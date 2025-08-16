@@ -1,8 +1,10 @@
 {
-  "name": "vite-template",
+  "name": "utaipei-course-website",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "author": "allen0099",
+  "packageManager": "pnpm@10.14.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
