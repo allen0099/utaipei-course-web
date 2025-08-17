@@ -2,6 +2,7 @@ import { Link } from "@heroui/link";
 import React from "react";
 
 import { GithubIcon, HeartFilledIcon } from "@/components/icons.tsx";
+import { siteConfig } from "@/config/site.ts";
 
 const FooterLink = ({
   link,
@@ -27,21 +28,25 @@ export const Footbar = () => {
   return (
     <>
       <footer className="w-full flex items-center justify-center">
-        <div className="container mx-auto max-w-7xl pt-12">
+        <div className="container mx-auto max-w-7xl px-12 md:px-0 pt-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
-              <h3 className="text-lg font-bold">校方連結</h3>
+              <h3 className="text-lg font-bold md:text-left text-center">
+                校方連結
+              </h3>
               <div className="flex space-x-4">
                 <h4 className="text-default-600">還沒有整理啦</h4>
               </div>
             </div>
             <div className="space-y-4">
-              <h3 className="text-lg font-bold">關於專案</h3>
+              <h3 className="text-lg font-bold md:text-left text-center">
+                關於專案
+              </h3>
               <FooterLink link="https://github.com/allen0099/utaipei-course-web">
                 <GithubIcon className="mr-2" />
                 網頁原始碼
               </FooterLink>
-              <FooterLink link="https://github.com/allen0099/utaipei-course-crawler">
+              <FooterLink link={siteConfig.links.github_crawler}>
                 <GithubIcon className="mr-2" />
                 資料原始碼
               </FooterLink>
