@@ -41,11 +41,11 @@ export const Footbar = () => {
             <Divider className="w-auto sm:hidden my-3" />
             <div className="space-y-4 flex-1">
               <h3 className="text-lg font-bold">關於專案</h3>
-              <FooterLink link="https://github.com/allen0099/utaipei-course-web">
+              <FooterLink link={siteConfig.links.github.web}>
                 <GithubIcon className="mr-2" />
                 網頁原始碼
               </FooterLink>
-              <FooterLink link={siteConfig.links.github_crawler}>
+              <FooterLink link={siteConfig.links.github.crawler}>
                 <GithubIcon className="mr-2" />
                 資料原始碼
               </FooterLink>
@@ -62,7 +62,7 @@ export const Footbar = () => {
                 <Link
                   isExternal
                   className="flex items-center gap-1 text-current"
-                  href="https://heroui.com"
+                  href={siteConfig.links.hero_ui.docs}
                   title="heroui.com homepage"
                 >
                   <span className="text-default-600">Powered by</span>

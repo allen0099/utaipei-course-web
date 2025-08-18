@@ -10,6 +10,7 @@ import {
   AnnounceHrefItem,
   AnnouncementItem,
 } from "@/interfaces/announcements.ts";
+import { siteConfig } from "@/config/site.ts";
 
 const reDate = /((?:\d{3}\s年)?\s\d{1,2}\s[/\-月]\s\d{1,2}\s日?)(?!\d)/g;
 
@@ -118,9 +119,7 @@ export default function IndexPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(
-      "https://allen0099.github.io/utaipei-course-crawler/announcement.json",
-    )
+    fetch(`${siteConfig.links.github.api}/announcement.json`)
       .then((res) => res.json())
       .then((data) => {
         setAnnouncements(data);
@@ -158,7 +157,7 @@ export default function IndexPage() {
               <Link
                 isExternal
                 showAnchorIcon
-                href="https://my.utaipei.edu.tw/utaipei/index_sky.html"
+                href={siteConfig.links.utaipei.sky}
               >
                 詳細公告請見校務資訊系統
               </Link>

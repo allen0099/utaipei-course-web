@@ -44,9 +44,17 @@ export const siteConfig = {
     },
   ],
   links: {
-    github_crawler: "https://github.com/allen0099/utaipei-course-crawler",
-    github_web: "https://github.com/allen0099/utaipei-course-crawler",
-    github: "https://github.com/frontio-ai/heroui",
-    docs: "https://heroui.com",
+    utaipei: {
+      sky: "https://my.utaipei.edu.tw/utaipei/index_sky.html",
+    },
+    hero_ui: {
+      github: "https://github.com/frontio-ai/heroui",
+      docs: "https://heroui.com",
+    },
+    github: {
+      api: "https://allen0099.github.io/utaipei-course-crawler",
+      web: "https://github.com/allen0099/utaipei-course-web",
+      crawler: "https://github.com/allen0099/utaipei-course-crawler",
+    },
   },
 };
