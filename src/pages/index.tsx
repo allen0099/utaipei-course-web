@@ -73,6 +73,7 @@ const renderTextWithLinks = (text: string, hrefs?: AnnounceHrefItem[]) => {
           <Link
             key={idx}
             isExternal
+            showAnchorIcon
             className="text-blue-600 underline hover:text-blue-800"
             href={part.link}
           >
