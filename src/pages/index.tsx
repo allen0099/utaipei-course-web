@@ -14,13 +14,13 @@ import {
 const reDate = /((?:\d{3}\s年)?\s\d{1,2}\s[/\-月]\s\d{1,2}\s日?)(?!\d)/g;
 
 // 計算縮排 class
-export function getIndentClass(level: number) {
+const getIndentClass = (level: number) => {
   // level=1 無縮排，level=2 pl-4, level=3 pl-8 ...
   return `pl-${(level - 1) * 4}`;
-}
+};
 
 // 將 text 中出現 href.text 的部分轉為 Link，並在 Link 前後自動補空白（若無則補）
-export function renderTextWithLinks(text: string, hrefs?: AnnounceHrefItem[]) {
+const renderTextWithLinks = (text: string, hrefs?: AnnounceHrefItem[]) => {
   if (!hrefs || hrefs.length === 0) return highlightDate(text); // 無連結時直接高亮日期
   // 依照 hrefs.text 長度排序，避免短字串先被分割
   const sortedHrefs = [...hrefs].sort((a, b) => b.text.length - a.text.length);
@@ -82,10 +82,10 @@ export function renderTextWithLinks(text: string, hrefs?: AnnounceHrefItem[]) {
       );
     }
   });
-}
+};
 
 // 新增：高亮日期的函數
-function highlightDate(text: string) {
+const highlightDate = (text: string) => {
   if (!text) return text;
   const re = reDate;
   const result: (string | JSX.Element)[] = [];
@@ -111,7 +111,7 @@ function highlightDate(text: string) {
   re.lastIndex = 0;
 
   return result.length > 0 ? result : text;
-}
+};
 
 export default function IndexPage() {
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
