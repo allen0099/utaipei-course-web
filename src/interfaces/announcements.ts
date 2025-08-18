@@ -1,8 +1,10 @@
+export interface AnnounceHrefItem {
+  link: string;
+  text: string;
+}
+
 export interface AnnouncementItem {
   text: string;
-  href?: {
-    link: string;
-    text: string;
-  }[];
+  href?: AnnounceHrefItem[];
   level: number;
 }
