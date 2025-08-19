@@ -6,10 +6,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@heroui/link";
 
 import DefaultLayout from "@/layouts/default";
-import {
-  AnnounceHrefItem,
-  AnnouncementItem,
-} from "@/interfaces/announcements.ts";
+import { AnnounceHrefItem, AnnouncementItem } from "@/interfaces/globals.ts";
 import { CourseFunctions } from "@/components/course-functions.tsx";
 import { siteConfig } from "@/config/site.ts";
 

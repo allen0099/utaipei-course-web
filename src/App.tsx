@@ -2,7 +2,7 @@ import { Route, Routes, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 import IndexPage from "@/pages/index";
-import CourseCalendarPage from "@/pages/course-calendar";
+import CourseCalendarPage from "@/pages/calendar.tsx";
 import AdvancedSearchPage from "@/pages/advanced-search";
 import TeacherSchedulePage from "@/pages/teacher-schedule";
 import ClassSchedulePage from "@/pages/class-schedule";
