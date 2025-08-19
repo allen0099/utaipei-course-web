@@ -5,8 +5,24 @@ export const siteConfig = {
   description: "Make beautiful websites regardless of your design experience.",
   navItems: [
     {
-      label: "Home",
+      label: "首頁",
       href: "/",
+    },
+    {
+      label: "課程行事曆",
+      href: "/calendar",
+    },
+    {
+      label: "進階選課",
+      href: "/search",
+    },
+    {
+      label: "教師課表",
+      href: "/teacher-schedule",
+    },
+    {
+      label: "班級課表",
+      href: "/class-schedule",
     },
   ],
   navMenuItems: [

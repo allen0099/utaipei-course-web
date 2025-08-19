@@ -10,6 +10,7 @@ import {
   AnnounceHrefItem,
   AnnouncementItem,
 } from "@/interfaces/announcements.ts";
+import { CourseFunctions } from "@/components/course-functions.tsx";
 import { siteConfig } from "@/config/site.ts";
 
 const reDate = /((?:\d{3}\s年)?\s\d{1,2}\s[/\-月]\s\d{1,2}\s日?)(?!\d)/g;
@@ -166,6 +167,7 @@ export default function IndexPage() {
           </Card>
         )}
       </section>
+      <CourseFunctions />
     </DefaultLayout>
   );
 }
