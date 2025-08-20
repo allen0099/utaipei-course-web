@@ -7,6 +7,7 @@ import AdvancedSearchPage from "@/pages/advanced-search";
 import TeacherSchedulePage from "@/pages/teacher-schedule";
 import ClassSchedulePage from "@/pages/class-schedule";
 import NotFoundPage from "@/pages/not-found";
+import MapPage from "@/pages/map.tsx";
 
 function App() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ function App() {
     <Routes>
       <Route element={<IndexPage />} path="/" />
       <Route element={<CourseCalendarPage />} path="/calendar" />
+      <Route element={<MapPage />} path="/map" />
       <Route element={<AdvancedSearchPage />} path="/search" />
       <Route element={<TeacherSchedulePage />} path="/teacher-schedule" />
       <Route element={<ClassSchedulePage />} path="/class-schedule" />
