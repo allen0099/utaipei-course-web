@@ -68,8 +68,8 @@ export const CalendarViewer = ({ link }: { link: string }) => {
   useEffect(() => {
     if (!link) {
       setPdfFile(null);
-      
-return;
+
+      return;
     }
 
     if (pdfCache.current[link]) {
@@ -165,10 +165,11 @@ export const CalendarPage = () => {
           ...item,
           link: `${siteConfig.links.github.api}/calendar/${item.year}/${item.title}.pdf`,
         }));
+        const reversedData = [...processedData].reverse();
 
-        setCalendarList(processedData);
-        if (processedData.length > 0) {
-          setSelectedCalendar(processedData[processedData.length - 1]);
+        setCalendarList(reversedData);
+        if (reversedData.length > 0) {
+          setSelectedCalendar(reversedData[0]);
         }
       });
   }, []);
@@ -185,9 +186,7 @@ export const CalendarPage = () => {
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="flex max-sm:flex-col max-lg:w-full items-center">
-          <h1 className={title()}>
-            {selectedCalendar?.title || "校園行事曆"}
-          </h1>
+          <h1 className={title()}>{selectedCalendar?.title || "校園行事曆"}</h1>
           <Dropdown>
             <DropdownTrigger>
               <Button className="ml-8" color="primary" variant="ghost">
@@ -196,6 +195,7 @@ export const CalendarPage = () => {
             </DropdownTrigger>
             <DropdownMenu
               aria-label="選擇學年度"
+              className="max-h-60 overflow-y-auto"
               items={calendarList}
               onAction={handleYearChange}
             >
