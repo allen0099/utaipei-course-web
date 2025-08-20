@@ -5,6 +5,12 @@ import { Document, Page, PageProps } from "react-pdf";
 import { pdfjs } from "react-pdf";
 import { useResizeObserver } from "@wojtekmaj/react-hooks";
 import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+} from "@heroui/dropdown";
+import {
   Modal,
   ModalBody,
   ModalContent,
@@ -49,9 +55,28 @@ export const CalendarViewer = ({ link }: { link: string }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const pdfCache = useRef<{ [key: string]: string }>({});
 
+  // Effect for cleaning up the entire cache on unmount
   useEffect(() => {
-    if (link && !pdfCache.current[link]) {
+    // The returned function runs only once when the component is destroyed.
+    return () => {
+      Object.values(pdfCache.current).forEach(URL.revokeObjectURL);
+      pdfCache.current = {};
+    };
+  }, []);
+
+  // Effect for fetching and setting the PDF from cache or network
+  useEffect(() => {
+    if (!link) {
+      setPdfFile(null);
+      
+return;
+    }
+
+    if (pdfCache.current[link]) {
+      setPdfFile(pdfCache.current[link]);
+    } else {
       setIsLoading(true);
+      setPdfFile(null); // Clear previous PDF while loading new one
       fetch(link)
         .then((res) => res.blob())
         .then((blob) => {
@@ -59,16 +84,11 @@ export const CalendarViewer = ({ link }: { link: string }) => {
 
           pdfCache.current[link] = objectUrl;
           setPdfFile(objectUrl);
+        })
+        .finally(() => {
           setIsLoading(false);
         });
-    } else if (link && pdfCache.current[link]) {
-      setPdfFile(pdfCache.current[link]);
     }
-
-    // Cleanup function to revoke object URLs on component unmount
-    return () => {
-      Object.values(pdfCache.current).forEach(URL.revokeObjectURL);
-    };
   }, [link]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
@@ -132,33 +152,62 @@ export const CalendarViewer = ({ link }: { link: string }) => {
 };
 
 export const CalendarPage = () => {
-  const [calendar, setCalendar] = useState<calendarItem[]>([]);
-
-  const lastItem = calendar[calendar.length - 1];
+  const [calendarList, setCalendarList] = useState<calendarItem[]>([]);
+  const [selectedCalendar, setSelectedCalendar] = useState<calendarItem | null>(
+    null,
+  );
 
   useEffect(() => {
     fetch(`${siteConfig.links.github.api}/calendar.json`)
       .then((res) => res.json())
-      .then((data) => {
-        data.forEach((item: calendarItem) => {
-          item.link = `${siteConfig.links.github.api}/calendar/${item.year}/${item.title}.pdf`;
-        });
-        setCalendar(data);
+      .then((data: calendarItem[]) => {
+        const processedData = data.map((item) => ({
+          ...item,
+          link: `${siteConfig.links.github.api}/calendar/${item.year}/${item.title}.pdf`,
+        }));
+
+        setCalendarList(processedData);
+        if (processedData.length > 0) {
+          setSelectedCalendar(processedData[processedData.length - 1]);
+        }
       });
   }, []);
+
+  const handleYearChange = (key: unknown) => {
+    const selected = calendarList.find((item) => item.title === key);
+
+    if (selected) {
+      setSelectedCalendar(selected);
+    }
+  };
 
   return (
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="flex max-sm:flex-col max-lg:w-full items-center">
-          <h1 className={title()}>{lastItem?.title || "校園行事曆"}</h1>
-          <Button className="ml-8" color="primary" variant="ghost">
-            切換學年度
-          </Button>
+          <h1 className={title()}>
+            {selectedCalendar?.title || "校園行事曆"}
+          </h1>
+          <Dropdown>
+            <DropdownTrigger>
+              <Button className="ml-8" color="primary" variant="ghost">
+                切換學年度
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu
+              aria-label="選擇學年度"
+              items={calendarList}
+              onAction={handleYearChange}
+            >
+              {(item) => (
+                <DropdownItem key={item.title}>{item.title}</DropdownItem>
+              )}
+            </DropdownMenu>
+          </Dropdown>
         </div>
         <p className="text-default-500">點擊下方任一頁即可放大檢視</p>
-        {lastItem?.link ? (
-          <CalendarViewer link={lastItem.link} />
+        {selectedCalendar?.link ? (
+          <CalendarViewer link={selectedCalendar.link} />
         ) : (
           <Spinner label="載入中..." />
         )}
