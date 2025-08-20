@@ -1,6 +1,6 @@
 import { Spinner } from "@heroui/spinner";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "@heroui/button";
+import { Button, ButtonGroup } from "@heroui/button";
 import { Document, Page, PageProps } from "react-pdf";
 import { pdfjs } from "react-pdf";
 import { useResizeObserver } from "@wojtekmaj/react-hooks";
@@ -14,6 +14,7 @@ import {
   Modal,
   ModalBody,
   ModalContent,
+  ModalFooter,
   ModalHeader,
   useDisclosure,
 } from "@heroui/modal";
@@ -52,6 +53,7 @@ export const CalendarViewer = ({ link }: { link: string }) => {
   const [activePage, setActivePage] = useState<number>(1);
   const [pdfFile, setPdfFile] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [zoom, setZoom] = useState<number>(1.0);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const pdfCache = useRef<{ [key: string]: string }>({});
 
@@ -97,6 +99,7 @@ export const CalendarViewer = ({ link }: { link: string }) => {
 
   const handlePageClick = (pageNumber: number) => {
     setActivePage(pageNumber);
+    setZoom(1.0);
     onOpen();
   };
 
@@ -135,16 +138,41 @@ export const CalendarViewer = ({ link }: { link: string }) => {
       >
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">
-            頁面 {activePage}
+            <span>頁面 {activePage}</span>
           </ModalHeader>
-          <ModalBody className="p-2">
-            <Document file={pdfFile} loading={<Spinner />}>
-              <ResponsivePage
-                className="dark:invert dark:hue-rotate-180"
-                pageNumber={activePage}
-              />
-            </Document>
+          <ModalBody className="p-2 flex justify-start overflow-auto">
+            <div
+              className="transform-gpu transition-transform duration-200 ease-in-out"
+              style={{
+                transform: `scale(${zoom})`,
+                transformOrigin: "top left",
+              }}
+            >
+              <Document file={pdfFile} loading={<Spinner />}>
+                <ResponsivePage
+                  className="dark:invert dark:hue-rotate-180"
+                  pageNumber={activePage}
+                />
+              </Document>
+            </div>
           </ModalBody>
+          <ModalFooter>
+            <ButtonGroup size="sm" variant="ghost">
+              <Button
+                onPress={() => setZoom((prev) => Math.max(1.0, prev - 0.2))}
+              >
+                -
+              </Button>
+              <Button onPress={() => setZoom(1.0)}>
+                {Math.round(zoom * 100)}%
+              </Button>
+              <Button
+                onPress={() => setZoom((prev) => Math.min(2.0, prev + 0.2))}
+              >
+                +
+              </Button>
+            </ButtonGroup>
+          </ModalFooter>
         </ModalContent>
       </Modal>
     </div>
