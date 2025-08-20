@@ -55,7 +55,7 @@ export const CourseFunctions = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {functions.map((func) => (
           <Link key={func.title} className="w-full" href={func.href}>
-            <Card className="h-full w-full hover:bg-default-100 transition-colors">
+              <Card className="h-full w-full hover:bg-default-100 transition-colors transform transition-transform duration-200 hover:scale-105">
               <CardHeader className="flex items-center gap-4">
                 {func.icon}
                 <h3 className="text-lg font-semibold">{func.title}</h3>

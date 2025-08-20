@@ -10,10 +10,10 @@ export default function NotFoundPage() {
           <h1 className="text-4xl font-bold">404</h1>
           <p className="text-xl mt-2">Page Not Found</p>
           <p className="text-default-500 mt-2">
-            The page you are looking for does not exist.
+            歐歐，你似乎發現了蟲洞。
           </p>
           <Link className="mt-6" href="/">
-            Go back to Home
+            返回首頁
           </Link>
         </div>
       </section>
