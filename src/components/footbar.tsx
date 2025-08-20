@@ -28,7 +28,7 @@ const FooterLink = ({
 export const Footbar = () => {
   return (
     <>
-      <footer className="w-full flex items-center justify-center">
+      <footer className="w-full flex items-center justify-center bg-default-50">
         <div className="container mx-auto max-w-7xl px-12 pt-12">
           <div className="sm:flex gap-8">
             <div className="space-y-4 flex-1 text-left sm:text-right">
