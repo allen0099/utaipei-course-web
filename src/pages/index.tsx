@@ -130,12 +130,13 @@ export default function IndexPage() {
   return (
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
+        <CourseFunctions />
         {loading ? (
-          <Spinner />
+          <Spinner className="mt-8" label="正在載入校園公告..." />
         ) : (
           <Card
             isFooterBlurred
-            className="border-none w-full max-w-2xl bg-yellow-50"
+            className="border-none w-full max-w-2xl bg-yellow-50 dark:bg-default-100"
             radius="lg"
           >
             <CardHeader className="flex justify-center text-center w-full">
@@ -164,7 +165,6 @@ export default function IndexPage() {
           </Card>
         )}
       </section>
-      <CourseFunctions />
     </DefaultLayout>
   );
 }
