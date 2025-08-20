@@ -4,6 +4,13 @@ import { Button } from "@heroui/button";
 import { Document, Page, PageProps } from "react-pdf";
 import { pdfjs } from "react-pdf";
 import { useResizeObserver } from "@wojtekmaj/react-hooks";
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalHeader,
+  useDisclosure,
+} from "@heroui/modal";
 
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
@@ -36,9 +43,16 @@ const ResponsivePage = (props: PageProps) => {
 
 export const CalendarViewer = ({ link }: { link: string }) => {
   const [numPages, setNumPages] = useState<number>(1);
+  const [activePage, setActivePage] = useState<number>(1);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
+  };
+
+  const handlePageClick = (pageNumber: number) => {
+    setActivePage(pageNumber);
+    onOpen();
   };
 
   return (
@@ -53,7 +67,8 @@ export const CalendarViewer = ({ link }: { link: string }) => {
           {Array.from(new Array(numPages), (_, index) => (
             <div
               key={`page_wrapper_${index + 1}`}
-              className="w-full xl:w-[48%]"
+              className="w-full xl:w-[48%] cursor-pointer"
+              onClick={() => handlePageClick(index + 1)}
             >
               <ResponsivePage
                 key={`page_${index + 1}`}
@@ -66,6 +81,26 @@ export const CalendarViewer = ({ link }: { link: string }) => {
           ))}
         </Document>
       </div>
+      <Modal
+        isOpen={isOpen}
+        scrollBehavior="inside"
+        size="5xl"
+        onClose={onClose}
+      >
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">
+            頁面 {activePage}
+          </ModalHeader>
+          <ModalBody className="p-2">
+            <Document file={link} loading={<Spinner />}>
+              <ResponsivePage
+                className="dark:invert dark:hue-rotate-180"
+                pageNumber={activePage}
+              />
+            </Document>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </div>
   );
 };
@@ -95,7 +130,7 @@ export const CalendarPage = () => {
             切換年分
           </Button>
         </div>
-
+        <p className="text-default-500">點擊下方任一頁即可放大檢視</p>
         <CalendarViewer link={lastItem?.link} />
       </section>
     </DefaultLayout>
