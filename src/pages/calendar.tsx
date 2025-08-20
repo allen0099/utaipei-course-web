@@ -1,5 +1,5 @@
 import { Spinner } from "@heroui/spinner";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@heroui/button";
 import { Document, Page, PageProps } from "react-pdf";
 import { pdfjs } from "react-pdf";
@@ -44,7 +44,32 @@ const ResponsivePage = (props: PageProps) => {
 export const CalendarViewer = ({ link }: { link: string }) => {
   const [numPages, setNumPages] = useState<number>(1);
   const [activePage, setActivePage] = useState<number>(1);
+  const [pdfFile, setPdfFile] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const pdfCache = useRef<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    if (link && !pdfCache.current[link]) {
+      setIsLoading(true);
+      fetch(link)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const objectUrl = URL.createObjectURL(blob);
+
+          pdfCache.current[link] = objectUrl;
+          setPdfFile(objectUrl);
+          setIsLoading(false);
+        });
+    } else if (link && pdfCache.current[link]) {
+      setPdfFile(pdfCache.current[link]);
+    }
+
+    // Cleanup function to revoke object URLs on component unmount
+    return () => {
+      Object.values(pdfCache.current).forEach(URL.revokeObjectURL);
+    };
+  }, [link]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -55,12 +80,16 @@ export const CalendarViewer = ({ link }: { link: string }) => {
     onOpen();
   };
 
+  if (isLoading || !pdfFile) {
+    return <Spinner label="讀取行事曆中..." />;
+  }
+
   return (
     <div className="w-full flex justify-center">
       <div className="w-full max-w-5xl">
         <Document
           className="flex flex-wrap justify-center gap-4"
-          file={link}
+          file={pdfFile}
           loading={<Spinner />}
           onLoadSuccess={onDocumentLoadSuccess}
         >
@@ -89,7 +118,7 @@ export const CalendarViewer = ({ link }: { link: string }) => {
             頁面 {activePage}
           </ModalHeader>
           <ModalBody className="p-2">
-            <Document file={link} loading={<Spinner />}>
+            <Document file={pdfFile} loading={<Spinner />}>
               <ResponsivePage
                 className="dark:invert dark:hue-rotate-180"
                 pageNumber={activePage}
@@ -128,7 +157,11 @@ export const CalendarPage = () => {
           </Button>
         </div>
         <p className="text-default-500">點擊下方任一頁即可放大檢視</p>
-        <CalendarViewer link={lastItem?.link} />
+        {lastItem?.link ? (
+          <CalendarViewer link={lastItem.link} />
+        ) : (
+          <Spinner label="載入中..." />
+        )}
       </section>
     </DefaultLayout>
   );
