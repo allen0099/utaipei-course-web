@@ -13,7 +13,7 @@ export const siteConfig = {
       href: "/calendar",
     },
     {
-      label: "進階選課",
+      label: "課程查詢",
       href: "/search",
     },
     {

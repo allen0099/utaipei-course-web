@@ -6,7 +6,7 @@ export default function AdvancedSearchPage() {
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="inline-block max-w-lg text-center justify-center">
-          <h1 className={title()}>進階選課</h1>
+          <h1 className={title()}>課程查詢</h1>
           <p>此頁面正在建置中。</p>
         </div>
       </section>
