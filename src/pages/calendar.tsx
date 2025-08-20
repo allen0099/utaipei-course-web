@@ -65,17 +65,14 @@ export const CalendarViewer = ({ link }: { link: string }) => {
           onLoadSuccess={onDocumentLoadSuccess}
         >
           {Array.from(new Array(numPages), (_, index) => (
-            <div
-              key={`page_wrapper_${index + 1}`}
-              className="w-full xl:w-[48%] cursor-pointer"
-              onClick={() => handlePageClick(index + 1)}
-            >
+            <div key={`page_wrapper_${index + 1}`} className="w-full">
               <ResponsivePage
                 key={`page_${index + 1}`}
-                className="dark:invert dark:hue-rotate-180 shadow-lg"
+                className="dark:invert dark:hue-rotate-180 shadow-lg cursor-pointer"
                 pageNumber={index + 1}
                 renderAnnotationLayer={false}
                 renderTextLayer={false}
+                onClick={() => handlePageClick(index + 1)}
               />
             </div>
           ))}
@@ -127,7 +124,7 @@ export const CalendarPage = () => {
         <div className="flex max-sm:flex-col max-lg:w-full items-center">
           <h1 className={title()}>{lastItem?.title || "校園行事曆"}</h1>
           <Button className="ml-8" color="primary" variant="ghost">
-            切換年分
+            切換學年度
           </Button>
         </div>
         <p className="text-default-500">點擊下方任一頁即可放大檢視</p>
