@@ -20,9 +20,7 @@ export function CampusFloorPlan({ title, children }: CampusFloorPlanProps) {
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-xl font-semibold mb-4 text-center">{title}</h2>
-      <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
-        點擊圖片可放大查看
-      </p>
+      <p className="text-center text-default-500 mb-4">點擊圖片可放大查看</p>
       <div className="relative w-full aspect-[1.22/1] max-h-[80vh] cursor-pointer">
         <div
           className="absolute inset-0"

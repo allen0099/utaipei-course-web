@@ -46,16 +46,14 @@ export const MapPage = () => {
       <div className="space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">大樓代碼說明</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            臺北市立大學各校區大樓代碼對照表
-          </p>
+          <p className="text-default-500">臺北市立大學各校區大樓代碼對照表</p>
         </div>
         <Tabs aria-label="Options">
           <Tab key="bo-ai" title="博愛校區">
             <div className="space-y-6">
               <BuildingCard buildings={boaiBuildings} title="博愛校區" />
               <CampusFloorPlan title="博愛校區平面圖">
-                <BoAiFloorPlan className="fill-amber-400" />
+                <BoAiFloorPlan />
               </CampusFloorPlan>
             </div>
           </Tab>
