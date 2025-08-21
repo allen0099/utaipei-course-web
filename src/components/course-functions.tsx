@@ -3,9 +3,11 @@ import { Link } from "@heroui/link";
 
 import {
   CalendarIcon,
+  ClassroomIcon,
   CourseIcon,
+  GraduationIcon,
   MapIcon,
-  SearchIcon,
+  ProfileIcon,
   TimeIcon,
 } from "@/components/svgIcon.tsx";
 
@@ -29,7 +31,7 @@ const functions = [
     description: "了解校園內的課程節次安排",
   },
   {
-    title: "課程查詢",
+    title: "科目課程查詢",
     href: "/search",
     icon: <CourseIcon className="text-4xl" size={48} />,
     description: "透過篩選器搜尋您想要的課程",
@@ -37,13 +39,19 @@ const functions = [
   {
     title: "教師課表查詢",
     href: "/teacher-schedule",
-    icon: <SearchIcon className="text-4xl" size={48} />,
+    icon: <ProfileIcon className="text-4xl" size={48} />,
     description: "查詢指定教師的開課時間",
   },
   {
-    title: "班級課表查詢",
+    title: "教室課表查詢",
+    href: "/teacher-schedule",
+    icon: <ClassroomIcon className="text-4xl" size={48} />,
+    description: "查詢指定教室的使用情況",
+  },
+  {
+    title: "系所班級課表查詢",
     href: "/class-schedule",
-    icon: <SearchIcon className="text-4xl" size={48} />,
+    icon: <GraduationIcon className="text-4xl" size={48} />,
     description: "查詢指定班級的課表",
   },
 ];
@@ -55,7 +63,7 @@ export const CourseFunctions = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {functions.map((func) => (
           <Link key={func.title} className="w-full" href={func.href}>
-            <Card className="h-full w-full hover:bg-default-100 transition-colors transform transition-transform duration-200 hover:scale-105">
+            <Card className="h-full w-full hover:bg-default-100 transform transition-transform duration-200 hover:scale-105">
               <CardHeader className="flex items-center gap-4">
                 {func.icon}
                 <h3 className="text-lg font-semibold">{func.title}</h3>
