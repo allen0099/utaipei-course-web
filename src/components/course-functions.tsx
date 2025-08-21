@@ -24,7 +24,7 @@ const functions = [
   },
   {
     title: "校園節次說明",
-    href: "/class-time",
+    href: "/timetable",
     icon: <TimeIcon className="text-4xl" size={48} />,
     description: "了解校園內的課程節次安排",
   },
