@@ -26,6 +26,19 @@ export const DisclaimerModal = () => {
     else setOpen(false);
   }, []);
 
+  // prevent text selection when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.userSelect = "none";
+    } else {
+      document.body.style.userSelect = "";
+    }
+
+    return () => {
+      document.body.style.userSelect = "";
+    };
+  }, [open]);
+
   const handleAccept = () => {
     document.cookie = `disclaimer_accepted=true; path=/; max-age=${60 * 60 * 24 * 365}`;
     setOpen(false);
