@@ -87,7 +87,7 @@ export const PDFDocument = ({ link }: { link: string }) => {
   };
 
   if (isLoading || !pdfFile) {
-    return <Spinner label="讀取行事曆中..." />;
+    return <Spinner label="讀取中..." />;
   }
 
   return (
