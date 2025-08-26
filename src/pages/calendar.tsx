@@ -10,20 +10,20 @@ import {
 
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
-import { calendarItem } from "@/interfaces/globals.ts";
+import { CalendarItem } from "@/interfaces/globals.ts";
 import { title } from "@/components/primitives.ts";
 import { PDFDocument } from "@/components/pdf.tsx";
 
 export const CalendarPage = () => {
-  const [calendarList, setCalendarList] = useState<calendarItem[]>([]);
-  const [selectedCalendar, setSelectedCalendar] = useState<calendarItem | null>(
+  const [calendarList, setCalendarList] = useState<CalendarItem[]>([]);
+  const [selectedCalendar, setSelectedCalendar] = useState<CalendarItem | null>(
     null,
   );
 
   useEffect(() => {
     fetch(`${siteConfig.links.github.api}/calendar.json`)
       .then((res) => res.json())
-      .then((data: calendarItem[]) => {
+      .then((data: CalendarItem[]) => {
         const processedData = data.map((item) => ({
           ...item,
           link: `${siteConfig.links.github.api}/calendar/${item.year}/${item.title}.pdf`,

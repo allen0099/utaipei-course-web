@@ -1,7 +1,7 @@
 import { title } from "@/components/primitives.ts";
 import DefaultLayout from "@/layouts/default.tsx";
 
-export default function ClassSchedulePage() {
+export const ClassSearchPage = () => {
   return (
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
@@ -12,4 +12,6 @@ export default function ClassSchedulePage() {
       </section>
     </DefaultLayout>
   );
-}
+};
+
+export default ClassSearchPage;

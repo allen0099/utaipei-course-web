@@ -9,9 +9,19 @@ export interface AnnouncementItem {
   level: number;
 }
 
-export interface calendarItem {
+export interface CalendarItem {
   year: number;
   semester: number;
   title: string;
   link: string;
+}
+
+export interface YearSemesterItem {
+  code: string;
+  displayName: string;
+}
+
+export interface LocationItem {
+  code: string;
+  name: string;
 }
