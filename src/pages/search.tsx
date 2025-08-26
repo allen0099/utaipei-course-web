@@ -10,7 +10,7 @@ import React from "react";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 
-export default function AdvancedSearchPage() {
+export default function SearchPage() {
   const [value, setValue] = React.useState<CalendarDate>(
     parseDate("2025-05-14"),
   );

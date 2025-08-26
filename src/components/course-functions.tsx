@@ -38,21 +38,21 @@ const functions = [
   },
   {
     title: "教師課表查詢",
-    href: "/teacher-schedule",
+    href: "/schedules/teacher",
     icon: <ProfileIcon className="text-4xl" size={48} />,
     description: "查詢指定教師的開課時間",
   },
   {
-    title: "教室課表查詢",
-    href: "/teacher-schedule",
+    title: "場地課表查詢",
+    href: "/schedules/location",
     icon: <ClassroomIcon className="text-4xl" size={48} />,
-    description: "查詢指定教室的使用情況",
+    description: "查詢指定教室或場地的使用情況",
   },
   {
     title: "系所班級課表查詢",
-    href: "/class-schedule",
+    href: "/schedules/class",
     icon: <GraduationIcon className="text-4xl" size={48} />,
-    description: "查詢指定班級的課表",
+    description: "查詢指定系所班級的課表",
   },
 ];
 

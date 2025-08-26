@@ -2,10 +2,10 @@ import { Route, Routes, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 import IndexPage from "@/pages/index";
-import CourseCalendarPage from "@/pages/calendar.tsx";
-import AdvancedSearchPage from "@/pages/advanced-search";
-import TeacherSchedulePage from "@/pages/teacher-schedule";
-import ClassSchedulePage from "@/pages/class-schedule";
+import CalendarPage from "@/pages/calendar.tsx";
+import SearchPage from "@/pages/search.tsx";
+import TeacherSchedulePage from "@/pages/schedules/teacher.tsx";
+import ClassSchedulePage from "@/pages/schedules/class.tsx";
 import NotFoundPage from "@/pages/not-found";
 import MapPage from "@/pages/map.tsx";
 import TimetablePage from "@/pages/timetable.tsx";
@@ -27,11 +27,11 @@ function App() {
   return (
     <Routes>
       <Route element={<IndexPage />} path="/" />
-      <Route element={<CourseCalendarPage />} path="/calendar" />
+      <Route element={<CalendarPage />} path="/calendar" />
       <Route element={<MapPage />} path="/map" />
-      <Route element={<AdvancedSearchPage />} path="/search" />
-      <Route element={<TeacherSchedulePage />} path="/teacher-schedule" />
-      <Route element={<ClassSchedulePage />} path="/class-schedule" />
+      <Route element={<SearchPage />} path="/search" />
+      <Route element={<TeacherSchedulePage />} path="/schedules/teacher" />
+      <Route element={<ClassSchedulePage />} path="/schedules/class" />
       <Route element={<TimetablePage />} path="/timetable" />
       <Route element={<NotFoundPage />} path="*" />
     </Routes>

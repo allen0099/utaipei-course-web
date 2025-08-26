@@ -18,11 +18,11 @@ export const siteConfig = {
     },
     {
       label: "教師課表",
-      href: "/teacher-schedule",
+      href: "/schedules/teacher",
     },
     {
-      label: "班級課表",
-      href: "/class-schedule",
+      label: "系所課表",
+      href: "/schedules/class",
     },
   ],
   navMenuItems: [
