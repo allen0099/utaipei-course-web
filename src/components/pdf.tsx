@@ -11,6 +11,7 @@ import {
 } from "@heroui/modal";
 import { Spinner } from "@heroui/spinner";
 import { Button, ButtonGroup } from "@heroui/button";
+import clsx from "clsx";
 
 export const ResponsivePage = (props: PageProps) => {
   const [containerRef, setContainerRef] = useState<HTMLElement | null>(null);
@@ -142,6 +143,9 @@ export const PDFDocument = ({ link }: { link: string }) => {
           <ModalFooter>
             <ButtonGroup size="sm" variant="ghost">
               <Button
+                className={clsx({
+                  "cursor-not-allowed": zoom <= 1.0,
+                })}
                 disabled={zoom <= 1.0}
                 onPress={() => setZoom((prev) => Math.max(1.0, prev - 0.2))}
               >
@@ -151,6 +155,9 @@ export const PDFDocument = ({ link }: { link: string }) => {
                 {Math.round(zoom * 100)}%
               </Button>
               <Button
+                className={clsx({
+                  "cursor-not-allowed": zoom >= 2.0,
+                })}
                 disabled={zoom >= 2.0}
                 onPress={() => setZoom((prev) => Math.min(2.0, prev + 0.2))}
               >
