@@ -1,13 +1,19 @@
 import { DatePicker } from "@heroui/date-picker";
 import { useDateFormatter } from "@react-aria/i18n";
-import { getLocalTimeZone, parseDate } from "@internationalized/date";
+import {
+  CalendarDate,
+  getLocalTimeZone,
+  parseDate,
+} from "@internationalized/date";
 import React from "react";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 
 export default function SearchPage() {
-  const [value, setValue] = React.useState<any>(parseDate("2025-05-14"));
+  const [value, setValue] = React.useState<CalendarDate>(
+    parseDate("2025-05-14"),
+  );
 
   let formatter = useDateFormatter({ dateStyle: "full" });
 
