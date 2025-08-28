@@ -19,6 +19,7 @@ export interface CalendarItem {
 export interface YearSemesterItem {
   code: string;
   displayName: string;
+  default: boolean;
 }
 
 export interface LocationItem {

@@ -1,7 +1,8 @@
-import { Key, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Divider } from "@heroui/divider";
 import { Button } from "@heroui/button";
-import { Autocomplete, AutocompleteItem } from "@heroui/autocomplete";
+import { Autocomplete, AutocompleteItem } from "@heroui/react";
+import { Key } from "@react-types/shared";
 
 import DefaultLayout from "@/layouts/default.tsx";
 import { siteConfig } from "@/config/site.ts";
@@ -9,12 +10,20 @@ import { LocationItem, YearSemesterItem } from "@/interfaces/globals.ts";
 
 const YmsSelector = ({ onChange }: { onChange: (id: Key | null) => void }) => {
   const [data, setData] = useState<YearSemesterItem[]>([]);
+  const [defaultKey, setDefaultKey] = useState<string>("");
 
   useEffect(() => {
     fetch(`${siteConfig.links.github.api}/yms.json`)
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: YearSemesterItem[]) => {
         setData(data);
+
+        const defaultItem = data.find((item) => item.default);
+
+        if (defaultItem) {
+          setDefaultKey(defaultItem.code);
+          onChange(defaultItem.code);
+        }
       });
   }, []);
 
@@ -22,8 +31,10 @@ const YmsSelector = ({ onChange }: { onChange: (id: Key | null) => void }) => {
     <Autocomplete
       isRequired
       className="max-w-xs"
+      isVirtualized={false} // Disable virtualization so we can scroll to the selected item
       label="選擇學年度"
       placeholder="請選擇..."
+      selectedKey={defaultKey}
       variant="bordered"
       onSelectionChange={onChange}
     >
@@ -67,6 +78,7 @@ const LocationSelector = ({
       isRequired
       className="max-w-xs"
       isDisabled={disabled}
+      isVirtualized={false} // Disable virtualization so we can scroll to the selected item
       label="選擇地點"
       placeholder="請選擇..."
       variant="bordered"
