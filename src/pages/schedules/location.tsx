@@ -16,6 +16,8 @@ const YmsSelector = ({ onChange }: { onChange: (id: Key | null) => void }) => {
     fetch(`${siteConfig.links.github.api}/yms.json`)
       .then((res) => res.json())
       .then((data: YearSemesterItem[]) => {
+        data.reverse();
+
         setData(data);
 
         const defaultItem = data.find((item) => item.default);
