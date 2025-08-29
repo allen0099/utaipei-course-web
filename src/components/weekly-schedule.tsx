@@ -395,7 +395,9 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 </div>
               </div>
               {DAY_NAMES.map((_, dayIndex) => (
-                <React.Fragment key={`${timeOfDay}-${timeInfo.period}-day-${dayIndex}`}>
+                <React.Fragment
+                  key={`${timeOfDay}-${timeInfo.period}-day-${dayIndex}`}
+                >
                   {renderTimeSlot(dayIndex, timeInfo.period, timeInfo)}
                 </React.Fragment>
               ))}
