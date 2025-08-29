@@ -25,4 +25,13 @@ export interface YearSemesterItem {
 export interface LocationItem {
   code: string;
   name: string;
+  courses: CourseItem[];
+}
+
+interface CourseItem {
+  code: string;
+  name: string;
+  class: string;
+  time: string;
+  teacher: string;
 }

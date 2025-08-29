@@ -48,32 +48,19 @@ const YmsSelector = ({ onChange }: { onChange: (id: Key | null) => void }) => {
 };
 
 const LocationSelector = ({
-  yms,
+  locations,
   onChange,
 }: {
-  yms: string;
+  locations: LocationItem[];
   onChange: (id: Key | null) => void;
 }) => {
   const [disabled, setDisabled] = useState(true);
-  const [locations, setLocations] = useState<LocationItem[]>([]);
-  const [year, semester] = yms.split("#");
 
   useEffect(() => {
-    if (!yms) {
-      setDisabled(true);
-      setLocations([]);
-      onChange("");
-
-      return;
-    }
-
-    fetch(`${siteConfig.links.github.api}/${year}/${semester}/locations.json`)
-      .then((res) => res.json())
-      .then((data) => {
-        setDisabled(false);
-        setLocations(data);
-      });
-  }, [yms]);
+    if (locations.length > 0) {
+      setDisabled(false);
+    } else setDisabled(true);
+  }, [locations]);
 
   return (
     <Autocomplete
@@ -93,9 +80,46 @@ const LocationSelector = ({
   );
 };
 
+const LocationDisplay = ({
+  locations,
+  selectedKey,
+}: {
+  locations: LocationItem[];
+  selectedKey: string;
+}) => {
+  const course = locations.find((loc) => loc.code === selectedKey);
+
+  if (!course) {
+    return <div className="mt-4">尚未選擇地點或無資料</div>;
+  }
+
+  return (
+    <div>
+      {course.courses.map((item) => (
+        <div key={item.code} className="border p-4 my-2 rounded-lg shadow-sm">
+          <h3 className="text-lg font-semibold mb-2">{item.name}</h3>
+          <p>
+            <strong>課程代碼:</strong> {item.code}
+          </p>
+          <p>
+            <strong>教師:</strong> {item.teacher}
+          </p>
+          <p>
+            <strong>教室:</strong> {item.class}
+          </p>
+          <p>
+            <strong>時間:</strong> {item.time}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const LocationSearchPage = () => {
   const [yms, setYms] = useState<string>("");
   const [location, setLocation] = useState<string>("");
+  const [locations, setLocations] = useState<LocationItem[]>([]);
 
   const onYmsChange = (id: Key | null) => {
     setYms(id?.toString() || "");
@@ -106,12 +130,27 @@ export const LocationSearchPage = () => {
     setLocation(id?.toString() || "");
   };
 
+  useEffect(() => {
+    if (!yms) {
+      setLocations([]);
+
+      return;
+    }
+    const [year, semester] = yms.split("#");
+
+    fetch(`${siteConfig.links.github.api}/${year}/${semester}/locations.json`)
+      .then((res) => res.json())
+      .then((data) => {
+        setLocations(data);
+      });
+  }, [yms]);
+
   return (
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center py-8 md:py-10 w-full">
         <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
           <YmsSelector onChange={onYmsChange} />
-          <LocationSelector yms={yms} onChange={onLocationChange} />
+          <LocationSelector locations={locations} onChange={onLocationChange} />
           <Button>查詢</Button>
         </div>
         <Divider className="my-6 max-w-5xl w-full" />
@@ -120,6 +159,7 @@ export const LocationSearchPage = () => {
             目前選擇 {yms} {location}
           </p>
         </div>
+        <LocationDisplay locations={locations} selectedKey={location} />
       </section>
     </DefaultLayout>
   );
