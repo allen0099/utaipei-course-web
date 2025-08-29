@@ -138,6 +138,7 @@ export const LocationSearchPage = () => {
   const [yms, setYms] = useState<string>("");
   const [location, setLocation] = useState<string>("");
   const [locations, setLocations] = useState<LocationItem[]>([]);
+  const [year, semester] = yms.split("#");
 
   const onYmsChange = (id: Key | null) => {
     setYms(id?.toString() || "");
@@ -172,13 +173,20 @@ export const LocationSearchPage = () => {
         </div>
         <Divider className="my-6 max-w-5xl w-full" />
         <div className="w-full max-w-2xl">
-          <h3 className="text-lg text-center mb-2">
-            {location
-              ? `${
-                  locations.find((loc) => loc.code === location)?.name || ""
-                } 的課表`
-              : "尚未選擇地點"}
-          </h3>
+          {location ? (
+            <>
+              <h3 className="text-lg text-center mb-2">
+                {year} 學年
+                {locations.find((loc) => loc.code === location)?.name || ""}
+                的課表
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+                學期：{semester}
+              </p>
+            </>
+          ) : (
+            <h3 className="text-lg text-center mb-2">尚未選擇地點</h3>
+          )}
         </div>
         <LocationDisplay locations={locations} selectedKey={location} />
       </section>
