@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import { Divider } from "@heroui/divider";
-import { Button } from "@heroui/button";
 import { Autocomplete, AutocompleteItem } from "@heroui/react";
 import { Key } from "@react-types/shared";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableColumn,
+  TableRow,
+  TableCell,
+} from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default.tsx";
 import { siteConfig } from "@/config/site.ts";
@@ -89,29 +96,36 @@ const LocationDisplay = ({
 }) => {
   const course = locations.find((loc) => loc.code === selectedKey);
 
-  if (!course) {
+  const columns = [
+    { key: "code", label: "課程代碼" },
+    { key: "name", label: "課程名稱" },
+    { key: "teacher", label: "教師" },
+    { key: "class", label: "班級名稱" },
+    { key: "time", label: "時間" },
+  ];
+
+  if (!course || !course.courses || course.courses.length === 0) {
     return <div className="mt-4">尚未選擇地點或無資料</div>;
   }
 
   return (
-    <div>
-      {course.courses.map((item) => (
-        <div key={item.code} className="border p-4 my-2 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold mb-2">{item.name}</h3>
-          <p>
-            <strong>課程代碼:</strong> {item.code}
-          </p>
-          <p>
-            <strong>教師:</strong> {item.teacher}
-          </p>
-          <p>
-            <strong>教室:</strong> {item.class}
-          </p>
-          <p>
-            <strong>時間:</strong> {item.time}
-          </p>
-        </div>
-      ))}
+    <div className="mt-4 overflow-x-auto">
+      <Table fullWidth isStriped aria-label="課程表" radius="md" shadow="sm">
+        <TableHeader>
+          {columns.map((column) => (
+            <TableColumn key={column.key}>{column.label}</TableColumn>
+          ))}
+        </TableHeader>
+        <TableBody emptyContent="尚未選擇地點或無資料" items={course.courses}>
+          {(item) => (
+            <TableRow key={item.code}>
+              {(columnKey) => (
+                <TableCell>{item[columnKey as keyof typeof item]}</TableCell>
+              )}
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };
@@ -151,13 +165,16 @@ export const LocationSearchPage = () => {
         <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
           <YmsSelector onChange={onYmsChange} />
           <LocationSelector locations={locations} onChange={onLocationChange} />
-          <Button>查詢</Button>
         </div>
         <Divider className="my-6 max-w-5xl w-full" />
         <div className="w-full max-w-2xl">
-          <p>
-            目前選擇 {yms} {location}
-          </p>
+          <h3 className="text-lg text-center mb-2">
+            {location
+              ? `地點：${
+                  locations.find((loc) => loc.code === location)?.name || ""
+                } 的課表`
+              : "尚未選擇地點"}
+          </h3>
         </div>
         <LocationDisplay locations={locations} selectedKey={location} />
       </section>
