@@ -30,11 +30,15 @@ const YmsSelector = ({ onChange }: { onChange: (id: Key | null) => void }) => {
         const defaultItem = data.find((item) => item.default);
 
         if (defaultItem) {
-          setDefaultKey(defaultItem.code);
-          onChange(defaultItem.code);
+          updateDefaultKey(defaultItem.code);
         }
       });
   }, []);
+
+  const updateDefaultKey = (key: Key | null) => {
+    setDefaultKey(key?.toString() || "");
+    onChange(key);
+  };
 
   return (
     <Autocomplete
@@ -45,7 +49,7 @@ const YmsSelector = ({ onChange }: { onChange: (id: Key | null) => void }) => {
       placeholder="請選擇..."
       selectedKey={defaultKey}
       variant="bordered"
-      onSelectionChange={onChange}
+      onSelectionChange={updateDefaultKey}
     >
       {data.map((yms) => (
         <AutocompleteItem key={yms.code}>{yms.displayName}</AutocompleteItem>
@@ -170,7 +174,7 @@ export const LocationSearchPage = () => {
         <div className="w-full max-w-2xl">
           <h3 className="text-lg text-center mb-2">
             {location
-              ? `地點：${
+              ? `${
                   locations.find((loc) => loc.code === location)?.name || ""
                 } 的課表`
               : "尚未選擇地點"}
