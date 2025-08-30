@@ -5,6 +5,16 @@ on:
     branches:
       - master
 
+  # Only files changed can trigger this workflow
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - '*.js'
+      - '*.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+
 jobs:
   vite-build:
     runs-on: ubuntu-latest
