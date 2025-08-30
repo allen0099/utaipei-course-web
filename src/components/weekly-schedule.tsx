@@ -15,181 +15,181 @@ import {
 const DEFAULT_CAMPUS_MAPPINGS: CampusTimeMapping[] = [
   {
     campus: "main",
-    name: "校本部",
+    name: "博愛校區",
     periods: [
       {
         period: 1,
         startTime: "08:10",
         endTime: "09:00",
-        label: "第1節",
+        label: "第 1 節",
       },
       {
         period: 2,
         startTime: "09:10",
         endTime: "10:00",
-        label: "第2節",
+        label: "第 2 節",
       },
       {
         period: 3,
         startTime: "10:10",
         endTime: "11:00",
-        label: "第3節",
+        label: "第 3 節",
       },
       {
         period: 4,
         startTime: "11:10",
         endTime: "12:00",
-        label: "第4節",
+        label: "第 4 節",
       },
       {
         period: 5,
         startTime: "12:10",
         endTime: "13:00",
-        label: "第5節",
+        label: "第 5 節",
       },
       {
         period: 6,
         startTime: "13:10",
         endTime: "14:00",
-        label: "第6節",
+        label: "第 6 節",
       },
       {
         period: 7,
         startTime: "14:10",
         endTime: "15:00",
-        label: "第7節",
+        label: "第 7 節",
       },
       {
         period: 8,
         startTime: "15:10",
         endTime: "16:00",
-        label: "第8節",
+        label: "第 8 節",
       },
       {
         period: 9,
         startTime: "16:10",
         endTime: "17:00",
-        label: "第9節",
+        label: "第 9 節",
       },
       {
         period: 10,
         startTime: "17:10",
         endTime: "18:00",
-        label: "第10節",
-      },
-      {
-        period: 11,
-        startTime: "18:20",
-        endTime: "19:10",
-        label: "第11節",
-      },
-      {
-        period: 12,
-        startTime: "19:15",
-        endTime: "20:05",
-        label: "第12節",
-      },
-      {
-        period: 13,
-        startTime: "20:10",
-        endTime: "21:00",
-        label: "第13節",
-      },
-      {
-        period: 14,
-        startTime: "21:05",
-        endTime: "21:55",
-        label: "第14節",
-      },
-    ],
-  },
-  {
-    campus: "secondary",
-    name: "博愛校區",
-    periods: [
-      {
-        period: 1,
-        startTime: "08:00",
-        endTime: "08:50",
-        label: "第1節",
-      },
-      {
-        period: 2,
-        startTime: "09:00",
-        endTime: "09:50",
-        label: "第2節",
-      },
-      {
-        period: 3,
-        startTime: "10:00",
-        endTime: "10:50",
-        label: "第3節",
-      },
-      {
-        period: 4,
-        startTime: "11:00",
-        endTime: "11:50",
-        label: "第4節",
-      },
-      {
-        period: 5,
-        startTime: "12:00",
-        endTime: "12:50",
-        label: "第5節",
-      },
-      {
-        period: 6,
-        startTime: "13:00",
-        endTime: "13:50",
-        label: "第6節",
-      },
-      {
-        period: 7,
-        startTime: "14:00",
-        endTime: "14:50",
-        label: "第7節",
-      },
-      {
-        period: 8,
-        startTime: "15:00",
-        endTime: "15:50",
-        label: "第8節",
-      },
-      {
-        period: 9,
-        startTime: "16:00",
-        endTime: "16:50",
-        label: "第9節",
-      },
-      {
-        period: 10,
-        startTime: "17:00",
-        endTime: "17:50",
-        label: "第10節",
+        label: "第 10 節",
       },
       {
         period: 11,
         startTime: "18:10",
         endTime: "19:00",
-        label: "第11節",
+        label: "第 11 節",
       },
       {
         period: 12,
-        startTime: "19:05",
-        endTime: "19:55",
-        label: "第12節",
+        startTime: "19:10",
+        endTime: "20:00",
+        label: "第 12 節",
       },
       {
         period: 13,
-        startTime: "20:00",
-        endTime: "20:50",
-        label: "第13節",
+        startTime: "20:10",
+        endTime: "21:00",
+        label: "第 13 節",
       },
       {
         period: 14,
-        startTime: "20:55",
-        endTime: "21:45",
-        label: "第14節",
+        startTime: "21:10",
+        endTime: "22:00",
+        label: "第 14 節",
+      },
+    ],
+  },
+  {
+    campus: "secondary",
+    name: "天母校區",
+    periods: [
+      {
+        period: 1,
+        startTime: "08:10",
+        endTime: "09:00",
+        label: "第 1 節",
+      },
+      {
+        period: 2,
+        startTime: "09:10",
+        endTime: "10:00",
+        label: "第 2 節",
+      },
+      {
+        period: 3,
+        startTime: "10:10",
+        endTime: "11:00",
+        label: "第 3 節",
+      },
+      {
+        period: 4,
+        startTime: "11:10",
+        endTime: "12:00",
+        label: "第 4 節",
+      },
+      {
+        period: 5,
+        startTime: "12:10",
+        endTime: "13:00",
+        label: "第 5 節",
+      },
+      {
+        period: 6,
+        startTime: "13:10",
+        endTime: "14:00",
+        label: "第 6 節",
+      },
+      {
+        period: 7,
+        startTime: "14:10",
+        endTime: "15:00",
+        label: "第 7 節",
+      },
+      {
+        period: 8,
+        startTime: "15:10",
+        endTime: "16:00",
+        label: "第 8 節",
+      },
+      {
+        period: 9,
+        startTime: "16:10",
+        endTime: "17:00",
+        label: "第 9 節",
+      },
+      {
+        period: 10,
+        startTime: "17:10",
+        endTime: "18:00",
+        label: "第 10 節",
+      },
+      {
+        period: 11,
+        startTime: "18:30",
+        endTime: "19:15",
+        label: "第 11 節",
+      },
+      {
+        period: 12,
+        startTime: "19:15",
+        endTime: "20:00",
+        label: "第 12 節",
+      },
+      {
+        period: 13,
+        startTime: "20:20",
+        endTime: "21:05",
+        label: "第 13 節",
+      },
+      {
+        period: 14,
+        startTime: "21:05",
+        endTime: "21:50",
+        label: "第 14 節",
       },
     ],
   },
@@ -302,8 +302,8 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
   // Helper function to determine time of day based on period number
   const getTimeOfDay = (period: number): "morning" | "noon" | "evening" => {
-    if (period <= 4) return "morning";
-    if (period <= 9) return "noon";
+    if (period <= 5) return "morning";
+    if (period <= 10) return "noon";
 
     return "evening";
   };
@@ -387,7 +387,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
           <div className="flex items-center space-x-3">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              校本部
+              博愛校區
             </span>
             <Switch
               color="primary"
@@ -396,7 +396,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
               onValueChange={handleCampusChange}
             />
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              博愛校區
+              天母校區
             </span>
           </div>
         </div>

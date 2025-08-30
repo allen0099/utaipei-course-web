@@ -180,7 +180,7 @@ export const WeeklyScheduleDemo = () => {
               <div>
                 <h4 className="font-medium mb-2">進階功能：</h4>
                 <ul className="list-disc list-inside space-y-1 text-default-600">
-                  <li>校本部/博愛校區時間切換</li>
+                  <li>博愛校區/天母校區時間切換</li>
                   <li>課程自動配色</li>
                   <li>課程資訊完整顯示</li>
                   <li>空課堂視覺提示</li>
