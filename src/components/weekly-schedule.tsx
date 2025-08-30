@@ -262,7 +262,9 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   const [currentCampus, setCurrentCampus] = useState<"main" | "secondary">(
     selectedCampus,
   );
-  const [hoveredCourseCode, setHoveredCourseCode] = useState<string | null>(null);
+  const [hoveredCourseCode, setHoveredCourseCode] = useState<string | null>(
+    null,
+  );
 
   const currentMapping = useMemo(() => {
     return (
@@ -333,8 +335,9 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     const timeOfDay = getTimeOfDay(period);
 
     // Check if any course in this slot is being hovered
-    const hasHoveredCourse = hoveredCourseCode && 
-      coursesInSlot.some(course => course.code === hoveredCourseCode);
+    const hasHoveredCourse =
+      hoveredCourseCode &&
+      coursesInSlot.some((course) => course.code === hoveredCourseCode);
 
     return (
       <div
@@ -353,7 +356,8 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
           <div className="h-full w-full flex flex-col gap-1">
             {coursesInSlot.map((course, index) => {
               const isHovered = hoveredCourseCode === course.code;
-              const isDimmed = hoveredCourseCode && hoveredCourseCode !== course.code;
+              const isDimmed =
+                hoveredCourseCode && hoveredCourseCode !== course.code;
 
               return (
                 <div
