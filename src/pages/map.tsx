@@ -1,7 +1,7 @@
 import { Tab, Tabs } from "@heroui/tabs";
-import { Link } from "@heroui/link";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import clsx from "clsx";
 
 import DefaultLayout from "@/layouts/default.tsx";
 import {
@@ -16,20 +16,27 @@ const BuildingCard = ({
   buildings,
   title,
   onBuildingHover,
+  className,
 }: {
   buildings: BuildingCode[];
   title: string;
   onBuildingHover: (id: string | null) => void;
+  className?: string;
 }) => (
-  <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-6">
+  <div
+    className={clsx(
+      "rounded-lg border border-gray-200 dark:border-gray-800 p-6",
+      className,
+    )}
+  >
     <div className="flex items-center gap-2 mb-4">
       <MapPinIcon className="h-5 w-5 text-blue-500" />
       <h2 className="text-xl font-semibold">{title}</h2>
     </div>
-    <p className="text-default-500">
+    <p className="text-default-500 hidden md:block">
       Hint: 移動滑鼠到大樓名稱上可查看該大樓位置
     </p>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
       {buildings.map((building) => (
         <div
           key={building.code + building.name}
@@ -53,7 +60,7 @@ export const MapPage = () => {
 
   return (
     <DefaultLayout>
-      <div className="space-y-8">
+      <div className="mb-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">大樓代碼說明</h1>
           <p className="text-default-500">臺北市立大學各校區大樓代碼對照表</p>
@@ -61,14 +68,17 @@ export const MapPage = () => {
         <Tabs aria-label="Options">
           <Tab key="bo-ai" title="博愛校區">
             <div className="space-y-6">
-              <BuildingCard
-                buildings={boaiBuildings}
-                title="博愛校區"
-                onBuildingHover={setHoveredBuilding}
-              />
-              <CampusFloorPlan title="博愛校區平面圖">
-                <BoAiFloorPlan hoveredBuilding={hoveredBuilding} />
-              </CampusFloorPlan>
+              <div className="grid grid-cols-1 gap-y-3 md:gap-3 md:grid-cols-3">
+                <BuildingCard
+                  buildings={boaiBuildings}
+                  className="col-span-1"
+                  title="博愛校區"
+                  onBuildingHover={setHoveredBuilding}
+                />
+                <CampusFloorPlan className="col-span-2" title="博愛校區平面圖">
+                  <BoAiFloorPlan hoveredBuilding={hoveredBuilding} />
+                </CampusFloorPlan>
+              </div>
             </div>
           </Tab>
           <Tab key="tian-mu" title="天母校區">
@@ -81,15 +91,6 @@ export const MapPage = () => {
             </div>
           </Tab>
         </Tabs>
-
-        <div className="text-center pb-8">
-          <Link
-            className="inline-flex items-center text-blue-500 hover:text-blue-600"
-            href="/"
-          >
-            ← 返回首頁
-          </Link>
-        </div>
       </div>
     </DefaultLayout>
   );

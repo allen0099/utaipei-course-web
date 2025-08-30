@@ -58,9 +58,8 @@ export const BoAiFloorPlan = ({
       <Tooltip content="圖書館">
         <g id="Library" strokeLinecap="round">
           <path
-            className={clsx({
-              "fill-[#a5d8ff]": hoveredBuilding === null,
-              "fill-red-300": hoveredBuilding === "Library",
+            className={clsx("fill-[#a5d8ff]", {
+              "blur-md": hoveredBuilding === "Library",
             })}
             d="M179.094 662.94c36.03-.29 71.96 2.25 125.3 0 22.4-3.06 31.54 10.16 32 32-3.74 38.39-.67 71.1 0 126.02-.21 21.98-9.57 29.62-32 32-48.86.96-95.05-2.18-125.3 0-19.69-2.7-31.29-8.78-32-32-.16-45.15-.68-86.59 0-126.02 2.99-17.92 7.83-28.81 32-32"
             strokeWidth={0}
@@ -78,9 +77,8 @@ export const BoAiFloorPlan = ({
       <Tooltip content="行政大樓">
         <g id="Administration-Building" strokeLinecap="round">
           <path
-            className={clsx({
-              "fill-[#a5d8ff]": hoveredBuilding === null,
-              "fill-red-300": hoveredBuilding === "Administration-Building",
+            className={clsx("fill-[#a5d8ff]", {
+              "blur-md": hoveredBuilding === "Administration-Building",
             })}
             d="M374.483 555.411c123.32-1.8 241.04 1.84 380.59 0 18.91-3.22 27.69 12.19 27.33 27.33-1.27 15.55 2.04 31.7 0 54.66-3.32 19.65-10.24 27.47-27.33 27.33-142.5-4.3-288.59-2.1-380.59 0-17.27-.83-25.99-5.85-27.33-27.33-1.5-16.44 1.92-31.37 0-54.66 1.15-20.89 6.67-25.53 27.33-27.33"
             strokeWidth={0}
@@ -97,9 +95,8 @@ export const BoAiFloorPlan = ({
       <Tooltip content="藝術館">
         <g id="Art-Building" strokeLinecap="round">
           <path
-            className={clsx({
-              "fill-[#a5d8ff]": hoveredBuilding === null,
-              "fill-red-300": hoveredBuilding === "Art-Building",
+            className={clsx("fill-[#a5d8ff]", {
+              "blur-md": hoveredBuilding === "Art-Building",
             })}
             d="M911.422 248.524c36.42 1.2 64.09 2.86 112.4 0 23.35-.08 31.8 7.25 32 32-1.73 82.12-1.01 164.58 0 216.7 3.38 18.33-13.54 33.06-32 32-38.17 1.85-78.16 1.96-112.4 0-18.12 3.2-33.15-10.51-32-32-2.74-71.35-1.94-146 0-216.7 3.27-21.86 8.93-29.57 32-32"
             strokeWidth={0}
@@ -116,9 +113,8 @@ export const BoAiFloorPlan = ({
       <Tooltip content="音樂廳">
         <g id="Music-Building" strokeLinecap="round">
           <path
-            className={clsx({
-              "fill-[#a5d8ff]": hoveredBuilding === null,
-              "fill-red-300": hoveredBuilding === "Music-Building",
+            className={clsx("fill-[#a5d8ff]", {
+              "blur-md": hoveredBuilding === "Music-Building",
             })}
             d="M1080.685 248.32c9.82-1.89 17.43 3.04 34.78 0 8.26-2.27 19.89 6.14 17.38 17.39 1.72 71.19-1.52 146.88 0 241.37-3.02 12.08-8.57 17.71-17.38 17.39-12.19-3.55-23.57-1.39-34.78 0-14.01.76-17.28-3.82-17.39-17.39-3.86-73.38.84-153.78 0-241.37-2.9-8.2 4.06-14.27 17.39-17.39"
             strokeWidth={0}
@@ -137,9 +133,8 @@ export const BoAiFloorPlan = ({
       <Tooltip content="中正堂">
         <g id="Zhongzheng-Hall" strokeLinecap="round">
           <path
-            className={clsx({
-              "fill-[#a5d8ff]": hoveredBuilding === null,
-              "fill-red-300": hoveredBuilding === "Zhongzheng-Hall",
+            className={clsx("fill-[#a5d8ff]", {
+              "blur-md": hoveredBuilding === "Zhongzheng-Hall",
             })}
             d="M765.647 744.879c55.07.37 115.65.26 259.39 0 18.07-.51 34.94 8.71 32 32-1.57 37.99.67 78.8 0 101.97 2.65 22.28-12.94 34.32-32 32-92.33 2.43-180.16-2.51-259.39 0-21.44 1.77-28.97-13.15-32-32-2.25-22.08-.51-53.26 0-101.97.4-18.29 7.52-30.76 32-32"
             strokeWidth={0}
@@ -156,9 +151,8 @@ export const BoAiFloorPlan = ({
       <Tooltip content="公誠樓">
         <g id="Gongcheng-Building" strokeLinecap="round">
           <path
-            className={clsx({
-              "fill-[#a5d8ff]": hoveredBuilding === null,
-              "fill-red-300": hoveredBuilding === "Gongcheng-Building",
+            className={clsx("fill-[#a5d8ff]", {
+              "blur-md": hoveredBuilding === "Gongcheng-Building",
             })}
             d="M832.693 576.37c56.24.03 115.65 2.61 247.2 0 19.09-2.3 33.97 7.4 32 32 .65 25.35 1.55 47.92 0 85.48-2.09 18.56-13.42 32.9-32 32-76.01-2.18-151.8-2.06-247.2 0-23.62-.26-32.86-12.41-32-32-2.37-31.99.29-59.06 0-85.48-2.8-20.08 9.19-34.43 32-32"
             strokeWidth={0}
@@ -175,9 +169,8 @@ export const BoAiFloorPlan = ({
       <Tooltip content="學生宿舍">
         <g id="Dormitory" strokeLinecap="round">
           <path
-            className={clsx({
-              "fill-[#a5d8ff]": hoveredBuilding === null,
-              "fill-red-300": hoveredBuilding === "Dormitory",
+            className={clsx("fill-[#a5d8ff]", {
+              "blur-md": hoveredBuilding === "Dormitory",
             })}
             d="M762.78 51.238c93.5 2.98 188.12 2.8 332.53 0 21.64 3.17 31.83 8.37 32 32 1.49 26.91 1.12 56.42 0 110.96-2.9 23.21-9.94 31.23-32 32-109.1.07-213.06.38-332.53 0-23.91-2.5-35.31-7.76-32-32-1.19-27.68 2.7-61.46 0-110.96-1.5-20.71 12.23-35.08 32-32"
             strokeWidth={0}
@@ -194,9 +187,8 @@ export const BoAiFloorPlan = ({
       <Tooltip content="科學館">
         <g id="Science-Building" strokeLinecap="round">
           <path
-            className={clsx({
-              "fill-[#a5d8ff]": hoveredBuilding === null,
-              "fill-red-300": hoveredBuilding === "Science-Building",
+            className={clsx("fill-[#a5d8ff]", {
+              "blur-md": hoveredBuilding === "Science-Building",
             })}
             d="M194.152 289.353c43.62-.82 97.06-2.96 122.44 0 19.11 2.41 29.21 13.31 32 32-.59 40.89-4.21 81.25 0 110.25 2.29 20.35-7.08 31.81-32 32-39.95-.1-79.07-.43-122.44 0-22-1.63-34.13-10.56-32-32 2.35-26.02 1.19-54.01 0-110.25-2.38-19.01 9.7-30.61 32-32"
             strokeWidth={0}
@@ -213,9 +205,8 @@ export const BoAiFloorPlan = ({
       <Tooltip content="勤樸樓">
         <g id="Qinpu-Building" strokeLinecap="round">
           <path
-            className={clsx({
-              "fill-[#a5d8ff]": hoveredBuilding === null,
-              "fill-red-300": hoveredBuilding === "Qinpu-Building",
+            className={clsx("fill-[#a5d8ff]", {
+              "blur-md": hoveredBuilding === "Qinpu-Building",
             })}
             d="M211.362 68.5c170.98-3.76 341.23-3.83 444.39 0 20.71 1.76 32.67 13.81 32 32-2.87 32.09-2.03 69.98 0 88.02 1.7 24-14.21 31.29-32 32-144.4 4.72-291.54 1.93-444.39 0-17.86-2.51-33.38-8.16-32-32-4.3-24.21 1.04-44.8 0-88.02 2.33-18.29 9.92-28.77 32-32"
             strokeWidth={0}

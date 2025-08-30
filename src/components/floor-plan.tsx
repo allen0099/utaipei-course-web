@@ -8,17 +8,28 @@ import {
   useDisclosure,
 } from "@heroui/modal";
 import { Button } from "@heroui/button";
+import clsx from "clsx";
 
 interface CampusFloorPlanProps {
   title: string;
   children: ReactNode;
+  className?: string;
 }
 
-export function CampusFloorPlan({ title, children }: CampusFloorPlanProps) {
+export function CampusFloorPlan({
+  title,
+  children,
+  className,
+}: CampusFloorPlanProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-6">
+    <div
+      className={clsx(
+        "rounded-lg border border-gray-200 dark:border-gray-800 p-6",
+        className,
+      )}
+    >
       <h2 className="text-xl font-semibold mb-4 text-center">{title}</h2>
       <p className="text-center text-default-500 mb-4">點擊圖片可放大查看</p>
       <div className="relative w-full aspect-[1.22/1] max-h-[80vh] cursor-pointer">
