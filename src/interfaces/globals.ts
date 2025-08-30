@@ -61,6 +61,7 @@ export interface CampusTimeMapping {
 }
 
 export interface WeeklyScheduleProps {
+  scheduleTitle?: string;
   courses: WeeklyScheduleCourse[];
   campusTimeMappings?: CampusTimeMapping[];
   selectedCampus?: "main" | "secondary";

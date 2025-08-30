@@ -252,6 +252,7 @@ const COURSE_COLORS = [
 ];
 
 export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
+  scheduleTitle = "週課表",
   courses = [],
   campusTimeMappings = DEFAULT_CAMPUS_MAPPINGS,
   selectedCampus = "main",
@@ -382,10 +383,12 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   return (
     <Card className={clsx("w-full max-w-7xl", className)}>
       <CardHeader className="flex flex-col space-y-4">
-        <div className="flex justify-between items-center w-full">
-          <h3 className="text-xl font-bold">週課表</h3>
+        <div className="relative flex items-center w-full">
+          <h3 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold m-0">
+            {scheduleTitle}
+          </h3>
 
-          <div className="flex items-center space-x-3">
+          <div className="ml-auto flex items-center space-x-3">
             <div className="flex items-center space-x-2">
               <Chip color="primary" size="sm" variant="flat">
                 {currentMapping.name}
