@@ -262,6 +262,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   const [currentCampus, setCurrentCampus] = useState<"main" | "secondary">(
     selectedCampus,
   );
+  const [hoveredCourseCode, setHoveredCourseCode] = useState<string | null>(null);
 
   const currentMapping = useMemo(() => {
     return (
@@ -291,14 +292,31 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     return colorMap;
   }, [courses]);
 
-  // Get course for specific day and period
-  const getCourseForSlot = (
+  // Get courses for specific day and period (each course appears in every period it spans)
+  const getCoursesForSlot = (
     day: number,
     period: number,
-  ): WeeklyScheduleCourse | undefined => {
-    return courses.find(
-      (course) => course.day === day && course.period === period,
-    );
+  ): WeeklyScheduleCourse[] => {
+    return courses.filter((course) => {
+      // Check if this period falls within the course's duration
+      const courseDuration = course.duration || 1;
+      const courseEndPeriod = course.period + courseDuration - 1;
+
+      return (
+        course.day === day &&
+        period >= course.period &&
+        period <= courseEndPeriod
+      );
+    });
+  };
+
+  // Handle course hover events
+  const handleCourseMouseEnter = (courseCode: string) => {
+    setHoveredCourseCode(courseCode);
+  };
+
+  const handleCourseMouseLeave = () => {
+    setHoveredCourseCode(null);
   };
 
   // Helper function to determine time of day based on period number
@@ -310,9 +328,13 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   };
 
   const renderTimeSlot = (day: number, period: number) => {
-    const course = getCourseForSlot(day, period);
-    const isEmpty = !course;
+    const coursesInSlot = getCoursesForSlot(day, period);
+    const isEmpty = coursesInSlot.length === 0;
     const timeOfDay = getTimeOfDay(period);
+
+    // Check if any course in this slot is being hovered
+    const hasHoveredCourse = hoveredCourseCode && 
+      coursesInSlot.some(course => course.code === hoveredCourseCode);
 
     return (
       <div
@@ -322,21 +344,47 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
           TIME_OF_DAY_COLORS[timeOfDay],
           {
             "hover:bg-gray-100 dark:hover:bg-gray-800": isEmpty,
+            // Highlight slot if it contains the hovered course
+            "ring-2 ring-blue-400 dark:ring-blue-500": hasHoveredCourse,
           },
         )}
       >
-        {course && (
-          <div
-            className={clsx(
-              "h-full w-full rounded-md p-2 border-2 text-xs",
-              courseColorMap[course.code] || COURSE_COLORS[0],
-            )}
-          >
-            <div className="font-semibold text-xs leading-tight mb-1">
-              {course.name}
-            </div>
-            <div className="text-xs opacity-80">{course.teacher}</div>
-            <div className="text-xs opacity-70">{course.class}</div>
+        {coursesInSlot.length > 0 && (
+          <div className="h-full w-full flex flex-col gap-1">
+            {coursesInSlot.map((course, index) => {
+              const isHovered = hoveredCourseCode === course.code;
+              const isDimmed = hoveredCourseCode && hoveredCourseCode !== course.code;
+
+              return (
+                <div
+                  key={course.id}
+                  className={clsx(
+                    "flex-1 rounded-md p-2 border-2 text-xs transition-all duration-200 cursor-pointer",
+                    courseColorMap[course.code] || COURSE_COLORS[0],
+                    {
+                      "mb-1": index < coursesInSlot.length - 1, // Add margin between multiple courses
+                      // Highlight the hovered course
+                      "ring-2 ring-blue-500 scale-105 shadow-lg": isHovered,
+                      // Dim other courses when something is hovered
+                      "opacity-30 blur-[1px]": isDimmed,
+                    },
+                  )}
+                  onMouseEnter={() => handleCourseMouseEnter(course.code)}
+                  onMouseLeave={handleCourseMouseLeave}
+                >
+                  <div className="font-semibold text-xs leading-tight mb-1">
+                    {course.name}
+                  </div>
+                  <div className="text-xs opacity-80">{course.teacher}</div>
+                  <div className="text-xs opacity-70">{course.class}</div>
+                  {(course.duration || 1) > 1 && (
+                    <div className="text-xs opacity-60 mt-1">
+                      {course.duration}節課
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -369,11 +417,9 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 <div className="text-xs opacity-70">{timeInfo.endTime}</div>
               </div>
             </div>
-            {DAY_NAMES.map((_, dayIndex) => (
-              <React.Fragment key={`${timeInfo.period}-day-${dayIndex}`}>
-                {renderTimeSlot(dayIndex, timeInfo.period)}
-              </React.Fragment>
-            ))}
+            {DAY_NAMES.map((_, dayIndex) => {
+              return renderTimeSlot(dayIndex, timeInfo.period);
+            })}
           </React.Fragment>
         ))}
       </div>
