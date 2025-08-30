@@ -370,9 +370,6 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                       "mb-1": index < coursesInSlot.length - 1, // Add margin between multiple courses
                     },
                   )}
-                  style={{
-                    minHeight: `${(course.duration || 1) * 60 - 8}px`, // Height for multiple periods
-                  }}
                 >
                   <div className="font-semibold text-xs leading-tight mb-1">
                     {course.name}
