@@ -13,7 +13,13 @@ import {
 
 import DefaultLayout from "@/layouts/default.tsx";
 import { siteConfig } from "@/config/site.ts";
-import { LocationItem, YearSemesterItem } from "@/interfaces/globals.ts";
+import {
+  CourseItem,
+  LocationItem,
+  YearSemesterItem,
+} from "@/interfaces/globals.ts";
+import WeeklySchedule from "@/components/weekly-schedule.tsx";
+import { convertCourses } from "@/utils/convert-course.ts";
 
 const YmsSelector = ({ onChange }: { onChange: (id: Key | null) => void }) => {
   const [data, setData] = useState<YearSemesterItem[]>([]);
@@ -91,15 +97,7 @@ const LocationSelector = ({
   );
 };
 
-const LocationDisplay = ({
-  locations,
-  selectedKey,
-}: {
-  locations: LocationItem[];
-  selectedKey: string;
-}) => {
-  const course = locations.find((loc) => loc.code === selectedKey);
-
+const LocationTable = ({ courses }: { courses: CourseItem[] }) => {
   const columns = [
     { key: "code", label: "課程代碼" },
     { key: "name", label: "課程名稱" },
@@ -108,7 +106,7 @@ const LocationDisplay = ({
     { key: "time", label: "時間" },
   ];
 
-  if (!course || !course.courses || course.courses.length === 0) {
+  if (!courses || courses.length === 0) {
     return <div className="mt-4">尚未選擇地點或無資料</div>;
   }
 
@@ -120,7 +118,7 @@ const LocationDisplay = ({
             <TableColumn key={column.key}>{column.label}</TableColumn>
           ))}
         </TableHeader>
-        <TableBody emptyContent="尚未選擇地點或無資料" items={course.courses}>
+        <TableBody emptyContent="尚未選擇地點或無資料" items={courses}>
           {(item) => (
             <TableRow key={item.code}>
               {(columnKey) => (
@@ -139,6 +137,9 @@ export const LocationSearchPage = () => {
   const [location, setLocation] = useState<string>("");
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [year, semester] = yms.split("#");
+
+  const scheduleTitle = `${year} 學年 ${locations.find((loc) => loc.code === location)?.name || ""} 的課表`;
+  const selectedLocation = locations.find((loc) => loc.code === location);
 
   const onYmsChange = (id: Key | null) => {
     setYms(id?.toString() || "");
@@ -173,14 +174,10 @@ export const LocationSearchPage = () => {
         </div>
         <Divider className="my-6 max-w-5xl w-full" />
         <div className="w-full max-w-2xl">
-          {location ? (
+          {selectedLocation ? (
             <>
-              <h3 className="text-lg text-center mb-2">
-                {year} 學年
-                {locations.find((loc) => loc.code === location)?.name || ""}
-                的課表
-              </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+              <h3 className="text-lg text-center mb-2">{scheduleTitle}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
                 學期：{semester}
               </p>
             </>
@@ -188,7 +185,16 @@ export const LocationSearchPage = () => {
             <h3 className="text-lg text-center mb-2">尚未選擇地點</h3>
           )}
         </div>
-        <LocationDisplay locations={locations} selectedKey={location} />
+        {selectedLocation && (
+          <>
+            <LocationTable courses={selectedLocation.courses} />
+            <WeeklySchedule
+              className="mt-5"
+              courses={convertCourses(selectedLocation.courses)}
+              scheduleTitle={scheduleTitle}
+            />
+          </>
+        )}
       </section>
     </DefaultLayout>
   );

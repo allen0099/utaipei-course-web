@@ -28,7 +28,7 @@ export interface LocationItem {
   courses: CourseItem[];
 }
 
-interface CourseItem {
+export interface CourseItem {
   code: string;
   name: string;
   class: string;
