@@ -386,39 +386,32 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
           <h3 className="text-xl font-bold">週課表</h3>
 
           <div className="flex items-center space-x-3">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              博愛校區
-            </span>
+            <div className="flex items-center space-x-2">
+              <Chip color="primary" size="sm" variant="flat">
+                {currentMapping.name}
+              </Chip>
+            </div>
+
             <Switch
               color="primary"
               isSelected={currentCampus === "secondary"}
               size="lg"
               onValueChange={handleCampusChange}
             />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              天母校區
-            </span>
           </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium">目前選擇：</span>
-          <Chip color="primary" size="sm" variant="flat">
-            {currentMapping.name}
-          </Chip>
         </div>
 
         <Divider />
       </CardHeader>
 
       <CardBody className="overflow-x-auto">
-        <div className="min-w-[800px]">{renderUnifiedSchedule()}</div>
-
-        {courses.length === 0 && (
+        {courses.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <p>目前沒有課程資料</p>
-            <p className="text-sm">請傳入課程陣列以顯示課表</p>
+            <p>沒有課程資料</p>
+            <p className="text-sm">請重新查詢</p>
           </div>
+        ) : (
+          <div className="min-w-[800px]">{renderUnifiedSchedule()}</div>
         )}
       </CardBody>
     </Card>
