@@ -291,14 +291,36 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     return colorMap;
   }, [courses]);
 
-  // Get course for specific day and period
-  const getCourseForSlot = (
+  // Get courses for specific day and period (supports multiple courses and duration)
+  const getCoursesForSlot = (
     day: number,
     period: number,
-  ): WeeklyScheduleCourse | undefined => {
-    return courses.find(
-      (course) => course.day === day && course.period === period,
-    );
+  ): WeeklyScheduleCourse[] => {
+    return courses.filter((course) => {
+      // Check if this period falls within the course's duration
+      const courseDuration = course.duration || 1;
+      const courseEndPeriod = course.period + courseDuration - 1;
+
+      return (
+        course.day === day &&
+        period >= course.period &&
+        period <= courseEndPeriod
+      );
+    });
+  };
+
+  // Check if a slot should be skipped because it's part of a multi-period course
+  const shouldSkipSlot = (day: number, period: number): boolean => {
+    return courses.some((course) => {
+      const courseDuration = course.duration || 1;
+
+      // Skip if this period is part of a course that starts earlier
+      return (
+        course.day === day &&
+        course.period < period &&
+        period < course.period + courseDuration
+      );
+    });
   };
 
   // Helper function to determine time of day based on period number
@@ -310,8 +332,13 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   };
 
   const renderTimeSlot = (day: number, period: number) => {
-    const course = getCourseForSlot(day, period);
-    const isEmpty = !course;
+    // Skip slots that are part of a multi-period course starting earlier
+    if (shouldSkipSlot(day, period)) {
+      return null;
+    }
+
+    const coursesInSlot = getCoursesForSlot(day, period);
+    const isEmpty = coursesInSlot.length === 0;
     const timeOfDay = getTimeOfDay(period);
 
     return (
@@ -325,18 +352,41 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
           },
         )}
       >
-        {course && (
-          <div
-            className={clsx(
-              "h-full w-full rounded-md p-2 border-2 text-xs",
-              courseColorMap[course.code] || COURSE_COLORS[0],
-            )}
-          >
-            <div className="font-semibold text-xs leading-tight mb-1">
-              {course.name}
-            </div>
-            <div className="text-xs opacity-80">{course.teacher}</div>
-            <div className="text-xs opacity-70">{course.class}</div>
+        {coursesInSlot.length > 0 && (
+          <div className="h-full w-full flex flex-col gap-1">
+            {coursesInSlot.map((course, index) => {
+              // Only render course info on the first period of the course
+              const isFirstPeriod = course.period === period;
+
+              if (!isFirstPeriod) return null;
+
+              return (
+                <div
+                  key={course.id}
+                  className={clsx(
+                    "flex-1 rounded-md p-2 border-2 text-xs",
+                    courseColorMap[course.code] || COURSE_COLORS[0],
+                    {
+                      "mb-1": index < coursesInSlot.length - 1, // Add margin between multiple courses
+                    },
+                  )}
+                  style={{
+                    minHeight: `${(course.duration || 1) * 60 - 8}px`, // Height for multiple periods
+                  }}
+                >
+                  <div className="font-semibold text-xs leading-tight mb-1">
+                    {course.name}
+                  </div>
+                  <div className="text-xs opacity-80">{course.teacher}</div>
+                  <div className="text-xs opacity-70">{course.class}</div>
+                  {(course.duration || 1) > 1 && (
+                    <div className="text-xs opacity-60 mt-1">
+                      {course.duration}節課
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -369,11 +419,28 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 <div className="text-xs opacity-70">{timeInfo.endTime}</div>
               </div>
             </div>
-            {DAY_NAMES.map((_, dayIndex) => (
-              <React.Fragment key={`${timeInfo.period}-day-${dayIndex}`}>
-                {renderTimeSlot(dayIndex, timeInfo.period)}
-              </React.Fragment>
-            ))}
+            {DAY_NAMES.map((_, dayIndex) => {
+              const timeSlot = renderTimeSlot(dayIndex, timeInfo.period);
+
+              // If the slot should be skipped (part of multi-period course), render empty div with same background
+              if (timeSlot === null) {
+                return (
+                  <div
+                    key={`${timeInfo.period}-day-${dayIndex}-skip`}
+                    className={clsx(
+                      "min-h-[60px] border border-gray-200 dark:border-gray-700",
+                      TIME_OF_DAY_COLORS[getTimeOfDay(timeInfo.period)],
+                    )}
+                  />
+                );
+              }
+
+              return (
+                <React.Fragment key={`${timeInfo.period}-day-${dayIndex}`}>
+                  {timeSlot}
+                </React.Fragment>
+              );
+            })}
           </React.Fragment>
         ))}
       </div>
