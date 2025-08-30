@@ -57,7 +57,6 @@ export interface CampusTimeMapping {
     startTime: string;
     endTime: string;
     label: string;
-    timeOfDay: "morning" | "noon" | "evening";
   }[];
 }
 
