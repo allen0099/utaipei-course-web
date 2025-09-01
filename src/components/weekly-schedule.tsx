@@ -530,13 +530,17 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
         {visiblePeriods.map((timeInfo) => (
           <React.Fragment key={`period-${timeInfo.period}`}>
             <div className="bg-gray-50 dark:bg-gray-700 p-2 border-r border-gray-300 dark:border-gray-600 border-t">
-              {!settings.hideTimeLabel && (
-                <div className="text-xs text-center">
-                  <div className="font-medium">{timeInfo.label}</div>
-                  <div className="text-xs opacity-70">{timeInfo.startTime}</div>
-                  <div className="text-xs opacity-70">{timeInfo.endTime}</div>
-                </div>
-              )}
+              <div className="text-xs text-center">
+                <div className="font-medium">{timeInfo.label}</div>
+                {!settings.hideTimeLabel && (
+                  <>
+                    <div className="text-xs opacity-70">
+                      {timeInfo.startTime}
+                    </div>
+                    <div className="text-xs opacity-70">{timeInfo.endTime}</div>
+                  </>
+                )}
+              </div>
             </div>
             {visibleDayIndices.map((dayIndex) => {
               return renderTimeSlot(dayIndex, timeInfo.period);
@@ -603,6 +607,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 <DropdownMenu
                   onAction={(key) => {
                     const stringKey = key as string;
+
                     if (stringKey === "hide-weekend") {
                       updateSetting("hideWeekend", !settings.hideWeekend);
                     } else if (stringKey === "hide-night") {
