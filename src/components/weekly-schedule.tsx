@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Switch } from "@heroui/switch";
 import { Divider } from "@heroui/divider";
@@ -206,6 +206,46 @@ const DEFAULT_CAMPUS_MAPPINGS: CampusTimeMapping[] = [
 
 const DAY_NAMES = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
 
+// Schedule settings interface
+interface ScheduleSettings {
+  hideWeekend: boolean;
+  hideNight: boolean;
+  hideTimeLabel: boolean;
+}
+
+// Default settings
+const DEFAULT_SETTINGS: ScheduleSettings = {
+  hideWeekend: false,
+  hideNight: false,
+  hideTimeLabel: false,
+};
+
+// localStorage key for settings
+const SETTINGS_STORAGE_KEY = "weekly-schedule-settings";
+
+// Utility functions for localStorage
+const loadSettings = (): ScheduleSettings => {
+  try {
+    const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+
+    if (stored) {
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+    }
+  } catch (error) {
+    // Silently fall back to default settings if localStorage fails
+  }
+
+  return DEFAULT_SETTINGS;
+};
+
+const saveSettings = (settings: ScheduleSettings) => {
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch (error) {
+    // Silently ignore storage failures
+  }
+};
+
 const TIME_OF_DAY_COLORS = {
   morning: "bg-blue-50 dark:bg-blue-900/20",
   noon: "bg-orange-50 dark:bg-orange-900/20",
@@ -275,6 +315,22 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     null,
   );
 
+  // Settings state
+  const [settings, setSettings] = useState<ScheduleSettings>(DEFAULT_SETTINGS);
+
+  // Load settings on component mount
+  useEffect(() => {
+    setSettings(loadSettings());
+  }, []);
+
+  // Save settings whenever they change
+  const updateSetting = (key: keyof ScheduleSettings, value: boolean) => {
+    const newSettings = { ...settings, [key]: value };
+
+    setSettings(newSettings);
+    saveSettings(newSettings);
+  };
+
   const currentMapping = useMemo(() => {
     return (
       campusTimeMappings.find((mapping) => mapping.campus === currentCampus) ||
@@ -336,6 +392,33 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     if (period <= 10) return "noon";
 
     return "evening";
+  };
+
+  // Filter days based on settings
+  const getVisibleDays = () => {
+    if (settings.hideWeekend) {
+      return DAY_NAMES.slice(0, 5); // Only Monday to Friday
+    }
+
+    return DAY_NAMES;
+  };
+
+  const getVisibleDayIndices = () => {
+    if (settings.hideWeekend) {
+      return [0, 1, 2, 3, 4]; // Only Monday to Friday indices
+    }
+
+    return [0, 1, 2, 3, 4, 5, 6]; // All days
+  };
+
+  // Filter periods based on settings
+  const getVisiblePeriods = () => {
+    if (settings.hideNight) {
+      // Hide evening periods (typically 11-14 based on the time mappings)
+      return currentMapping.periods.filter((period) => period.period <= 10);
+    }
+
+    return currentMapping.periods;
   };
 
   const renderTimeSlot = (day: number, period: number) => {
@@ -405,32 +488,45 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   };
 
   const renderUnifiedSchedule = () => {
+    const visibleDays = getVisibleDays();
+    const visibleDayIndices = getVisibleDayIndices();
+    const visiblePeriods = getVisiblePeriods();
+
     return (
-      <div className="grid grid-cols-8 gap-0 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+      <div
+        className={`grid gap-0 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden`}
+        style={{
+          gridTemplateColumns: `auto repeat(${visibleDays.length}, 1fr)`,
+        }}
+      >
         {/* Headers */}
         <div className="bg-gray-100 dark:bg-gray-800 p-2 border-r border-gray-300 dark:border-gray-600">
-          <div className="text-xs font-semibold text-center">時間</div>
+          {!settings.hideTimeLabel && (
+            <div className="text-xs font-semibold text-center">時間</div>
+          )}
         </div>
-        {DAY_NAMES.map((dayName, dayIndex) => (
+        {visibleDays.map((dayName, visibleIndex) => (
           <div
-            key={dayIndex}
+            key={visibleIndex}
             className="bg-gray-100 dark:bg-gray-800 p-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0"
           >
             <div className="text-xs font-semibold text-center">{dayName}</div>
           </div>
         ))}
 
-        {/* Time slots for all periods */}
-        {currentMapping.periods.map((timeInfo) => (
+        {/* Time slots for visible periods */}
+        {visiblePeriods.map((timeInfo) => (
           <React.Fragment key={`period-${timeInfo.period}`}>
             <div className="bg-gray-50 dark:bg-gray-700 p-2 border-r border-gray-300 dark:border-gray-600 border-t">
-              <div className="text-xs text-center">
-                <div className="font-medium">{timeInfo.label}</div>
-                <div className="text-xs opacity-70">{timeInfo.startTime}</div>
-                <div className="text-xs opacity-70">{timeInfo.endTime}</div>
-              </div>
+              {!settings.hideTimeLabel && (
+                <div className="text-xs text-center">
+                  <div className="font-medium">{timeInfo.label}</div>
+                  <div className="text-xs opacity-70">{timeInfo.startTime}</div>
+                  <div className="text-xs opacity-70">{timeInfo.endTime}</div>
+                </div>
+              )}
             </div>
-            {DAY_NAMES.map((_, dayIndex) => {
+            {visibleDayIndices.map((dayIndex) => {
               return renderTimeSlot(dayIndex, timeInfo.period);
             })}
           </React.Fragment>
@@ -490,7 +586,30 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                     </DropdownTrigger>
                   </div>
                 </Tooltip>
-                <DropdownMenu>
+                <DropdownMenu
+                  selectedKeys={[
+                    ...(settings.hideWeekend ? ["hide-weekend"] : []),
+                    ...(settings.hideNight ? ["hide-night"] : []),
+                    ...(settings.hideTimeLabel ? ["hide-time-label"] : []),
+                  ]}
+                  selectionMode="multiple"
+                  onSelectionChange={(keys) => {
+                    const selectedKeys = Array.from(keys as Set<string>);
+
+                    updateSetting(
+                      "hideWeekend",
+                      selectedKeys.includes("hide-weekend"),
+                    );
+                    updateSetting(
+                      "hideNight",
+                      selectedKeys.includes("hide-night"),
+                    );
+                    updateSetting(
+                      "hideTimeLabel",
+                      selectedKeys.includes("hide-time-label"),
+                    );
+                  }}
+                >
                   <DropdownItem key="hide-weekend">隱藏周末</DropdownItem>
                   <DropdownItem key="hide-night">隱藏晚上</DropdownItem>
                   <DropdownItem key="hide-time-label">隱藏時間</DropdownItem>
