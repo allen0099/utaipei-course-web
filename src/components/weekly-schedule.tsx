@@ -587,32 +587,26 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                   </div>
                 </Tooltip>
                 <DropdownMenu
-                  selectedKeys={[
-                    ...(settings.hideWeekend ? ["hide-weekend"] : []),
-                    ...(settings.hideNight ? ["hide-night"] : []),
-                    ...(settings.hideTimeLabel ? ["hide-time-label"] : []),
-                  ]}
-                  selectionMode="multiple"
-                  onSelectionChange={(keys) => {
-                    const selectedKeys = Array.from(keys as Set<string>);
-
-                    updateSetting(
-                      "hideWeekend",
-                      selectedKeys.includes("hide-weekend"),
-                    );
-                    updateSetting(
-                      "hideNight",
-                      selectedKeys.includes("hide-night"),
-                    );
-                    updateSetting(
-                      "hideTimeLabel",
-                      selectedKeys.includes("hide-time-label"),
-                    );
+                  onAction={(key) => {
+                    const stringKey = key as string;
+                    if (stringKey === "hide-weekend") {
+                      updateSetting("hideWeekend", !settings.hideWeekend);
+                    } else if (stringKey === "hide-night") {
+                      updateSetting("hideNight", !settings.hideNight);
+                    } else if (stringKey === "hide-time-label") {
+                      updateSetting("hideTimeLabel", !settings.hideTimeLabel);
+                    }
                   }}
                 >
-                  <DropdownItem key="hide-weekend">隱藏周末</DropdownItem>
-                  <DropdownItem key="hide-night">隱藏晚上</DropdownItem>
-                  <DropdownItem key="hide-time-label">隱藏時間</DropdownItem>
+                  <DropdownItem key="hide-weekend">
+                    {settings.hideWeekend ? "✓ " : ""}隱藏周末
+                  </DropdownItem>
+                  <DropdownItem key="hide-night">
+                    {settings.hideNight ? "✓ " : ""}隱藏晚上
+                  </DropdownItem>
+                  <DropdownItem key="hide-time-label">
+                    {settings.hideTimeLabel ? "✓ " : ""}隱藏時間
+                  </DropdownItem>
                 </DropdownMenu>
               </Dropdown>
             </div>
