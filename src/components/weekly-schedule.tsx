@@ -233,7 +233,7 @@ const loadSettings = (): ScheduleSettings => {
     if (stored) {
       return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
     }
-  } catch (error) {
+  } catch {
     // Silently fall back to default settings if localStorage fails
   }
 
@@ -243,7 +243,7 @@ const loadSettings = (): ScheduleSettings => {
 const saveSettings = (settings: ScheduleSettings) => {
   try {
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-  } catch (error) {
+  } catch {
     // Silently ignore storage failures
   }
 };
@@ -507,6 +507,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     return (
       <div
         className={`grid gap-0 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden`}
+        id="weekly-schedule-grid"
         style={{
           gridTemplateColumns: `auto repeat(${visibleDays.length}, 1fr)`,
         }}
