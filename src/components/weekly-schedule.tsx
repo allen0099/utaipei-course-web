@@ -4,6 +4,15 @@ import { Switch } from "@heroui/switch";
 import { Divider } from "@heroui/divider";
 import { Chip } from "@heroui/chip";
 import clsx from "clsx";
+import { Cog6ToothIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { Button } from "@heroui/button";
+import { Tooltip } from "@heroui/tooltip";
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+} from "@heroui/dropdown";
 
 import {
   WeeklyScheduleProps,
@@ -171,25 +180,25 @@ const DEFAULT_CAMPUS_MAPPINGS: CampusTimeMapping[] = [
         period: 11,
         startTime: "18:30",
         endTime: "19:15",
-        label: "第 11 節",
+        label: "第 A 節",
       },
       {
         period: 12,
         startTime: "19:15",
         endTime: "20:00",
-        label: "第 12 節",
+        label: "第 B 節",
       },
       {
         period: 13,
         startTime: "20:20",
         endTime: "21:05",
-        label: "第 13 節",
+        label: "第 C 節",
       },
       {
         period: 14,
         startTime: "21:05",
         endTime: "21:50",
-        label: "第 14 節",
+        label: "第 D 節",
       },
     ],
   },
@@ -445,12 +454,49 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
               </Chip>
             </div>
 
-            <Switch
-              color="primary"
-              isSelected={currentCampus === "secondary"}
-              size="lg"
-              onValueChange={handleCampusChange}
-            />
+            <div className="flex items-center space-x-2" id="calendar-toolbox">
+              <Switch
+                color="primary"
+                isSelected={currentCampus === "secondary"}
+                size="lg"
+                onValueChange={handleCampusChange}
+              />
+              <Tooltip content="下載 ICS 檔案">
+                <Button
+                  isIconOnly
+                  className="bg-gradient-to-tl from-cyan-500 to-blue-600 text-white shadow-lg"
+                  variant="solid"
+                >
+                  <ArrowDownTrayIcon width="20" />
+                </Button>
+              </Tooltip>
+              <Tooltip content="另存圖片">
+                <Button
+                  isIconOnly
+                  className="bg-green-700 dark:bg-green-900 text-white shadow-lg"
+                  variant="solid"
+                >
+                  <ArrowDownTrayIcon width="20" />
+                </Button>
+              </Tooltip>
+
+              <Dropdown>
+                <Tooltip color="default" content="設定">
+                  <div>
+                    <DropdownTrigger>
+                      <Button isIconOnly variant="bordered">
+                        <Cog6ToothIcon width="20" />
+                      </Button>
+                    </DropdownTrigger>
+                  </div>
+                </Tooltip>
+                <DropdownMenu>
+                  <DropdownItem key="hide-weekend">隱藏周末</DropdownItem>
+                  <DropdownItem key="hide-night">隱藏晚上</DropdownItem>
+                  <DropdownItem key="hide-time-label">隱藏時間</DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            </div>
           </div>
         </div>
 

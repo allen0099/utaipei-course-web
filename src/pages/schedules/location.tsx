@@ -138,7 +138,7 @@ export const LocationSearchPage = () => {
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [year, semester] = yms.split("#");
 
-  const scheduleTitle = `${year} 學年 ${locations.find((loc) => loc.code === location)?.name || ""} 的課表`;
+  const scheduleTitle = `${year} 學年 (${semester}) ${locations.find((loc) => loc.code === location)?.name || ""} 的課表`;
   const selectedLocation = locations.find((loc) => loc.code === location);
 
   const onYmsChange = (id: Key | null) => {
