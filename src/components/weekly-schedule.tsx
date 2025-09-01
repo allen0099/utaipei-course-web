@@ -19,6 +19,8 @@ import {
   WeeklyScheduleCourse,
   CampusTimeMapping,
 } from "@/interfaces/globals";
+import { downloadICSFile } from "@/utils/ics-generator";
+import { downloadScheduleImage } from "@/utils/image-generator";
 
 // Default campus time mappings
 const DEFAULT_CAMPUS_MAPPINGS: CampusTimeMapping[] = [
@@ -331,6 +333,16 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     saveSettings(newSettings);
   };
 
+  // Handle ICS file download
+  const handleICSDownload = () => {
+    downloadICSFile(courses, currentMapping, scheduleTitle);
+  };
+
+  // Handle image download
+  const handleImageDownload = async () => {
+    await downloadScheduleImage(scheduleTitle);
+  };
+
   const currentMapping = useMemo(() => {
     return (
       campusTimeMappings.find((mapping) => mapping.campus === currentCampus) ||
@@ -562,6 +574,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                   isIconOnly
                   className="bg-gradient-to-tl from-cyan-500 to-blue-600 text-white shadow-lg"
                   variant="solid"
+                  onPress={handleICSDownload}
                 >
                   <ArrowDownTrayIcon width="20" />
                 </Button>
@@ -571,6 +584,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                   isIconOnly
                   className="bg-green-700 dark:bg-green-900 text-white shadow-lg"
                   variant="solid"
+                  onPress={handleImageDownload}
                 >
                   <ArrowDownTrayIcon width="20" />
                 </Button>
