@@ -13,6 +13,8 @@ import {
   DropdownMenu,
   DropdownTrigger,
 } from "@heroui/dropdown";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { XCircleIcon } from "@heroicons/react/24/outline";
 
 import {
   WeeklyScheduleProps,
@@ -589,29 +591,33 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   return (
     <Card className={clsx("w-full max-w-7xl", className)}>
       <CardHeader className="flex flex-col space-y-4">
-        <div className="relative flex items-center w-full">
-          <h3 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold m-0">
+        <div className="relative flex-row items-center w-full">
+          <h3 className="static md:absolute lg:left-1/2 lg:-translate-x-1/2 text-xl font-bold">
             {scheduleTitle}
           </h3>
 
-          <div className="ml-auto flex items-center space-x-3">
+          <div
+            className="flex items-center space-x-3 justify-end pt-2 md:pt-0"
+            id="calendar-toolbox"
+          >
             <div className="flex items-center space-x-2">
               <Chip color="primary" size="sm" variant="flat">
                 {currentMapping.name}
               </Chip>
-            </div>
-
-            <div className="flex items-center space-x-2" id="calendar-toolbox">
               <Switch
                 color="primary"
                 isSelected={currentCampus === "secondary"}
                 size="lg"
                 onValueChange={handleCampusChange}
               />
+            </div>
+
+            <div className="flex items-center space-x-2">
               <Tooltip content="下載 ICS 檔案">
                 <Button
                   isIconOnly
                   className="bg-gradient-to-tl from-cyan-500 to-blue-600 text-white shadow-lg"
+                  size="sm"
                   variant="solid"
                   onPress={handleICSDownload}
                 >
@@ -622,6 +628,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 <Button
                   isIconOnly
                   className="bg-green-700 dark:bg-green-900 text-white shadow-lg"
+                  size="sm"
                   variant="solid"
                   onPress={handleImageDownload}
                 >
@@ -633,7 +640,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 <Tooltip color="default" content="設定">
                   <div>
                     <DropdownTrigger>
-                      <Button isIconOnly variant="bordered">
+                      <Button isIconOnly size="sm" variant="bordered">
                         <Cog6ToothIcon width="20" />
                       </Button>
                     </DropdownTrigger>
@@ -652,14 +659,41 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                     }
                   }}
                 >
-                  <DropdownItem key="hide-weekend">
-                    {settings.hideWeekend ? "✓ " : ""}隱藏周末
+                  <DropdownItem
+                    key="hide-weekend"
+                    startContent={
+                      settings.hideWeekend ? (
+                        <CheckCircleIcon width="20" />
+                      ) : (
+                        <XCircleIcon width="20" />
+                      )
+                    }
+                  >
+                    隱藏周末
                   </DropdownItem>
-                  <DropdownItem key="hide-night">
-                    {settings.hideNight ? "✓ " : ""}隱藏晚上
+                  <DropdownItem
+                    key="hide-night"
+                    startContent={
+                      settings.hideNight ? (
+                        <CheckCircleIcon width="20" />
+                      ) : (
+                        <XCircleIcon width="20" />
+                      )
+                    }
+                  >
+                    隱藏晚上
                   </DropdownItem>
-                  <DropdownItem key="hide-time-label">
-                    {settings.hideTimeLabel ? "✓ " : ""}隱藏時間
+                  <DropdownItem
+                    key="hide-time-label"
+                    startContent={
+                      settings.hideTimeLabel ? (
+                        <CheckCircleIcon width="20" />
+                      ) : (
+                        <XCircleIcon width="20" />
+                      )
+                    }
+                  >
+                    隱藏時間
                   </DropdownItem>
                 </DropdownMenu>
               </Dropdown>
