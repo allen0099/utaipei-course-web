@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeeklySchedule 測試</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 100px repeat(5, 1fr);
+            gap: 1px;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .time-cell, .day-cell, .course-cell {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+            background-color: white;
+        }
+        .time-cell {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .day-cell {
+            background-color: #e3f2fd;
+            font-weight: bold;
+        }
+        .course-cell {
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .course-item {
+            background-color: #4caf50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+        }
+        .toolbar {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>UTC 選課小幫手 - 週課表測試</h1>
+    <p><strong>這是新功能的演示頁面</strong></p>
+    <ul>
+        <li>✅ 點擊「另存圖片」按鈕會顯示預覽模態框</li>
+        <li>✅ 圖片會有暖色背景 (#fef7ed) 而非純白色</li>
+        <li>✅ 圖片會有適當的留白(padding)</li>
+        <li>✅ 預覽後可確認下載或取消</li>
+    </ul>
+    
+    <div class="toolbar">
+        <button class="btn btn-primary" onclick="downloadICS()">下載 ICS 檔案</button>
+        <button class="btn btn-success" onclick="downloadImage()">另存圖片</button>
+        <button class="btn" onclick="toggleSettings()">設定</button>
+    </div>
+
+    <div id="weekly-schedule-grid" class="schedule-grid">
+        <!-- Header row -->
+        <div class="time-cell">時間</div>
+        <div class="day-cell">星期一</div>
+        <div class="day-cell">星期二</div>
+        <div class="day-cell">星期三</div>
+        <div class="day-cell">星期四</div>
+        <div class="day-cell">星期五</div>
+        
+        <!-- Time slots -->
+        <div class="time-cell">08:10-09:00</div>
+        <div class="course-cell"></div>
+        <div class="course-cell">
+            <div class="course-item">數學<br>A101</div>
+        </div>
+        <div class="course-cell"></div>
+        <div class="course-cell">
+            <div class="course-item">英文<br>B202</div>
+        </div>
+        <div class="course-cell"></div>
+        
+        <div class="time-cell">09:10-10:00</div>
+        <div class="course-cell">
+            <div class="course-item">計算機概論<br>C303</div>
+        </div>
+        <div class="course-cell">
+            <div class="course-item">數學<br>A101</div>
+        </div>
+        <div class="course-cell">
+            <div class="course-item">物理<br>D404</div>
+        </div>
+        <div class="course-cell">
+            <div class="course-item">英文<br>B202</div>
+        </div>
+        <div class="course-cell"></div>
+        
+        <div class="time-cell">10:10-11:00</div>
+        <div class="course-cell">
+            <div class="course-item">計算機概論<br>C303</div>
+        </div>
+        <div class="course-cell"></div>
+        <div class="course-cell">
+            <div class="course-item">物理<br>D404</div>
+        </div>
+        <div class="course-cell"></div>
+        <div class="course-cell">
+            <div class="course-item">體育<br>操場</div>
+        </div>
+        
+        <div class="time-cell">11:10-12:00</div>
+        <div class="course-cell"></div>
+        <div class="course-cell">
+            <div class="course-item">化學<br>E505</div>
+        </div>
+        <div class="course-cell"></div>
+        <div class="course-cell">
+            <div class="course-item">歷史<br>F606</div>
+        </div>
+        <div class="course-cell">
+            <div class="course-item">體育<br>操場</div>
+        </div>
+    </div>
+
+    <!-- Modal for testing -->
+    <div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; max-width: 80%; max-height: 80%; overflow: auto;">
+            <h3 style="color: #007bff;">預覽課表圖片</h3>
+            <p>確認下載以下圖片？</p>
+            <div id="preview-container" style="border: 2px dashed #ccc; margin: 10px 0; max-height: 400px; overflow: auto; padding: 10px; background-color: #fafafa;">
+                <!-- Preview image will be inserted here -->
+            </div>
+            <p style="font-size: 12px; color: #666;">文件名稱：UTC選課小幫手-週課表.png</p>
+            <div style="text-align: right; margin-top: 15px;">
+                <button class="btn" onclick="closeModal()" style="margin-right: 10px;">取消</button>
+                <button class="btn btn-success" onclick="confirmDownload()">確認下載</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let previewBlob = null;
+        
+        function downloadICS() {
+            console.log('下載 ICS 檔案');
+            alert('ICS 下載功能（模擬）');
+        }
+        
+        async function downloadImage() {
+            console.log('開始生成課表圖片...');
+            
+            try {
+                // Find the schedule grid
+                const scheduleGrid = document.getElementById('weekly-schedule-grid');
+                if (!scheduleGrid) {
+                    throw new Error('找不到課表容器');
+                }
+                
+                // Simulate the preview (since html2canvas might not be available)
+                simulatePreview();
+                
+            } catch (error) {
+                console.error('生成圖片失敗:', error);
+                alert('生成課表圖片失敗，請稍後再試。');
+            }
+        }
+        
+        function simulatePreview() {
+            // Create a canvas to simulate the output with warm background and padding
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const PADDING = 40;
+            canvas.width = 800 + (PADDING * 2); // Add padding
+            canvas.height = 400 + (PADDING * 2); // Add padding
+            
+            // Fill with warm background color (#fef7ed)
+            ctx.fillStyle = '#fef7ed';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add title
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('UTC 選課小幫手 - 週課表', canvas.width / 2, 60 + PADDING);
+            
+            // Add description
+            ctx.font = '16px Arial';
+            ctx.fillText('✅ 暖色背景 (#fef7ed)', canvas.width / 2, 120 + PADDING);
+            ctx.fillText('✅ 增加了留白 (40px padding)', canvas.width / 2, 150 + PADDING);
+            ctx.fillText('✅ 預覽功能已實現', canvas.width / 2, 180 + PADDING);
+            
+            // Draw a mock table border
+            ctx.strokeStyle = '#007bff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(PADDING + 50, 220, canvas.width - (PADDING * 2) - 100, canvas.height - 280);
+            
+            // Add some mock content
+            ctx.font = '14px Arial';
+            ctx.fillText('課表內容區域', canvas.width / 2, 280 + PADDING);
+            ctx.fillText('(實際使用時會是真實的課表)', canvas.width / 2, 310 + PADDING);
+            
+            canvas.toBlob((blob) => {
+                previewBlob = blob;
+                showPreview(blob);
+            }, 'image/png');
+        }
+        
+        function showPreview(blob) {
+            const url = URL.createObjectURL(blob);
+            const img = document.createElement('img');
+            img.src = url;
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.style.border = '1px solid #ddd';
+            img.alt = '課表預覽圖片';
+            
+            const previewContainer = document.getElementById('preview-container');
+            previewContainer.innerHTML = '';
+            previewContainer.appendChild(img);
+            
+            document.getElementById('modal-overlay').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            if (previewBlob) {
+                const url = document.querySelector('#preview-container img').src;
+                URL.revokeObjectURL(url);
+                previewBlob = null;
+            }
+        }
+        
+        function confirmDownload() {
+            if (previewBlob) {
+                const url = URL.createObjectURL(previewBlob);
+                const link = document.createElement('a');
+                
+                link.href = url;
+                link.download = 'UTC選課小幫手-週課表.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                URL.revokeObjectURL(url);
+                console.log('下載完成');
+                alert('下載完成！圖片已保存到您的下載資料夾。');
+            }
+            closeModal();
+        }
+        
+        function toggleSettings() {
+            alert('設定功能（模擬）- 在實際應用中可以隱藏周末、隱藏晚上時段等');
+        }
+    </script>
+</body>
+</html>

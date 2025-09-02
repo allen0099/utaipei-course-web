@@ -20,7 +20,11 @@ import {
   CampusTimeMapping,
 } from "@/interfaces/globals";
 import { downloadICSFile } from "@/utils/ics-generator";
-import { downloadScheduleImage } from "@/utils/image-generator";
+import {
+  downloadScheduleImage,
+  generateScheduleImageBlob,
+} from "@/utils/image-generator";
+import ImagePreviewModal from "@/components/image-preview-modal";
 
 // Default campus time mappings
 const DEFAULT_CAMPUS_MAPPINGS: CampusTimeMapping[] = [
@@ -319,6 +323,9 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
   // Settings state
   const [settings, setSettings] = useState<ScheduleSettings>(DEFAULT_SETTINGS);
+  // Image preview modal state
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewImageBlob, setPreviewImageBlob] = useState<Blob | null>(null);
 
   // Load settings on component mount
   useEffect(() => {
@@ -338,9 +345,41 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     downloadICSFile(courses, currentMapping, scheduleTitle);
   };
 
-  // Handle image download
+  // Handle image download with preview
   const handleImageDownload = async () => {
-    await downloadScheduleImage(scheduleTitle);
+    try {
+      const blob = await generateScheduleImageBlob(scheduleTitle);
+
+      setPreviewImageBlob(blob);
+      setIsPreviewModalOpen(true);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to generate preview image:", error);
+      // Fallback to direct download if preview fails
+      await downloadScheduleImage(scheduleTitle);
+    }
+  };
+
+  // Handle confirmed download from preview modal
+  const handleConfirmDownload = () => {
+    if (previewImageBlob) {
+      const url = URL.createObjectURL(previewImageBlob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `${scheduleTitle}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  // Handle closing preview modal
+  const handleClosePreview = () => {
+    setIsPreviewModalOpen(false);
+    setPreviewImageBlob(null);
   };
 
   const currentMapping = useMemo(() => {
@@ -646,6 +685,15 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
           <div className="min-w-[800px]">{renderUnifiedSchedule()}</div>
         )}
       </CardBody>
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        imageBlob={previewImageBlob}
+        isOpen={isPreviewModalOpen}
+        title={scheduleTitle}
+        onClose={handleClosePreview}
+        onConfirmDownload={handleConfirmDownload}
+      />
     </Card>
   );
 };
