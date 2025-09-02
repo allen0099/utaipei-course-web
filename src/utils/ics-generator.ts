@@ -2,10 +2,7 @@ import { WeeklyScheduleCourse, CampusTimeMapping } from "@/interfaces/globals";
 
 // Helper to format ICS date-time
 const formatICSDateTime = (date: Date): string => {
-  return date
-    .toISOString()
-    .replace(/[-:]/g, "")
-    .replace(/\.\d{3}/, "");
+  return date.toLocaleString("sv").replace(/[-:]/g, "").replace(/\W/g, "T");
 };
 
 // Helper to wrap long lines as per ICS specification
@@ -39,6 +36,18 @@ export const generateICSContent = (
   lines.push("METHOD:PUBLISH");
   lines.push(`X-WR-CALNAME:${scheduleTitle}`);
   lines.push("X-WR-TIMEZONE:Asia/Taipei");
+
+  // ICS VTIMEZONE Component
+  lines.push("BEGIN:VTIMEZONE");
+  lines.push("TZID:Asia/Taipei");
+  lines.push("X-LIC-LOCATION:Asia/Taipei");
+  lines.push("BEGIN:STANDARD");
+  lines.push("TZOFFSETFROM:+0800");
+  lines.push("TZOFFSETTO:+0800");
+  lines.push("TZNAME:GMT+8");
+  lines.push("DTSTART:19700101T000000");
+  lines.push("END:STANDARD");
+  lines.push("END:VTIMEZONE");
 
   // Get current date for scheduling (start from next Monday)
   const now = new Date();
@@ -88,12 +97,8 @@ export const generateICSContent = (
     // Create event
     lines.push("BEGIN:VEVENT");
     lines.push(`UID:${uid}`);
-    lines.push(
-      `DTSTART;TZID=Asia/Taipei:${formatICSDateTime(eventDate).slice(0, -1)}`,
-    );
-    lines.push(
-      `DTEND;TZID=Asia/Taipei:${formatICSDateTime(eventEndDate).slice(0, -1)}`,
-    );
+    lines.push(`DTSTART;TZID=Asia/Taipei:${formatICSDateTime(eventDate)}`);
+    lines.push(`DTEND;TZID=Asia/Taipei:${formatICSDateTime(eventEndDate)}`);
     lines.push(wrapICSLine(`SUMMARY:${course.name}`));
 
     // Add description with course details
@@ -146,7 +151,7 @@ export const downloadICSFile = (
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = `${scheduleTitle.replace(/[^\w\s-]/g, "")}.ics`;
+  link.download = `${scheduleTitle}.ics`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

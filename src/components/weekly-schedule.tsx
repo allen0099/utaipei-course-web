@@ -485,11 +485,6 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                   </div>
                   <div className="text-xs opacity-80">{course.teacher}</div>
                   <div className="text-xs opacity-70">{course.class}</div>
-                  {(course.duration || 1) > 1 && (
-                    <div className="text-xs opacity-60 mt-1">
-                      {course.duration}節課
-                    </div>
-                  )}
                 </div>
               );
             })}
