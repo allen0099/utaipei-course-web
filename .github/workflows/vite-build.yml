@@ -5,8 +5,9 @@ on:
     branches:
       - master
 
-  # Only files changed can trigger this workflow
+    # Only files changed can trigger this workflow
     paths:
+      - '.github/workflows/vite-build.yml' # This workflow file
       - 'src/**'
       - 'public/**'
       - 'index.html'
@@ -17,7 +18,7 @@ on:
 
 # Sets the GITHUB_TOKEN permissions to allow deployment to GitHub Pages
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
