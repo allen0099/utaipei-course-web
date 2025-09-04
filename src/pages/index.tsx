@@ -9,6 +9,7 @@ import DefaultLayout from "@/layouts/default";
 import { AnnounceHrefItem, AnnouncementItem } from "@/interfaces/globals.ts";
 import { CourseFunctions } from "@/components/course-functions.tsx";
 import { siteConfig } from "@/config/site.ts";
+import SEO from "@/components/seo-native.tsx";
 
 const reDate = /((?:\d{3}\s年)?\s\d{1,2}\s[/\-月]\s\d{1,2}\s日?)(?!\d)/g;
 
@@ -129,6 +130,7 @@ export default function IndexPage() {
 
   return (
     <DefaultLayout>
+      <SEO />
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <CourseFunctions />
         {loading ? (
