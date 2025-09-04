@@ -54,6 +54,7 @@
     "globals": "16.3.0",
     "postcss": "8.5.6",
     "prettier": "3.6.2",
+    "rollup-plugin-visualizer": "^6.0.3",
     "typescript": "5.9.2",
     "vite": "7.1.4",
     "vite-plugin-compression": "^0.5.1",

@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 import viteCompression from "vite-plugin-compression";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -17,11 +18,13 @@ export default defineConfig(({ mode }) => {
       viteCompression({
         threshold: 50000, // 50kb
       }),
+      visualizer(),
     ],
     build: {
       sourcemap: isDevelopment,
       cssMinify: isProduction,
       minify: isProduction ? "esbuild" : false,
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
           manualChunks: (id) => {
@@ -33,26 +36,15 @@ export default defineConfig(({ mode }) => {
                 : arr[1].split("@")[0];
 
               if (
-                pkgName === "react" ||
-                pkgName === "react-dom" ||
-                pkgName === "react-router-dom" ||
-                pkgName === "react-stately"
-              ) {
-                return "rdd";
-              }
+                pkgName.startsWith("react") ||
+                pkgName.startsWith("heroui") ||
+                pkgName.startsWith("heroicons") ||
+                pkgName.startsWith("tanstack") || // Hero UI table dependencies
+                pkgName.startsWith("framer-motion") // Hero UI animation dependencies
+              )
+                return "framework";
 
-              if (pkgName.startsWith("react-aria")) {
-                return "raa";
-              }
-              if (pkgName.startsWith("react")) {
-                return "rea";
-              }
-
-              if (pkgName.startsWith("heroui")) {
-                return "hui";
-              }
-
-              return;
+              return "vendor";
             }
           },
         },
