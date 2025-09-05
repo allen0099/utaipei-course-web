@@ -47,7 +47,7 @@ export default function SEO({
         meta = document.createElement("meta");
         const parts = selector.split("[")[1].split("=");
         const attr = parts[0];
-        const value = parts[1].replace(/['"]/g, "").replace("]", "");
+        const value = parts[1].replace(/['"]/g, "").replace(/\]/g, "");
 
         meta.setAttribute(attr, value);
         meta.setAttribute("content", content);
