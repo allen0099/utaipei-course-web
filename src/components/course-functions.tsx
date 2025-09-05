@@ -13,10 +13,10 @@ import {
 
 const functions = [
   {
-    title: "課程行事曆",
+    title: "校園行事曆",
     href: "/calendar",
     icon: <CalendarIcon className="text-4xl" size={48} />,
-    description: "查看校方提供的課程相關時程",
+    description: "查看校園行事曆了解重要日期",
   },
   {
     title: "校園地圖",

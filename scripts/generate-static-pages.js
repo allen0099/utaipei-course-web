@@ -22,8 +22,8 @@ const routes = {
     keywords: "臺北市立大學,選課,課程查詢,教師課表,校園地圖,UTC",
   },
   "/calendar": {
-    title: "課程行事曆 - UTC 選課小幫手",
-    description: "查看臺北市立大學課程行事曆，掌握重要學期日程與課程時間安排。",
+    title: "校園行事曆 - UTC 選課小幫手",
+    description: "查看臺北市立大學校園行事曆，掌握重要學期日程與課程時間安排。",
     keywords: "臺北市立大學,行事曆,課程時間,學期,UTC",
   },
   "/search": {

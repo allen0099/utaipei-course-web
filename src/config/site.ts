@@ -10,7 +10,7 @@ export const siteConfig = {
       href: "/",
     },
     {
-      label: "課程行事曆",
+      label: "校園行事曆",
       href: "/calendar",
     },
     {
