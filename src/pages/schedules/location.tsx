@@ -12,7 +12,6 @@ import {
 } from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default.tsx";
-import SEO from "@/components/seo-native.tsx";
 import { siteConfig } from "@/config/site.ts";
 import {
   CourseItem,
@@ -168,7 +167,6 @@ export const LocationSearchPage = () => {
 
   return (
     <DefaultLayout>
-      <SEO />
       <section className="flex flex-col items-center justify-center py-8 md:py-10 w-full">
         <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
           <YmsSelector onChange={onYmsChange} />

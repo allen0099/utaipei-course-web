@@ -13,7 +13,6 @@ import { siteConfig } from "@/config/site.ts";
 import { CalendarItem } from "@/interfaces/globals.ts";
 import { title } from "@/components/primitives.ts";
 import { PDFDocument } from "@/components/pdf.tsx";
-import SEO from "@/components/seo-native.tsx";
 
 export const CalendarPage = () => {
   const [calendarList, setCalendarList] = useState<CalendarItem[]>([]);
@@ -48,7 +47,6 @@ export const CalendarPage = () => {
 
   return (
     <DefaultLayout>
-      <SEO />
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="flex max-sm:flex-col max-lg:w-full items-center">
           <h1 className={title()}>{selectedCalendar?.title || "校園行事曆"}</h1>

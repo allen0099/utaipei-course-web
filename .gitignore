@@ -1,6 +1,9 @@
 .idea
 dist
 
+# Ignore build output
+stats.html
+
 ### Linux template
 *~
 
@@ -85,5 +88,3 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
-
-stats.html

@@ -5,35 +5,34 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <link href="/favicon.ico" rel="icon" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UTC 選課小幫手</title>
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <title>404 - 找不到內容 | UTC 選課小幫手</title>
 
     <!-- Default meta tags (will be replaced by build script for static OG support) -->
-    <meta name="description" content="臺北市立大學選課輔助工具，提供課程查詢、教師課表、校園地圖等功能，讓選課更便利！" />
+    <meta name="description" content="抱歉，您所尋找的頁面不存在。返回 UTC 選課小幫手首頁繼續使用服務。" />
     <meta name="keywords" content="臺北市立大學,選課,課程查詢,教師課表,校園地圖,UTC" />
     <meta name="author" content="UTC 選課小幫手" />
     <meta name="language" content="zh-TW" />
 
     <!-- Open Graph meta tags -->
     <meta property="og:title" content="UTC 選課小幫手" />
-    <meta property="og:description"
-          content="臺北市立大學選課輔助工具，提供課程查詢、教師課表、校園地圖等功能，讓選課更便利！" />
+    <meta property="og:description" content="抱歉，您所尋找的頁面不存在。返回 UTC 選課小幫手首頁繼續使用服務。" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="UTC 選課小幫手" />
 
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="UTC 選課小幫手" />
-    <meta name="twitter:description"
-          content="臺北市立大學選課輔助工具，提供課程查詢、教師課表、校園地圖等功能，讓選課更便利！" />
+    <meta name="twitter:description" content="抱歉，您所尋找的頁面不存在。返回 UTC 選課小幫手首頁繼續使用服務。" />
 
-    <!-- Viewport meta tag -->
-    <meta
-      content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
-      name="viewport"
-    />
+    <script>
+      // Store the full path into sessionStorage
+      sessionStorage.redirect = window.location.href;
+      // Redirect to the root of the domain
+      window.location.href = '/';
+    </script>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
