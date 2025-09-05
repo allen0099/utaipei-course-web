@@ -7,9 +7,10 @@
   "packageManager": "pnpm@10.14.0",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && node scripts/generate-static-pages.js",
     "lint": "eslint --fix",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-static": "node scripts/generate-static-pages.js"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
