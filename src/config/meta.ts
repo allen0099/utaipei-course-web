@@ -69,5 +69,10 @@ export const pageMeta: Record<string, PageMeta> = {
 };
 
 export const getPageMeta = (pathname: string): PageMeta => {
+  // If pathname ends with a "/", remove it for matching
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    pathname = pathname.slice(0, -1);
+  }
+
   return pageMeta[pathname] || defaultMeta;
 };
