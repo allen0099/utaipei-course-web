@@ -2,7 +2,8 @@ export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
   name: "UTC 選課小幫手",
-  description: "Make beautiful websites regardless of your design experience.",
+  description:
+    "臺北市立大學選課輔助工具，提供課程查詢、教師課表、校園地圖等功能，讓選課更便利！",
   navItems: [
     {
       label: "首頁",

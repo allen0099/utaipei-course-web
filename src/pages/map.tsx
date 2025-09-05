@@ -4,6 +4,7 @@ import { useState } from "react";
 import clsx from "clsx";
 
 import DefaultLayout from "@/layouts/default.tsx";
+import SEO from "@/components/seo-native.tsx";
 import {
   boaiBuildings,
   BuildingCode,
@@ -60,6 +61,7 @@ export const MapPage = () => {
 
   return (
     <DefaultLayout>
+      <SEO />
       <div className="mb-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">大樓代碼說明</h1>
