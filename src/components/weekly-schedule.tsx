@@ -550,9 +550,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
       >
         {/* Headers */}
         <div className="bg-gray-100 dark:bg-gray-800 p-2 border-r border-gray-300 dark:border-gray-600">
-          {!settings.hideTimeLabel && (
-            <div className="text-xs font-semibold text-center">時間</div>
-          )}
+          <div className="text-xs font-semibold text-center">時間</div>
         </div>
         {visibleDays.map((dayName, visibleIndex) => (
           <div
