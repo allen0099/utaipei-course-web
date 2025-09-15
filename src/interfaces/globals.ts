@@ -36,6 +36,18 @@ export interface CourseItem {
   teacher: string;
 }
 
+export interface TeacherClasses {
+  code: string;
+  name: string;
+  class: CourseItem[];
+}
+
+export interface Units {
+  code: string;
+  name: string;
+  teachers: TeacherClasses[];
+}
+
 // Weekly Schedule Interfaces
 export interface WeeklyScheduleCourse {
   id: string;
