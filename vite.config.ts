@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
 
@@ -10,7 +9,10 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
 
   return {
-    plugins: [react(), tsconfigPaths(), tailwindcss(), visualizer()],
+    plugins: [react(), tailwindcss(), visualizer()],
+    resolve: {
+      tsconfigPaths: true,
+    },
     build: {
       sourcemap: isDevelopment,
       cssMinify: isProduction,
@@ -37,6 +39,13 @@ export default defineConfig(({ mode }) => {
 
               return "vendor";
             }
+          },
+          assetFileNames: {
+            js: "assets/js/[name].[hash].js",
+            css: "assets/css/[name].[hash].css",
+            img: "assets/img/[name].[hash].[ext]",
+            svg: "assets/svg/[name].[hash].[ext]",
+            font: "assets/font/[name].[hash].[ext]",
           },
         },
       },
