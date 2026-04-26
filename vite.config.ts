@@ -40,13 +40,6 @@ export default defineConfig(({ mode }) => {
               return "vendor";
             }
           },
-          assetFileNames: {
-            js: "assets/js/[name].[hash].js",
-            css: "assets/css/[name].[hash].css",
-            img: "assets/img/[name].[hash].[ext]",
-            svg: "assets/svg/[name].[hash].[ext]",
-            font: "assets/font/[name].[hash].[ext]",
-          },
         },
       },
     },
