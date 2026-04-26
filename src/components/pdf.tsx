@@ -119,15 +119,16 @@ export const PDFDocument = ({ link }: { link: string }) => {
         <Modal.Backdrop isOpen={isOpen} onOpenChange={setIsOpen}>
           <Modal.Container scroll="inside" size="full">
             <Modal.Dialog>
+              <Modal.CloseTrigger />
               <Modal.Header>
                 <Modal.Heading>頁面 {activePage}</Modal.Heading>
               </Modal.Header>
-              <Modal.Body className="p-2 flex justify-start overflow-auto">
+              <Modal.Body className="p-2 flex flex-col items-center overflow-auto">
                 <div
-                  className="transform-gpu transition-transform duration-200 ease-in-out"
+                  className="w-full transform-gpu transition-transform duration-200 ease-in-out"
                   style={{
                     transform: `scale(${zoom})`,
-                    transformOrigin: "top left",
+                    transformOrigin: "top center",
                   }}
                 >
                   <Document file={pdfFile} loading={<Spinner />}>
