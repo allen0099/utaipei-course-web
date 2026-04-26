@@ -1,4 +1,4 @@
-import { Divider } from "@heroui/divider";
+import { Separator } from "@heroui/react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import { Key } from "@react-types/shared";
 
@@ -76,7 +76,7 @@ export const TeacherSchedulePage = () => {
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center py-8 md:py-10 w-full">
         <Selector setTeacher={setTeacher} />
-        <Divider className="my-6 max-w-5xl w-full" />
+        <Separator className="my-6 max-w-5xl w-full" />
         {teacher ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">

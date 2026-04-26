@@ -1,13 +1,5 @@
-import { ReactNode } from "react";
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-} from "@heroui/modal";
-import { Button } from "@heroui/button";
+import { ReactNode, useState } from "react";
+import { Modal, Button } from "@heroui/react";
 import clsx from "clsx";
 
 interface CampusFloorPlanProps {
@@ -21,7 +13,7 @@ export function CampusFloorPlan({
   children,
   className,
 }: CampusFloorPlanProps) {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div
@@ -37,32 +29,33 @@ export function CampusFloorPlan({
           className="absolute inset-0"
           role="button"
           tabIndex={0}
-          onClick={onOpen}
+          onClick={() => setIsOpen(true)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
-              onOpen();
+              setIsOpen(true);
             }
           }}
         >
           {children}
-          <Modal isOpen={isOpen} size="full" onOpenChange={onOpenChange}>
-            <ModalContent>
-              {(onClose) => (
-                <>
-                  <ModalHeader className="flex flex-col gap-1">
-                    {title}
-                  </ModalHeader>
-                  <ModalBody className="relative w-full h-[80vh]">
+          <Modal>
+            <Modal.Backdrop isOpen={isOpen} onOpenChange={setIsOpen}>
+              <Modal.Container size="full">
+                <Modal.Dialog>
+                  <Modal.CloseTrigger />
+                  <Modal.Header>
+                    <Modal.Heading>{title}</Modal.Heading>
+                  </Modal.Header>
+                  <Modal.Body className="relative w-full h-[80vh]">
                     {children}
-                  </ModalBody>
-                  <ModalFooter>
-                    <Button color="primary" onPress={onClose}>
+                  </Modal.Body>
+                  <Modal.Footer>
+                    <Button variant="primary" onPress={() => setIsOpen(false)}>
                       關閉
                     </Button>
-                  </ModalFooter>
-                </>
-              )}
-            </ModalContent>
+                  </Modal.Footer>
+                </Modal.Dialog>
+              </Modal.Container>
+            </Modal.Backdrop>
           </Modal>
         </div>
       </div>

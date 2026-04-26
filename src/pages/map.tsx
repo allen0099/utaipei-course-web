@@ -1,4 +1,4 @@
-import { Tab, Tabs } from "@heroui/tabs";
+import { Tabs } from "@heroui/react";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import clsx from "clsx";
@@ -65,8 +65,20 @@ export const MapPage = () => {
           <h1 className="text-3xl font-bold mb-2">大樓代碼說明</h1>
           <p className="text-default-500">臺北市立大學各校區大樓代碼對照表</p>
         </div>
-        <Tabs aria-label="Options">
-          <Tab key="bo-ai" title="博愛校區">
+        <Tabs>
+          <Tabs.ListContainer>
+            <Tabs.List aria-label="Options">
+              <Tabs.Tab id="bo-ai">
+                博愛校區
+                <Tabs.Indicator />
+              </Tabs.Tab>
+              <Tabs.Tab id="tian-mu">
+                天母校區
+                <Tabs.Indicator />
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+          <Tabs.Panel id="bo-ai">
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-y-3 md:gap-3 md:grid-cols-3">
                 <BuildingCard
@@ -80,8 +92,8 @@ export const MapPage = () => {
                 </CampusFloorPlan>
               </div>
             </div>
-          </Tab>
-          <Tab key="tian-mu" title="天母校區">
+          </Tabs.Panel>
+          <Tabs.Panel id="tian-mu">
             <div className="space-y-6">
               <BuildingCard
                 buildings={tianmuBuildings}
@@ -89,7 +101,7 @@ export const MapPage = () => {
                 onBuildingHover={() => {}}
               />
             </div>
-          </Tab>
+          </Tabs.Panel>
         </Tabs>
       </div>
     </DefaultLayout>

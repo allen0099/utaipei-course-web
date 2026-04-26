@@ -1,9 +1,7 @@
 import type { JSX } from "react";
 
-import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
-import { Spinner } from "@heroui/spinner";
+import { Card, Spinner } from "@heroui/react";
 import { useEffect, useState } from "react";
-import { Link } from "@heroui/link";
 
 import DefaultLayout from "@/layouts/default";
 import { AnnounceHrefItem, AnnouncementItem } from "@/interfaces/globals.ts";
@@ -68,15 +66,29 @@ const renderTextWithLinks = (text: string, hrefs?: AnnounceHrefItem[]) => {
       return (
         <>
           {needSpaceBefore && " "}
-          <Link
+          <a
             key={idx}
-            isExternal
-            showAnchorIcon
-            className="text-blue-600 underline hover:text-blue-800"
+            className="text-blue-600 underline hover:text-blue-800 inline-flex items-center gap-0.5"
             href={part.link}
+            rel="noopener noreferrer"
+            target="_blank"
           >
             {part.text}
-          </Link>
+            <svg
+              aria-hidden="true"
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M14 5H20M20 5V11M20 5L11 14M10 3H4C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21H20C20.5523 21 21 20.5523 21 20V14"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </a>
           {needSpaceAfter && " "}
         </>
       );
@@ -132,36 +144,50 @@ export default function IndexPage() {
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <CourseFunctions />
         {loading ? (
-          <Spinner className="mt-8" label="正在載入校園公告..." />
+          <div className="flex items-center gap-2 mt-8">
+            <Spinner />
+            <span>正在載入校園公告...</span>
+          </div>
         ) : (
-          <Card
-            isFooterBlurred
-            className="border-none w-full max-w-2xl bg-yellow-50 dark:bg-default-100"
-            radius="lg"
-          >
-            <CardHeader className="flex justify-center text-center w-full">
+          <Card className="border-none w-full max-w-2xl bg-yellow-50 dark:bg-gray-900">
+            <Card.Header className="flex justify-center text-center w-full">
               <p className="text-2xl font-bold w-full">校園公告</p>
-            </CardHeader>
-            <CardBody>
+            </Card.Header>
+            <Card.Content>
               <ul className="space-y-2">
                 {announcements.map((item, idx) => (
                   <li key={idx} className={getIndentClass(item.level)}>
-                    <span className="text-default-700 whitespace-pre-line">
+                    <span className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
                       {renderTextWithLinks(item.text, item.href)}
                     </span>
                   </li>
                 ))}
               </ul>
-            </CardBody>
-            <CardFooter>
-              <Link
-                isExternal
-                showAnchorIcon
+            </Card.Content>
+            <Card.Footer>
+              <a
+                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
                 href={siteConfig.links.utaipei.sky}
+                rel="noopener noreferrer"
+                target="_blank"
               >
                 詳細公告請見校務資訊系統
-              </Link>
-            </CardFooter>
+                <svg
+                  aria-hidden="true"
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M14 5H20M20 5V11M20 5L11 14M10 3H4C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21H20C20.5523 21 21 20.5523 21 20V14"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </a>
+            </Card.Footer>
           </Card>
         )}
       </section>

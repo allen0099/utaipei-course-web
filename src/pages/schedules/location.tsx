@@ -1,14 +1,6 @@
 import { useEffect, useState } from "react";
-import { Divider } from "@heroui/divider";
+import { Separator, Table } from "@heroui/react";
 import { Key } from "@react-types/shared";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableColumn,
-  TableRow,
-  TableCell,
-} from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default.tsx";
 import { siteConfig } from "@/config/site.ts";
@@ -33,21 +25,25 @@ const LocationTable = ({ courses }: { courses: CourseItem[] }) => {
 
   return (
     <div className="mt-4 overflow-x-auto">
-      <Table fullWidth isStriped aria-label="課程表" radius="md" shadow="sm">
-        <TableHeader>
+      <Table aria-label="課程表" className="w-full">
+        <Table.Header>
           {columns.map((column) => (
-            <TableColumn key={column.key}>{column.label}</TableColumn>
+            <Table.Column key={column.key} id={column.key}>
+              {column.label}
+            </Table.Column>
           ))}
-        </TableHeader>
-        <TableBody emptyContent="尚未選擇地點或無資料" items={courses}>
-          {(item) => (
-            <TableRow key={item.code}>
-              {(columnKey) => (
-                <TableCell>{item[columnKey as keyof typeof item]}</TableCell>
-              )}
-            </TableRow>
-          )}
-        </TableBody>
+        </Table.Header>
+        <Table.Body>
+          {courses.map((item) => (
+            <Table.Row key={item.code} id={item.code}>
+              {columns.map((column) => (
+                <Table.Cell key={column.key}>
+                  {item[column.key as keyof typeof item]}
+                </Table.Cell>
+              ))}
+            </Table.Row>
+          ))}
+        </Table.Body>
       </Table>
     </div>
   );
@@ -97,7 +93,7 @@ export const LocationSearchPage = () => {
             onChange={onLocationChange}
           />
         </div>
-        <Divider className="my-6 max-w-5xl w-full" />
+        <Separator className="my-6 max-w-5xl w-full" />
         <div className="w-full max-w-2xl">
           {selectedLocation ? (
             <>

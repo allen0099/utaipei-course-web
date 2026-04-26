@@ -1,12 +1,5 @@
-import { Spinner } from "@heroui/spinner";
+import { Spinner, Button, Dropdown, Label } from "@heroui/react";
 import { useEffect, useState } from "react";
-import { Button } from "@heroui/button";
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
-} from "@heroui/dropdown";
 
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
@@ -51,28 +44,38 @@ export const CalendarPage = () => {
         <div className="flex max-sm:flex-col max-lg:w-full items-center">
           <h1 className={title()}>{selectedCalendar?.title || "校園行事曆"}</h1>
           <Dropdown>
-            <DropdownTrigger>
-              <Button className="ml-8" color="primary" variant="ghost">
+            <Dropdown.Trigger>
+              <Button className="ml-8" variant="ghost">
                 切換學年度
               </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              aria-label="選擇學年度"
-              className="max-h-60 overflow-y-auto"
-              items={calendarList}
-              onAction={handleYearChange}
-            >
-              {(item) => (
-                <DropdownItem key={item.title}>{item.title}</DropdownItem>
-              )}
-            </DropdownMenu>
+            </Dropdown.Trigger>
+            <Dropdown.Popover>
+              <Dropdown.Menu
+                aria-label="選擇學年度"
+                className="max-h-60 overflow-y-auto"
+                onAction={handleYearChange}
+              >
+                {calendarList.map((item) => (
+                  <Dropdown.Item
+                    key={item.title}
+                    id={item.title}
+                    textValue={item.title}
+                  >
+                    <Label>{item.title}</Label>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown.Popover>
           </Dropdown>
         </div>
-        <p className="text-default-500">點擊下方任一頁即可放大檢視</p>
+        <p className="text-gray-500">點擊下方任一頁即可放大檢視</p>
         {selectedCalendar?.link ? (
           <PDFDocument link={selectedCalendar.link} />
         ) : (
-          <Spinner label="載入中..." />
+          <div className="flex items-center gap-2">
+            <Spinner />
+            <span>載入中...</span>
+          </div>
         )}
       </section>
     </DefaultLayout>

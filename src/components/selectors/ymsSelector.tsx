@@ -1,6 +1,6 @@
 import { Key } from "@react-types/shared";
 import { useEffect, useState } from "react";
-import { Autocomplete, AutocompleteItem } from "@heroui/react";
+import { ComboBox, Input, Label, ListBox } from "@heroui/react";
 
 import { YearSemesterItem } from "@/interfaces/globals.ts";
 import { siteConfig } from "@/config/site.ts";
@@ -35,19 +35,31 @@ export const YmsSelector = ({
   };
 
   return (
-    <Autocomplete
+    <ComboBox
       isRequired
       className="max-w-xs"
-      isVirtualized={false} // Disable virtualization so we can scroll to the selected item
-      label="選擇學年度"
-      placeholder="請選擇..."
       selectedKey={defaultKey}
-      variant="bordered"
       onSelectionChange={updateDefaultKey}
     >
-      {data.map((yms) => (
-        <AutocompleteItem key={yms.code}>{yms.displayName}</AutocompleteItem>
-      ))}
-    </Autocomplete>
+      <Label>選擇學年度</Label>
+      <ComboBox.InputGroup>
+        <Input placeholder="請選擇..." />
+        <ComboBox.Trigger />
+      </ComboBox.InputGroup>
+      <ComboBox.Popover>
+        <ListBox>
+          {data.map((yms) => (
+            <ListBox.Item
+              key={yms.code}
+              id={yms.code}
+              textValue={yms.displayName}
+            >
+              <Label>{yms.displayName}</Label>
+              <ListBox.ItemIndicator />
+            </ListBox.Item>
+          ))}
+        </ListBox>
+      </ComboBox.Popover>
+    </ComboBox>
   );
 };

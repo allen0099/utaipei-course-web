@@ -1,16 +1,7 @@
 import { Document, Page, PageProps } from "react-pdf";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useResizeObserver } from "@wojtekmaj/react-hooks";
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  useDisclosure,
-} from "@heroui/modal";
-import { Spinner } from "@heroui/spinner";
-import { Button, ButtonGroup } from "@heroui/button";
+import { Modal, Spinner, Button, ButtonGroup } from "@heroui/react";
 import clsx from "clsx";
 
 export const ResponsivePage = (props: PageProps) => {
@@ -38,7 +29,7 @@ export const PDFDocument = ({ link }: { link: string }) => {
   const [pdfFile, setPdfFile] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [zoom, setZoom] = useState<number>(1.0);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
   const pdfCache = useRef<{ [key: string]: string }>({});
 
   // Effect for cleaning up the entire cache on unmount
@@ -84,11 +75,16 @@ export const PDFDocument = ({ link }: { link: string }) => {
   const handlePageClick = (pageNumber: number) => {
     setActivePage(pageNumber);
     setZoom(1.0);
-    onOpen();
+    setIsOpen(true);
   };
 
   if (isLoading || !pdfFile) {
-    return <Spinner label="讀取中..." />;
+    return (
+      <div className="flex items-center gap-2">
+        <Spinner />
+        <span>讀取中...</span>
+      </div>
+    );
   }
 
   return (
@@ -97,7 +93,12 @@ export const PDFDocument = ({ link }: { link: string }) => {
         <Document
           className="flex flex-wrap justify-center gap-4"
           file={pdfFile}
-          loading={<Spinner label="讀取中..." />}
+          loading={
+            <div className="flex items-center gap-2">
+              <Spinner />
+              <span>讀取中...</span>
+            </div>
+          }
           onLoadSuccess={onDocumentLoadSuccess}
         >
           {Array.from(new Array(numPages), (_, index) => (
@@ -114,58 +115,57 @@ export const PDFDocument = ({ link }: { link: string }) => {
           ))}
         </Document>
       </div>
-      <Modal
-        isOpen={isOpen}
-        scrollBehavior="inside"
-        size="5xl"
-        onClose={onClose}
-      >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <span>頁面 {activePage}</span>
-          </ModalHeader>
-          <ModalBody className="p-2 flex justify-start overflow-auto">
-            <div
-              className="transform-gpu transition-transform duration-200 ease-in-out"
-              style={{
-                transform: `scale(${zoom})`,
-                transformOrigin: "top left",
-              }}
-            >
-              <Document file={pdfFile} loading={<Spinner />}>
-                <ResponsivePage
-                  className="dark:invert dark:hue-rotate-180"
-                  pageNumber={activePage}
-                />
-              </Document>
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <ButtonGroup size="sm" variant="ghost">
-              <Button
-                className={clsx({
-                  "cursor-not-allowed": zoom <= 1.0,
-                })}
-                disabled={zoom <= 1.0}
-                onPress={() => setZoom((prev) => Math.max(1.0, prev - 0.2))}
-              >
-                -
-              </Button>
-              <Button onPress={() => setZoom(1.0)}>
-                {Math.round(zoom * 100)}%
-              </Button>
-              <Button
-                className={clsx({
-                  "cursor-not-allowed": zoom >= 2.0,
-                })}
-                disabled={zoom >= 2.0}
-                onPress={() => setZoom((prev) => Math.min(2.0, prev + 0.2))}
-              >
-                +
-              </Button>
-            </ButtonGroup>
-          </ModalFooter>
-        </ModalContent>
+      <Modal>
+        <Modal.Backdrop isOpen={isOpen} onOpenChange={setIsOpen}>
+          <Modal.Container scroll="inside" size="full">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>頁面 {activePage}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="p-2 flex justify-start overflow-auto">
+                <div
+                  className="transform-gpu transition-transform duration-200 ease-in-out"
+                  style={{
+                    transform: `scale(${zoom})`,
+                    transformOrigin: "top left",
+                  }}
+                >
+                  <Document file={pdfFile} loading={<Spinner />}>
+                    <ResponsivePage
+                      className="dark:invert dark:hue-rotate-180"
+                      pageNumber={activePage}
+                    />
+                  </Document>
+                </div>
+              </Modal.Body>
+              <Modal.Footer>
+                <ButtonGroup size="sm" variant="ghost">
+                  <Button
+                    className={clsx({
+                      "cursor-not-allowed": zoom <= 1.0,
+                    })}
+                    isDisabled={zoom <= 1.0}
+                    onPress={() => setZoom((prev) => Math.max(1.0, prev - 0.2))}
+                  >
+                    -
+                  </Button>
+                  <Button onPress={() => setZoom(1.0)}>
+                    {Math.round(zoom * 100)}%
+                  </Button>
+                  <Button
+                    className={clsx({
+                      "cursor-not-allowed": zoom >= 2.0,
+                    })}
+                    isDisabled={zoom >= 2.0}
+                    onPress={() => setZoom((prev) => Math.min(2.0, prev + 0.2))}
+                  >
+                    +
+                  </Button>
+                </ButtonGroup>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

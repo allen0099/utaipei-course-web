@@ -1,5 +1,4 @@
-import { Card, CardHeader, CardBody } from "@heroui/card";
-import { Link } from "@heroui/link";
+import { Card, Link } from "@heroui/react";
 
 import {
   CalendarIcon,
@@ -63,14 +62,16 @@ export const CourseFunctions = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {functions.map((func) => (
           <Link key={func.title} className="w-full" href={func.href}>
-            <Card className="h-full w-full hover:bg-default-100 transform transition-transform duration-200 hover:scale-105">
-              <CardHeader className="flex items-center gap-4">
+            <Card className="h-full w-full hover:bg-gray-100 dark:hover:bg-gray-800 transform transition-transform duration-200 hover:scale-105">
+              <Card.Header className="flex items-center gap-4">
                 {func.icon}
                 <h3 className="text-lg font-semibold">{func.title}</h3>
-              </CardHeader>
-              <CardBody>
-                <p className="text-default-600">{func.description}</p>
-              </CardBody>
+              </Card.Header>
+              <Card.Content>
+                <p className="text-gray-600 dark:text-gray-400 text-center">
+                  {func.description}
+                </p>
+              </Card.Content>
             </Card>
           </Link>
         ))}

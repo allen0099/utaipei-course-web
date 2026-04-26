@@ -1,6 +1,6 @@
 import { Key } from "@react-types/shared";
 import { useEffect, useState } from "react";
-import { Autocomplete, AutocompleteItem } from "@heroui/react";
+import { ComboBox, Input, Label, ListBox } from "@heroui/react";
 
 type ItemElement = {
   code: string;
@@ -25,19 +25,27 @@ export const ItemSelector = (props: SelectorProps<any>) => {
   }, [items]);
 
   return (
-    <Autocomplete
+    <ComboBox
       isRequired
       className="max-w-xs"
       isDisabled={disabled}
-      isVirtualized={false} // Disable virtualization so we can scroll to the selected item
-      label={label}
-      placeholder={placeholder || "請選擇..."}
-      variant="bordered"
       onSelectionChange={onChange}
     >
-      {items.map((item) => (
-        <AutocompleteItem key={item.code}>{item.name}</AutocompleteItem>
-      ))}
-    </Autocomplete>
+      <Label>{label}</Label>
+      <ComboBox.InputGroup>
+        <Input placeholder={placeholder || "請選擇..."} />
+        <ComboBox.Trigger />
+      </ComboBox.InputGroup>
+      <ComboBox.Popover>
+        <ListBox>
+          {items.map((item) => (
+            <ListBox.Item key={item.code} id={item.code} textValue={item.name}>
+              <Label>{item.name}</Label>
+              <ListBox.ItemIndicator />
+            </ListBox.Item>
+          ))}
+        </ListBox>
+      </ComboBox.Popover>
+    </ComboBox>
   );
 };

@@ -1,18 +1,16 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Switch } from "@heroui/switch";
-import { Divider } from "@heroui/divider";
-import { Chip } from "@heroui/chip";
+import {
+  Card,
+  Switch,
+  Separator,
+  Chip,
+  Button,
+  Tooltip,
+  Dropdown,
+  Label,
+} from "@heroui/react";
 import clsx from "clsx";
 import { Cog6ToothIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
-import { Button } from "@heroui/button";
-import { Tooltip } from "@heroui/tooltip";
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-  DropdownTrigger,
-} from "@heroui/dropdown";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { XCircleIcon } from "@heroicons/react/24/outline";
 
@@ -588,7 +586,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
   return (
     <Card className={clsx("w-full max-w-7xl", className)}>
-      <CardHeader className="flex flex-col space-y-4">
+      <Card.Header className="flex flex-col space-y-4">
         <div className="relative flex-row items-center w-full">
           <h3 className="static md:absolute lg:left-1/2 lg:-translate-x-1/2 text-xl font-bold">
             {scheduleTitle}
@@ -599,110 +597,110 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
             id="calendar-toolbox"
           >
             <div className="flex items-center space-x-2">
-              <Chip color="primary" size="sm" variant="flat">
+              <Chip color="accent" size="sm" variant="tertiary">
                 {currentMapping.name}
               </Chip>
               <Switch
-                color="primary"
                 isSelected={currentCampus === "secondary"}
                 size="lg"
-                onValueChange={handleCampusChange}
-              />
+                onChange={(checked) => handleCampusChange(checked)}
+              >
+                <Switch.Control className="data-[selected=true]:bg-accent">
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Tooltip content="下載 ICS 檔案">
-                <Button
-                  isIconOnly
-                  className="bg-gradient-to-tl from-cyan-500 to-blue-600 text-white shadow-lg"
-                  size="sm"
-                  variant="solid"
-                  onPress={handleICSDownload}
-                >
-                  <ArrowDownTrayIcon width="20" />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    isIconOnly
+                    className="bg-gradient-to-tl from-cyan-500 to-blue-600 text-white shadow-lg"
+                    size="sm"
+                    variant="primary"
+                    onPress={handleICSDownload}
+                  >
+                    <ArrowDownTrayIcon width="20" />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content>下載 ICS 檔案</Tooltip.Content>
               </Tooltip>
-              <Tooltip content="另存圖片">
-                <Button
-                  isIconOnly
-                  className="bg-green-700 dark:bg-green-900 text-white shadow-lg"
-                  size="sm"
-                  variant="solid"
-                  onPress={handleImageDownload}
-                >
-                  <ArrowDownTrayIcon width="20" />
-                </Button>
+              <Tooltip>
+                <Tooltip.Trigger>
+                  <Button
+                    isIconOnly
+                    className="bg-green-700 dark:bg-green-900 text-white shadow-lg"
+                    size="sm"
+                    variant="primary"
+                    onPress={handleImageDownload}
+                  >
+                    <ArrowDownTrayIcon width="20" />
+                  </Button>
+                </Tooltip.Trigger>
+                <Tooltip.Content>另存圖片</Tooltip.Content>
               </Tooltip>
 
               <Dropdown>
-                <Tooltip color="default" content="設定">
-                  <div>
-                    <DropdownTrigger>
-                      <Button isIconOnly size="sm" variant="bordered">
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Dropdown.Trigger>
+                      <Button isIconOnly size="sm" variant="secondary">
                         <Cog6ToothIcon width="20" />
                       </Button>
-                    </DropdownTrigger>
-                  </div>
+                    </Dropdown.Trigger>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>設定</Tooltip.Content>
                 </Tooltip>
-                <DropdownMenu
-                  onAction={(key) => {
-                    const stringKey = key as string;
+                <Dropdown.Popover>
+                  <Dropdown.Menu
+                    onAction={(key) => {
+                      const stringKey = key as string;
 
-                    if (stringKey === "hide-weekend") {
-                      updateSetting("hideWeekend", !settings.hideWeekend);
-                    } else if (stringKey === "hide-night") {
-                      updateSetting("hideNight", !settings.hideNight);
-                    } else if (stringKey === "hide-time-label") {
-                      updateSetting("hideTimeLabel", !settings.hideTimeLabel);
-                    }
-                  }}
-                >
-                  <DropdownItem
-                    key="hide-weekend"
-                    startContent={
-                      settings.hideWeekend ? (
+                      if (stringKey === "hide-weekend") {
+                        updateSetting("hideWeekend", !settings.hideWeekend);
+                      } else if (stringKey === "hide-night") {
+                        updateSetting("hideNight", !settings.hideNight);
+                      } else if (stringKey === "hide-time-label") {
+                        updateSetting("hideTimeLabel", !settings.hideTimeLabel);
+                      }
+                    }}
+                  >
+                    <Dropdown.Item id="hide-weekend" textValue="隱藏周末">
+                      {settings.hideWeekend ? (
                         <CheckCircleIcon width="20" />
                       ) : (
                         <XCircleIcon width="20" />
-                      )
-                    }
-                  >
-                    隱藏周末
-                  </DropdownItem>
-                  <DropdownItem
-                    key="hide-night"
-                    startContent={
-                      settings.hideNight ? (
+                      )}
+                      <Label>隱藏周末</Label>
+                    </Dropdown.Item>
+                    <Dropdown.Item id="hide-night" textValue="隱藏晚上">
+                      {settings.hideNight ? (
                         <CheckCircleIcon width="20" />
                       ) : (
                         <XCircleIcon width="20" />
-                      )
-                    }
-                  >
-                    隱藏晚上
-                  </DropdownItem>
-                  <DropdownItem
-                    key="hide-time-label"
-                    startContent={
-                      settings.hideTimeLabel ? (
+                      )}
+                      <Label>隱藏晚上</Label>
+                    </Dropdown.Item>
+                    <Dropdown.Item id="hide-time-label" textValue="隱藏時間">
+                      {settings.hideTimeLabel ? (
                         <CheckCircleIcon width="20" />
                       ) : (
                         <XCircleIcon width="20" />
-                      )
-                    }
-                  >
-                    隱藏時間
-                  </DropdownItem>
-                </DropdownMenu>
+                      )}
+                      <Label>隱藏時間</Label>
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown.Popover>
               </Dropdown>
             </div>
           </div>
         </div>
 
-        <Divider />
-      </CardHeader>
+        <Separator />
+      </Card.Header>
 
-      <CardBody className="overflow-x-auto">
+      <Card.Content className="overflow-x-auto">
         {courses.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <p>沒有課程資料</p>
@@ -711,7 +709,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
         ) : (
           <div className="min-w-[800px]">{renderUnifiedSchedule()}</div>
         )}
-      </CardBody>
+      </Card.Content>
 
       {/* Image Preview Modal */}
       <ImagePreviewModal
