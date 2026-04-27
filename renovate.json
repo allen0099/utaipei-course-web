@@ -7,27 +7,45 @@
   "packageRules": [
     {
       "groupName": "React packages",
-      "matchPackagePatterns": ["^react", "^@types/react"]
+      "matchPackageNames": [
+        "/^react/",
+        "/^@types/react/"
+      ]
     },
     {
       "groupName": "HeroUI packages",
-      "matchPackagePatterns": ["^@heroui/"]
+      "matchPackageNames": [
+        "/^@heroui//"
+      ]
     },
     {
       "groupName": "Tailwind CSS packages",
-      "matchPackagePatterns": ["^tailwindcss", "^@tailwindcss/"]
+      "matchPackageNames": [
+        "/^tailwindcss/",
+        "/^@tailwindcss//"
+      ]
     },
     {
       "groupName": "Vite packages",
-      "matchPackagePatterns": ["^vite", "^@vitejs/"]
+      "matchPackageNames": [
+        "/^vite/",
+        "/^@vitejs//"
+      ]
     },
     {
       "groupName": "ESLint packages",
-      "matchPackagePatterns": ["^eslint", "^@eslint/"]
+      "matchPackageNames": [
+        "/^eslint/",
+        "/^@eslint//"
+      ]
     },
     {
       "groupName": "TypeScript and type definitions",
-      "matchPackagePatterns": ["^typescript$", "^@typescript-eslint/", "^@types/"]
+      "matchPackageNames": [
+        "/^typescript$/",
+        "/^@typescript-eslint//",
+        "/^@types//"
+      ]
     },
     {
       "matchUpdateTypes": ["minor", "patch"],
