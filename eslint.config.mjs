@@ -9,6 +9,7 @@ import _import from "eslint-plugin-import";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import jsxA11Y from "eslint-plugin-jsx-a11y";
 import prettier from "eslint-plugin-prettier";
+import n from "eslint-plugin-n";
 import globals from "globals";
 import tsParser from "@typescript-eslint/parser";
 import js from "@eslint/js";
@@ -62,6 +63,7 @@ export default defineConfig([
       "@typescript-eslint": typescriptEslint,
       "jsx-a11y": fixupPluginRules(jsxA11Y),
       prettier: fixupPluginRules(prettier),
+      n,
     },
 
     languageOptions: {
