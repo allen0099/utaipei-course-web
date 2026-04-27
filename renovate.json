@@ -29,7 +29,6 @@
       "matchPackagePatterns": ["^typescript$", "^@typescript-eslint/", "^@types/"]
     },
     {
-      "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     }
