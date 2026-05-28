@@ -16,10 +16,10 @@
     "@heroicons/react": "^2.2.0",
     "@heroui/react": "^3.0.3",
     "@heroui/styles": "^3.0.3",
-    "@internationalized/date": "3.12.1",
-    "@react-aria/i18n": "3.13.0",
-    "@react-aria/visually-hidden": "3.9.0",
-    "@react-types/shared": "3.34.0",
+    "@internationalized/date": "3.12.2",
+    "@react-aria/i18n": "3.13.1",
+    "@react-aria/visually-hidden": "3.9.1",
+    "@react-types/shared": "3.35.0",
     "@tailwindcss/postcss": "4.3.0",
     "@tailwindcss/vite": "4.3.0",
     "@wojtekmaj/react-hooks": "^2.0.5",
@@ -35,7 +35,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@internationalized/date": "3.12.1"
+      "@internationalized/date": "3.12.2"
     }
   },
   "devDependencies": {
