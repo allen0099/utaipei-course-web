@@ -605,9 +605,11 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 size="lg"
                 onChange={(checked) => handleCampusChange(checked)}
               >
-                <Switch.Control className="data-[selected=true]:bg-accent">
-                  <Switch.Thumb />
-                </Switch.Control>
+                <Switch.Content>
+                  <Switch.Control className="data-[selected=true]:bg-accent">
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch.Content>
               </Switch>
             </div>
 
