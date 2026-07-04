@@ -22,6 +22,11 @@ export interface YearSemesterItem {
   default: boolean;
 }
 
+export interface YmsCache {
+  lastUpdated: string;
+  data: YearSemesterItem[];
+}
+
 export interface LocationItem {
   code: string;
   name: string;
@@ -34,6 +39,18 @@ export interface CourseItem {
   class: string;
   time: string;
   teacher: string;
+}
+
+export interface MergedCourseItem {
+  code: string;
+  name: string;
+  class: string;
+  time: string;
+  teacher: string;
+  departmentCode?: string;
+  department?: string;
+  locationCode?: string;
+  classroom?: string;
 }
 
 export interface TeacherClasses {

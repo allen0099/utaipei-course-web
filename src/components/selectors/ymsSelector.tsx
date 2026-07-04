@@ -2,7 +2,7 @@ import { Key } from "@react-types/shared";
 import { useEffect, useState } from "react";
 import { ComboBox, Input, Label, ListBox } from "@heroui/react";
 
-import { YearSemesterItem } from "@/interfaces/globals.ts";
+import { YearSemesterItem, YmsCache } from "@/interfaces/globals.ts";
 import { siteConfig } from "@/config/site.ts";
 
 export const YmsSelector = ({
@@ -16,8 +16,8 @@ export const YmsSelector = ({
   useEffect(() => {
     fetch(`${siteConfig.links.github.api}/yms.json`)
       .then((res) => res.json())
-      .then((data: YearSemesterItem[]) => {
-        data.reverse();
+      .then((cache: YmsCache) => {
+        const data = cache.data.reverse();
 
         setData(data);
 
