@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Separator, Table } from "@heroui/react";
+import { Separator } from "@heroui/react";
 import { Key } from "@react-types/shared";
 
 import DefaultLayout from "@/layouts/default.tsx";
@@ -25,26 +25,31 @@ const LocationTable = ({ courses }: { courses: CourseItem[] }) => {
 
   return (
     <div className="mt-4 overflow-x-auto">
-      <Table aria-label="課程表" className="w-full">
-        <Table.Header>
-          {columns.map((column) => (
-            <Table.Column key={column.key} id={column.key}>
-              {column.label}
-            </Table.Column>
-          ))}
-        </Table.Header>
-        <Table.Body>
-          {courses.map((item) => (
-            <Table.Row key={item.code} id={item.code}>
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr className="border-b border-gray-300 dark:border-gray-700">
+            {columns.map((column) => (
+              <th key={column.key} className="text-left p-2 whitespace-nowrap">
+                {column.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {courses.map((item, index) => (
+            <tr
+              key={`${item.code}-${item.class}-${index}`}
+              className="border-b border-gray-200 dark:border-gray-800"
+            >
               {columns.map((column) => (
-                <Table.Cell key={column.key}>
+                <td key={column.key} className="p-2 whitespace-nowrap">
                   {item[column.key as keyof typeof item]}
-                </Table.Cell>
+                </td>
               ))}
-            </Table.Row>
+            </tr>
           ))}
-        </Table.Body>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 };
