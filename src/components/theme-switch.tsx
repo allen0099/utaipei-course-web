@@ -34,7 +34,7 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({ className }) => {
   return (
     <button
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className={`px-px transition-opacity hover:opacity-80 cursor-pointer text-default-500 ${className ?? ""}`}
+      className={`px-px transition-opacity hover:opacity-80 cursor-pointer text-muted ${className ?? ""}`}
       type="button"
       onClick={toggle}
     >

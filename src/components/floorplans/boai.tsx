@@ -44,7 +44,7 @@ export const BoAiFloorPlan = ({
       </g>
       <g strokeLinecap="round">
         <path
-          className="fill-green-700 dark:fill-default-300"
+          className="fill-green-700 dark:fill-muted"
           d="M137.947 11.406h1003.7v909.99h-1003.7"
           strokeWidth={0}
         />

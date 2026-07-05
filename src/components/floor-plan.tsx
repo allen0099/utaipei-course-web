@@ -23,7 +23,7 @@ export function CampusFloorPlan({
       )}
     >
       <h2 className="text-xl font-semibold mb-4 text-center">{title}</h2>
-      <p className="text-center text-default-500 mb-4">點擊圖片可放大查看</p>
+      <p className="text-center text-muted mb-4">點擊圖片可放大查看</p>
       <div className="relative w-full aspect-[1.22/1] max-h-[80vh] cursor-pointer">
         <div
           className="absolute inset-0"

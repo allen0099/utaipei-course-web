@@ -34,7 +34,7 @@ const BuildingCard = ({
       <MapPinIcon className="h-5 w-5 text-blue-500" />
       <h2 className="text-xl font-semibold">{title}</h2>
     </div>
-    <p className="text-default-500 hidden md:block">
+    <p className="text-muted hidden md:block">
       Hint: 移動滑鼠到大樓名稱上可查看該大樓位置
     </p>
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
@@ -64,7 +64,7 @@ export const MapPage = () => {
       <div className="mb-6">
         <div className="text-center">
           <h1 className={titleStyles()}>大樓代碼說明</h1>
-          <p className="text-default-500">臺北市立大學各校區大樓代碼對照表</p>
+          <p className="text-muted">臺北市立大學各校區大樓代碼對照表</p>
         </div>
         <Tabs>
           <Tabs.ListContainer>
