@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from "react";
+import { FC, useState } from "react";
 import { VisuallyHidden } from "@react-aria/visually-hidden";
 
 import { SunFilledIcon, MoonFilledIcon } from "@/components/icons";
@@ -8,13 +8,9 @@ export interface ThemeSwitchProps {
 }
 
 export const ThemeSwitch: FC<ThemeSwitchProps> = ({ className }) => {
-  const [isMounted, setIsMounted] = useState(false);
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-    setIsDark(document.documentElement.classList.contains("dark"));
-  }, []);
+  const [isDark, setIsDark] = useState(() =>
+    document.documentElement.classList.contains("dark"),
+  );
 
   const toggle = () => {
     const newDark = !isDark;
@@ -28,8 +24,6 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({ className }) => {
       localStorage.setItem("theme", "light");
     }
   };
-
-  if (!isMounted) return <div className="w-6 h-6" />;
 
   return (
     <button

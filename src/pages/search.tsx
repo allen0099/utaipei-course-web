@@ -68,6 +68,8 @@ export const SearchPage = () => {
   const onYmsChange = (id: Key | null) => {
     setYms(id?.toString() || "");
     setDepartmentCode("");
+    setUnits([]);
+    setLocations([]);
   };
 
   const onDepartmentChange = (id: Key | null) => {
@@ -76,9 +78,6 @@ export const SearchPage = () => {
 
   useEffect(() => {
     if (!yms) {
-      setUnits([]);
-      setLocations([]);
-
       return;
     }
 

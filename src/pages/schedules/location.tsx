@@ -66,6 +66,7 @@ export const LocationSearchPage = () => {
   const onYmsChange = (id: Key | null) => {
     setYms(id?.toString() || "");
     setLocation("");
+    setLocations([]);
   };
 
   const onLocationChange = (id: Key | null) => {
@@ -74,8 +75,6 @@ export const LocationSearchPage = () => {
 
   useEffect(() => {
     if (!yms) {
-      setLocations([]);
-
       return;
     }
     const [year, semester] = yms.split("#");

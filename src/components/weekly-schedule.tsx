@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   Switch,
@@ -321,16 +321,11 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     null,
   );
 
-  // Settings state
-  const [settings, setSettings] = useState<ScheduleSettings>(DEFAULT_SETTINGS);
+  // Settings state, loaded from localStorage on first render
+  const [settings, setSettings] = useState<ScheduleSettings>(loadSettings);
   // Image preview modal state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [previewImageBlob, setPreviewImageBlob] = useState<Blob | null>(null);
-
-  // Load settings on component mount
-  useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
 
   // Save settings whenever they change
   const updateSetting = (key: keyof ScheduleSettings, value: boolean) => {
@@ -339,6 +334,13 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     setSettings(newSettings);
     saveSettings(newSettings);
   };
+
+  const currentMapping = useMemo(() => {
+    return (
+      campusTimeMappings.find((mapping) => mapping.campus === currentCampus) ||
+      campusTimeMappings[0]
+    );
+  }, [campusTimeMappings, currentCampus]);
 
   // Handle ICS file download
   const handleICSDownload = () => {
@@ -381,13 +383,6 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     setIsPreviewModalOpen(false);
     setPreviewImageBlob(null);
   };
-
-  const currentMapping = useMemo(() => {
-    return (
-      campusTimeMappings.find((mapping) => mapping.campus === currentCampus) ||
-      campusTimeMappings[0]
-    );
-  }, [campusTimeMappings, currentCampus]);
 
   const handleCampusChange = (isSelected: boolean) => {
     const newCampus = isSelected ? "secondary" : "main";

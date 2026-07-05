@@ -13,6 +13,11 @@ export const YmsSelector = ({
   const [data, setData] = useState<YearSemesterItem[]>([]);
   const [defaultKey, setDefaultKey] = useState<string>("");
 
+  const updateDefaultKey = (key: Key | null) => {
+    setDefaultKey(key?.toString() || "");
+    onChange(key);
+  };
+
   useEffect(() => {
     fetch(`${siteConfig.links.github.api}/yms.json`)
       .then((res) => res.json())
@@ -28,11 +33,6 @@ export const YmsSelector = ({
         }
       });
   }, []);
-
-  const updateDefaultKey = (key: Key | null) => {
-    setDefaultKey(key?.toString() || "");
-    onChange(key);
-  };
 
   return (
     <ComboBox

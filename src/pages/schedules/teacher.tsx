@@ -24,8 +24,6 @@ const Selector = (prop: SelectorProps) => {
 
   useEffect(() => {
     if (!yms) {
-      setUnits([]);
-
       return;
     }
 
@@ -45,6 +43,7 @@ const Selector = (prop: SelectorProps) => {
       <YmsSelector
         onChange={(id: Key | null) => {
           setYms(id?.toString() || "");
+          setUnits([]);
         }}
       />
       <ItemSelector

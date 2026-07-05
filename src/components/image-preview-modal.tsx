@@ -23,6 +23,9 @@ export const ImagePreviewModal = ({
     if (imageBlob && isOpen) {
       const url = URL.createObjectURL(imageBlob);
 
+      // Object URL must be stored in state to render it; the effect's
+      // setup/cleanup pairing (incl. under StrictMode) keeps this leak-free.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImageUrl(url);
 
       return () => {

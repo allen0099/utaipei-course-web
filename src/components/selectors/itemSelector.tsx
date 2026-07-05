@@ -1,5 +1,4 @@
 import { Key } from "@react-types/shared";
-import { useEffect, useState } from "react";
 import { ComboBox, Input, Label, ListBox } from "@heroui/react";
 
 type ItemElement = {
@@ -16,13 +15,7 @@ type SelectorProps<T extends ItemElement> = {
 
 export const ItemSelector = (props: SelectorProps<any>) => {
   const { items, label, placeholder, onChange } = props;
-  const [disabled, setDisabled] = useState(true);
-
-  useEffect(() => {
-    if (items.length > 0) {
-      setDisabled(false);
-    } else setDisabled(true);
-  }, [items]);
+  const disabled = items.length === 0;
 
   return (
     <ComboBox

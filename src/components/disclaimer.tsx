@@ -10,14 +10,7 @@ function hasDisclaimerCookie() {
 }
 
 export const DisclaimerModal = () => {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const hasCookie = hasDisclaimerCookie();
-
-    if (!hasCookie) setOpen(true);
-    else setOpen(false);
-  }, []);
+  const [open, setOpen] = useState(() => !hasDisclaimerCookie());
 
   // prevent text selection when modal is open
   useEffect(() => {

@@ -44,8 +44,6 @@ export const PDFDocument = ({ link }: { link: string }) => {
   // Effect for fetching and setting the PDF from cache or network
   useEffect(() => {
     if (!link) {
-      setPdfFile(null);
-
       return;
     }
 
