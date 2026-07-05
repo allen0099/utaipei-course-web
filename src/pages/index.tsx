@@ -1,12 +1,13 @@
 import type { JSX } from "react";
 
-import { Card, Spinner } from "@heroui/react";
+import { Card, Link, Spinner } from "@heroui/react";
 import { useEffect, useState } from "react";
 
 import DefaultLayout from "@/layouts/default";
 import { AnnounceHrefItem, AnnouncementItem } from "@/interfaces/globals.ts";
 import { CourseFunctions } from "@/components/course-functions.tsx";
 import { siteConfig } from "@/config/site.ts";
+import { title } from "@/components/primitives.ts";
 
 const reDate = /((?:\d{3}\s年)?\s\d{1,2}\s[/\-月]\s\d{1,2}\s日?)(?!\d)/g;
 
@@ -68,7 +69,7 @@ const renderTextWithLinks = (text: string, hrefs?: AnnounceHrefItem[]) => {
           {needSpaceBefore && " "}
           <a
             key={idx}
-            className="text-blue-600 underline hover:text-blue-800 inline-flex items-center gap-0.5"
+            className="text-accent underline hover:text-accent-hover inline-flex items-center gap-0.5"
             href={part.link}
             rel="noopener noreferrer"
             target="_blank"
@@ -142,6 +143,33 @@ export default function IndexPage() {
   return (
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
+        <section className="w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-6 md:gap-10 pb-4 md:pb-8">
+          <img
+            alt=""
+            className="w-32 h-32 md:w-40 md:h-40 object-contain shrink-0"
+            src="/CatMeow.png"
+          />
+          <div className="flex flex-col items-center md:items-start gap-3 text-center md:text-left">
+            <h1 className={title()}>{siteConfig.name}</h1>
+            <p className="text-muted text-lg max-w-md">
+              {siteConfig.description}
+            </p>
+            <div className="flex gap-3 mt-2">
+              <Link
+                className="button button--primary button--md"
+                href="/search"
+              >
+                開始查課程
+              </Link>
+              <Link
+                className="button button--secondary button--md"
+                href="/calendar"
+              >
+                校園行事曆
+              </Link>
+            </div>
+          </div>
+        </section>
         <CourseFunctions />
         {loading ? (
           <div className="flex items-center gap-2 mt-8">
@@ -149,7 +177,7 @@ export default function IndexPage() {
             <span>正在載入校園公告...</span>
           </div>
         ) : (
-          <Card className="border-none w-full max-w-2xl bg-yellow-50 dark:bg-gray-900">
+          <Card className="border border-warning/30 border-l-4 border-l-warning w-full max-w-2xl bg-surface">
             <Card.Header className="flex justify-center text-center w-full">
               <p className="text-2xl font-bold w-full">校園公告</p>
             </Card.Header>
@@ -166,7 +194,7 @@ export default function IndexPage() {
             </Card.Content>
             <Card.Footer>
               <a
-                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                className="inline-flex items-center gap-1 text-accent hover:text-accent-hover"
                 href={siteConfig.links.utaipei.sky}
                 rel="noopener noreferrer"
                 target="_blank"

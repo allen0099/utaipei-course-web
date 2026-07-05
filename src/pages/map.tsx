@@ -11,6 +11,7 @@ import {
 } from "@/config/buildings.ts";
 import { CampusFloorPlan } from "@/components/floor-plan.tsx";
 import { BoAiFloorPlan } from "@/components/floorplans/boai.tsx";
+import { title as titleStyles } from "@/components/primitives.ts";
 
 const BuildingCard = ({
   buildings,
@@ -62,7 +63,7 @@ export const MapPage = () => {
     <DefaultLayout>
       <div className="mb-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">大樓代碼說明</h1>
+          <h1 className={titleStyles()}>大樓代碼說明</h1>
           <p className="text-default-500">臺北市立大學各校區大樓代碼對照表</p>
         </div>
         <Tabs>

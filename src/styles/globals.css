@@ -1,2 +1,8 @@
 @import "tailwindcss";
 @import "@heroui/styles";
+
+/* Brand accent — warm orange inspired by the CatMeow mascot, replacing HeroUI's default blue accent. */
+:root {
+  --accent: oklch(0.646 0.2223 41.12);
+  --accent-foreground: var(--snow);
+}

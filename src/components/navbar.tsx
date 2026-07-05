@@ -3,7 +3,6 @@ import clsx from "clsx";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import { Logo } from "@/components/icons";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,7 +17,11 @@ export const Navbar = () => {
               className="flex items-center gap-1 text-inherit no-underline font-bold"
               href="/"
             >
-              <Logo />
+              <img
+                alt=""
+                className="w-8 h-8 object-contain"
+                src="/CatMeow.png"
+              />
               <span>{siteConfig.name}</span>
             </a>
             {/* Desktop nav links */}
