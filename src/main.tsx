@@ -5,6 +5,8 @@ import { pdfjs } from "react-pdf";
 
 import App from "./App.tsx";
 import { Provider } from "./provider.tsx";
+
+import { SelectedCoursesProvider } from "@/contexts/selected-courses-context.tsx";
 import "@/styles/globals.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -15,7 +17,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Provider>
-        <App />
+        <SelectedCoursesProvider>
+          <App />
+        </SelectedCoursesProvider>
       </Provider>
     </BrowserRouter>
   </React.StrictMode>,

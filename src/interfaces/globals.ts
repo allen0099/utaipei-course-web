@@ -96,4 +96,7 @@ export interface WeeklyScheduleProps {
   selectedCampus?: "main" | "secondary";
   onCampusChange?: (campus: "main" | "secondary") => void;
   className?: string;
+  // Course codes that have a time conflict with another selected course.
+  // When provided, matching slots are highlighted as conflicts in the grid.
+  conflictCourseCodes?: string[];
 }
