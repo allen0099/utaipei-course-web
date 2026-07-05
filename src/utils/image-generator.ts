@@ -3,9 +3,18 @@ import { toBlob } from "html-to-image";
 const WARM_BACKGROUND_COLOR = "#fef7ed"; // Warm orange-50 background
 const PADDING = 40; // 40px padding on all sides
 
+// Wait for the browser to complete a full layout/paint cycle before measuring.
+// A single rAF can still fire before layout has settled, so we wait for two.
+const waitForLayout = (): Promise<void> =>
+  new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+
 const htmlToCanvas = async (element: HTMLElement): Promise<Blob | null> => {
   // Wait for any pending layout changes
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  await waitForLayout();
 
   return toBlob(element, {
     backgroundColor: WARM_BACKGROUND_COLOR, // Warm background color

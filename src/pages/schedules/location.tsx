@@ -79,12 +79,22 @@ export const LocationSearchPage = () => {
       return;
     }
     const [year, semester] = yms.split("#");
+    const controller = new AbortController();
 
-    fetch(`${siteConfig.links.github.api}/${year}/${semester}/locations.json`)
+    fetch(`${siteConfig.links.github.api}/${year}/${semester}/locations.json`, {
+      signal: controller.signal,
+    })
       .then((res) => res.json())
       .then((data) => {
         setLocations(data);
+      })
+      .catch((error) => {
+        if (error.name === "AbortError") return;
+        // eslint-disable-next-line no-console
+        console.error("Failed to fetch locations:", error);
       });
+
+    return () => controller.abort();
   }, [yms]);
 
   return (

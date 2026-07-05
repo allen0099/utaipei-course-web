@@ -11,7 +11,7 @@ export const boaiBuildings: BuildingCode[] = [
   { id: "Art-Building", code: "A", name: "藝術館" },
   { id: "Music-Building", code: "M", name: "音樂館" },
   { id: "Science-Building", code: "S", name: "科學館" },
-  { id: "Administration-Building", code: "C", name: "行政大樓", number: "10" },
+  { id: "Administration-Building", code: "P", name: "行政大樓", number: "10" },
   { id: "Zhongzheng-Hall", code: "B", name: "中正堂" },
   { id: "Gongcheng-Building", code: "G", name: "公誠樓" },
   { id: "Library", code: "L", name: "圖書館" },

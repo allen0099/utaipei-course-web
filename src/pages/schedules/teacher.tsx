@@ -30,14 +30,24 @@ const Selector = (prop: SelectorProps) => {
     }
 
     const [year, semester] = yms.split("#");
+    const controller = new AbortController();
 
-    fetch(`${siteConfig.links.github.api}/${year}/${semester}/teachers.json`)
+    fetch(`${siteConfig.links.github.api}/${year}/${semester}/teachers.json`, {
+      signal: controller.signal,
+    })
       .then((res) => res.json())
       .then((data: Units[]) => {
         // Data input is reversed to show latest first
         data.reverse();
         setUnits(data);
+      })
+      .catch((error) => {
+        if (error.name === "AbortError") return;
+        // eslint-disable-next-line no-console
+        console.error("Failed to fetch teachers:", error);
       });
+
+    return () => controller.abort();
   }, [yms]);
 
   return (
