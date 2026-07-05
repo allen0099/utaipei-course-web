@@ -1,5 +1,8 @@
 import { CourseItem, WeeklyScheduleCourse } from "@/interfaces/globals.ts";
 
+const MIN_PERIOD = 1;
+const MAX_PERIOD = 14;
+
 const convertCourse = (course: CourseItem): WeeklyScheduleCourse[] => {
   // Example time format: "(二) 8-9", "(一) 8-10 (二) 8-10 (四) 8-10 (五) 8-10", "(二) 3-4"
   const timePattern = /\((\S)\)\s*(\d+)(-(\d+))?/g;
@@ -26,6 +29,20 @@ const convertCourse = (course: CourseItem): WeeklyScheduleCourse[] => {
 
     if (day === undefined) {
       continue; // Skip invalid day entries
+    }
+
+    if (
+      startPeriod < MIN_PERIOD ||
+      startPeriod > MAX_PERIOD ||
+      endPeriod < MIN_PERIOD ||
+      endPeriod > MAX_PERIOD ||
+      endPeriod < startPeriod
+    ) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `Skipping course with invalid period range: ${course.code} ${match[0]}`,
+      );
+      continue; // Skip invalid period entries
     }
 
     courses.push({

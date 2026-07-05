@@ -53,7 +53,7 @@ export const generateICSContent = (
   const now = new Date();
   const nextMonday = new Date(now);
 
-  nextMonday.setDate(now.getDate() + ((1 + 7 - now.getDay()) % 7));
+  nextMonday.setDate(now.getDate() + ((8 - now.getDay()) % 7 || 7));
   nextMonday.setHours(0, 0, 0, 0);
 
   // Generate events for each course
@@ -92,7 +92,7 @@ export const generateICSContent = (
     }
 
     // Generate unique ID
-    const uid = `course-${course.code}-${course.day}-${course.period}-${Date.now()}@utaipei-course-helper`;
+    const uid = `course-${course.code}-${course.day}-${course.period}-${crypto.randomUUID()}@utaipei-course-helper`;
 
     // Create event
     lines.push("BEGIN:VEVENT");

@@ -22,7 +22,15 @@ export const YmsSelector = ({
     fetch(`${siteConfig.links.github.api}/yms.json`)
       .then((res) => res.json())
       .then((cache: YmsCache) => {
-        const data = cache.data.reverse();
+        if (!Array.isArray(cache?.data)) {
+          // eslint-disable-next-line no-console
+          console.error("Invalid yms.json response:", cache);
+          setData([]);
+
+          return;
+        }
+
+        const data = [...cache.data].reverse();
 
         setData(data);
 
