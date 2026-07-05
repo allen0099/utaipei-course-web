@@ -28,36 +28,36 @@ export const siteConfig = {
   ],
   navMenuItems: [
     {
-      label: "Profile",
-      href: "/profile",
+      label: "首頁",
+      href: "/",
     },
     {
-      label: "Dashboard",
-      href: "/dashboard",
-    },
-    {
-      label: "Projects",
-      href: "/projects",
-    },
-    {
-      label: "Team",
-      href: "/team",
-    },
-    {
-      label: "Calendar",
+      label: "校園行事曆",
       href: "/calendar",
     },
     {
-      label: "Settings",
-      href: "/settings",
+      label: "課程查詢",
+      href: "/search",
     },
     {
-      label: "Help & Feedback",
-      href: "/help-feedback",
+      label: "教師課表",
+      href: "/schedules/teacher",
     },
     {
-      label: "Logout",
-      href: "/logout",
+      label: "系所課表",
+      href: "/schedules/class",
+    },
+    {
+      label: "地點課表",
+      href: "/schedules/location",
+    },
+    {
+      label: "校園地圖",
+      href: "/map",
+    },
+    {
+      label: "校園節次表",
+      href: "/timetable",
     },
   ],
   links: {

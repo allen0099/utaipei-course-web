@@ -1,5 +1,4 @@
 import { useState } from "react";
-import clsx from "clsx";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -80,17 +79,10 @@ export const Navbar = () => {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="sm:hidden px-4 pb-4 flex flex-col gap-2">
-          {siteConfig.navMenuItems.map((item, index) => (
+          {siteConfig.navMenuItems.map((item) => (
             <a
-              key={`${item.label}-${index}`}
-              className={clsx(
-                "text-base py-1",
-                index === 2
-                  ? "text-accent"
-                  : index === siteConfig.navMenuItems.length - 1
-                    ? "text-danger"
-                    : "text-gray-700 dark:text-gray-300",
-              )}
+              key={item.href}
+              className="text-base py-1 text-gray-700 dark:text-gray-300 hover:text-accent dark:hover:text-accent transition-colors"
               href={item.href}
               onClick={() => setMenuOpen(false)}
             >
