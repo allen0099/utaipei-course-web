@@ -31,6 +31,20 @@
       content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
       name="viewport"
     />
+
+    <!-- Apply saved theme before first paint to avoid flash of wrong theme -->
+    <script>
+      (function () {
+        var theme = localStorage.getItem("theme");
+
+        if (
+          theme === "dark" ||
+          (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+        ) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
