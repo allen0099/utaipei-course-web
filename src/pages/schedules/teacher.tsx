@@ -1,5 +1,5 @@
-import { Separator } from "@heroui/react";
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
+import { Separator, Spinner } from "@heroui/react";
+import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { Key } from "@react-types/shared";
 
 import DefaultLayout from "@/layouts/default.tsx";
@@ -9,6 +9,8 @@ import { siteConfig } from "@/config/site.ts";
 import { TeacherClasses, Units } from "@/interfaces/globals.ts";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
+import { useFetchJson } from "@/hooks/useFetchJson.ts";
+import { FetchError } from "@/components/fetch-error.tsx";
 
 type SelectorProps = {
   setTeacher: Dispatch<SetStateAction<TeacherClasses | undefined>>;
@@ -18,53 +20,61 @@ const Selector = (prop: SelectorProps) => {
   const [yms, setYms] = useState<string>("");
   const [unit, setUnit] = useState<Units | undefined>(undefined);
 
-  const [units, setUnits] = useState<Units[]>([]);
+  const [year, semester] = yms.split("#");
+
+  const {
+    data: rawUnits,
+    loading,
+    error,
+    refetch,
+  } = useFetchJson<Units[]>(
+    yms
+      ? `${siteConfig.links.github.api}/${year}/${semester}/teachers.json`
+      : null,
+  );
+
+  // Data input is reversed to show latest first
+  const units = useMemo(
+    () => (rawUnits ? [...rawUnits].reverse() : []),
+    [rawUnits],
+  );
 
   const teachers = useMemo(() => unit?.teachers || [], [unit]);
 
-  useEffect(() => {
-    if (!yms) {
-      setUnits([]);
-
-      return;
-    }
-
-    const [year, semester] = yms.split("#");
-
-    fetch(`${siteConfig.links.github.api}/${year}/${semester}/teachers.json`)
-      .then((res) => res.json())
-      .then((data: Units[]) => {
-        // Data input is reversed to show latest first
-        data.reverse();
-        setUnits(data);
-      });
-  }, [yms]);
-
   return (
-    <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
-      <YmsSelector
-        onChange={(id: Key | null) => {
-          setYms(id?.toString() || "");
-        }}
-      />
-      <ItemSelector
-        items={units}
-        label="請選擇系級"
-        onChange={(id) => {
-          setUnit(units.find((u) => u.code === id) || undefined);
-        }}
-      />
-      <ItemSelector
-        items={teachers}
-        label="請選擇教師"
-        onChange={(id) => {
-          const teacher = teachers.find((t) => t.code === id);
+    <div className="flex flex-col gap-4 w-full max-w-2xl items-center">
+      <div className="flex flex-col md:flex-row gap-4 w-full items-center">
+        <YmsSelector
+          onChange={(id: Key | null) => {
+            setYms(id?.toString() || "");
+          }}
+        />
+        <ItemSelector
+          items={units}
+          label="請選擇系級"
+          onChange={(id) => {
+            setUnit(units.find((u) => u.code === id) || undefined);
+          }}
+        />
+        <ItemSelector
+          items={teachers}
+          label="請選擇教師"
+          onChange={(id) => {
+            const teacher = teachers.find((t) => t.code === id);
 
-          if (teacher) {
-            prop.setTeacher(teacher);
-          }
-        }}
-      />
+            if (teacher) {
+              prop.setTeacher(teacher);
+            }
+          }}
+        />
+      </div>
+      {loading && (
+        <div className="flex items-center gap-2">
+          <Spinner />
+          <span>載入系級資料中...</span>
+        </div>
+      )}
+      {error && <FetchError message="系級資料載入失敗。" onRetry={refetch} />}
     </div>
   );
 };
