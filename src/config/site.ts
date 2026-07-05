@@ -62,6 +62,7 @@ export const siteConfig = {
   ],
   links: {
     utaipei: {
+      official: "https://www.utaipei.edu.tw/",
       sky: "https://my.utaipei.edu.tw/utaipei/index_sky.html",
     },
     hero_ui: {

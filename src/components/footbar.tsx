@@ -33,11 +33,12 @@ export const Footbar = () => {
           <div className="sm:flex gap-8">
             <div className="space-y-4 flex-1 text-left sm:text-right">
               <h3 className="text-lg font-bold">校方連結</h3>
-              <div className="space-x-4">
-                <h4 className="text-gray-600 dark:text-gray-400">
-                  還沒有整理啦
-                </h4>
-              </div>
+              <FooterLink link={siteConfig.links.utaipei.official}>
+                校園官網
+              </FooterLink>
+              <FooterLink link={siteConfig.links.utaipei.sky}>
+                校務資訊系統
+              </FooterLink>
             </div>
             <Separator
               className="h-auto hidden sm:flex"
