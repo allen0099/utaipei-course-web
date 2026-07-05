@@ -1,9 +1,11 @@
-import { toBlob } from "html-to-image";
-
 const WARM_BACKGROUND_COLOR = "#fef7ed"; // Warm orange-50 background
 const PADDING = 40; // 40px padding on all sides
 
 const htmlToCanvas = async (element: HTMLElement): Promise<Blob | null> => {
+  // Lazily load html-to-image so it's only pulled into a chunk when a
+  // schedule image is actually requested, not bundled into the main chunk.
+  const { toBlob } = await import("html-to-image");
+
   // Wait for any pending layout changes
   await new Promise((resolve) => setTimeout(resolve, 100));
 

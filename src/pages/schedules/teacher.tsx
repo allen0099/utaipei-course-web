@@ -23,11 +23,7 @@ const Selector = (prop: SelectorProps) => {
   const teachers = useMemo(() => unit?.teachers || [], [unit]);
 
   useEffect(() => {
-    if (!yms) {
-      setUnits([]);
-
-      return;
-    }
+    if (!yms) return;
 
     const [year, semester] = yms.split("#");
 
@@ -44,7 +40,13 @@ const Selector = (prop: SelectorProps) => {
     <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
       <YmsSelector
         onChange={(id: Key | null) => {
-          setYms(id?.toString() || "");
+          const newYms = id?.toString() || "";
+
+          setYms(newYms);
+
+          if (!newYms) {
+            setUnits([]);
+          }
         }}
       />
       <ItemSelector

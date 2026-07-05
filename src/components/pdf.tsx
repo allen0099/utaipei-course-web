@@ -1,8 +1,13 @@
-import { Document, Page, PageProps } from "react-pdf";
+import { Document, Page, PageProps, pdfjs } from "react-pdf";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useResizeObserver } from "@wojtekmaj/react-hooks";
 import { Modal, Spinner, Button, ButtonGroup } from "@heroui/react";
 import clsx from "clsx";
+
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export const ResponsivePage = (props: PageProps) => {
   const [containerRef, setContainerRef] = useState<HTMLElement | null>(null);
@@ -26,8 +31,10 @@ export const ResponsivePage = (props: PageProps) => {
 export const PDFDocument = ({ link }: { link: string }) => {
   const [numPages, setNumPages] = useState<number>(1);
   const [activePage, setActivePage] = useState<number>(1);
+  // The object URL to display for the current `link`. Refs must not be read
+  // during render, so the cache (a ref, below) is only ever consulted inside
+  // effects/callbacks; this state is what render actually uses.
   const [pdfFile, setPdfFile] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [zoom, setZoom] = useState<number>(1.0);
   const [isOpen, setIsOpen] = useState(false);
   const pdfCache = useRef<{ [key: string]: string }>({});
@@ -41,31 +48,37 @@ export const PDFDocument = ({ link }: { link: string }) => {
     };
   }, []);
 
-  // Effect for fetching and setting the PDF from cache or network
+  // Effect for resolving the PDF for the current link: synchronously from
+  // the cache when available, otherwise via a network fetch. When there's no
+  // link, `pdfFile` simply stays at its initial `null` value below — no
+  // effect needed to represent "nothing to show".
   useEffect(() => {
-    if (!link) {
-      setPdfFile(null);
+    if (!link) return;
+
+    const cached = pdfCache.current[link];
+
+    if (cached) {
+      setPdfFile(cached);
 
       return;
     }
 
-    if (pdfCache.current[link]) {
-      setPdfFile(pdfCache.current[link]);
-    } else {
-      setIsLoading(true);
-      setPdfFile(null); // Clear previous PDF while loading new one
-      fetch(link)
-        .then((res) => res.blob())
-        .then((blob) => {
-          const objectUrl = URL.createObjectURL(blob);
+    let cancelled = false;
 
-          pdfCache.current[link] = objectUrl;
-          setPdfFile(objectUrl);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    }
+    fetch(link)
+      .then((res) => res.blob())
+      .then((blob) => {
+        if (cancelled) return;
+
+        const objectUrl = URL.createObjectURL(blob);
+
+        pdfCache.current[link] = objectUrl;
+        setPdfFile(objectUrl);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [link]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
@@ -78,7 +91,7 @@ export const PDFDocument = ({ link }: { link: string }) => {
     setIsOpen(true);
   };
 
-  if (isLoading || !pdfFile) {
+  if (!link || !pdfFile) {
     return (
       <div className="flex items-center gap-2">
         <Spinner />
@@ -171,3 +184,5 @@ export const PDFDocument = ({ link }: { link: string }) => {
     </div>
   );
 };
+
+export default PDFDocument;

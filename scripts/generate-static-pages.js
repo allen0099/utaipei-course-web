@@ -63,32 +63,54 @@ const routes = {
 const siteConfig = {
   name: "UTC 選課小幫手",
   baseUrl: "https://utc.allen0099.tw",
+  ogImage: "/CatMeow.png",
 };
 
 function generateMetaTags(route, routeMeta) {
   const fullUrl = `${siteConfig.baseUrl}${route}`;
-  
+  const fullOgImage = `${siteConfig.baseUrl}${siteConfig.ogImage}`;
+
   return `
     <!-- Basic meta tags -->
     <meta name="description" content="${routeMeta.description}" />
     <meta name="keywords" content="${routeMeta.keywords}" />
     <meta name="author" content="UTC 選課小幫手" />
     <meta name="language" content="zh-TW" />
-    
+
     <!-- Open Graph meta tags -->
     <meta property="og:title" content="${routeMeta.title}" />
     <meta property="og:description" content="${routeMeta.description}" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="${fullUrl}" />
     <meta property="og:site_name" content="${siteConfig.name}" />
-    
+    <meta property="og:image" content="${fullOgImage}" />
+
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="${routeMeta.title}" />
     <meta name="twitter:description" content="${routeMeta.description}" />
-    
+    <meta name="twitter:image" content="${fullOgImage}" />
+
     <!-- Canonical URL -->
     <link rel="canonical" href="${fullUrl}" />`;
+}
+
+function generateSitemap() {
+  const today = new Date().toISOString().split('T')[0];
+  const urlEntries = Object.keys(routes)
+    .map(
+      (route) => `  <url>
+    <loc>${siteConfig.baseUrl}${route}</loc>
+    <lastmod>${today}</lastmod>
+  </url>`,
+    )
+    .join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urlEntries}
+</urlset>
+`;
 }
 
 function generateStaticPages() {
@@ -150,6 +172,18 @@ function generateStaticPages() {
       console.error(`❌ Error writing file ${filePath}:`, error);
       process.exit(1);
     }
+  }
+
+  // Generate sitemap.xml from the same route list used for meta tags above,
+  // so there is a single source of truth for the site's static routes.
+  const sitemapPath = join(distPath, 'sitemap.xml');
+
+  try {
+    writeFileSync(sitemapPath, generateSitemap(), 'utf-8');
+    console.log(`✅ Generated: ${sitemapPath}`);
+  } catch (error) {
+    console.error(`❌ Error writing file ${sitemapPath}:`, error);
+    process.exit(1);
   }
 
   console.log('🎉 Static page generation completed!');

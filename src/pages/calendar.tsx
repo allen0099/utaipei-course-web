@@ -1,11 +1,12 @@
 import { Spinner, Button, Dropdown, Label } from "@heroui/react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
 import { CalendarItem } from "@/interfaces/globals.ts";
 import { title } from "@/components/primitives.ts";
-import { PDFDocument } from "@/components/pdf.tsx";
+
+const PDFDocument = lazy(() => import("@/components/pdf.tsx"));
 
 export const CalendarPage = () => {
   const [calendarList, setCalendarList] = useState<CalendarItem[]>([]);
@@ -70,7 +71,16 @@ export const CalendarPage = () => {
         </div>
         <p className="text-gray-500">點擊下方任一頁即可放大檢視</p>
         {selectedCalendar?.link ? (
-          <PDFDocument link={selectedCalendar.link} />
+          <Suspense
+            fallback={
+              <div className="flex items-center gap-2">
+                <Spinner />
+                <span>載入中...</span>
+              </div>
+            }
+          >
+            <PDFDocument link={selectedCalendar.link} />
+          </Suspense>
         ) : (
           <div className="flex items-center gap-2">
             <Spinner />

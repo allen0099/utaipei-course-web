@@ -64,8 +64,14 @@ export const LocationSearchPage = () => {
   const selectedLocation = locations.find((loc) => loc.code === location);
 
   const onYmsChange = (id: Key | null) => {
-    setYms(id?.toString() || "");
+    const newYms = id?.toString() || "";
+
+    setYms(newYms);
     setLocation("");
+
+    if (!newYms) {
+      setLocations([]);
+    }
   };
 
   const onLocationChange = (id: Key | null) => {
@@ -73,11 +79,8 @@ export const LocationSearchPage = () => {
   };
 
   useEffect(() => {
-    if (!yms) {
-      setLocations([]);
+    if (!yms) return;
 
-      return;
-    }
     const [year, semester] = yms.split("#");
 
     fetch(`${siteConfig.links.github.api}/${year}/${semester}/locations.json`)

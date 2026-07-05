@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Separator, SearchField } from "@heroui/react";
 import { Key } from "@react-types/shared";
 
@@ -58,29 +59,72 @@ const CourseTable = ({ courses }: { courses: MergedCourseItem[] }) => (
   </div>
 );
 
+// Query string keys used to sync search filters to the URL so results can
+// be bookmarked/shared.
+const PARAM_YMS = "yms";
+const PARAM_DEPARTMENT = "dept";
+const PARAM_KEYWORD = "q";
+
 export const SearchPage = () => {
-  const [yms, setYms] = useState<string>("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read the initial filter values once from the URL; subsequent user
+  // interaction is the source of truth and is written back to the URL below.
+  const [yms, setYms] = useState<string>(
+    () => searchParams.get(PARAM_YMS) || "",
+  );
   const [units, setUnits] = useState<Units[]>([]);
   const [locations, setLocations] = useState<LocationItem[]>([]);
-  const [keyword, setKeyword] = useState<string>("");
-  const [departmentCode, setDepartmentCode] = useState<string>("");
+  const [keyword, setKeyword] = useState<string>(
+    () => searchParams.get(PARAM_KEYWORD) || "",
+  );
+  const [departmentCode, setDepartmentCode] = useState<string>(
+    () => searchParams.get(PARAM_DEPARTMENT) || "",
+  );
+
+  // Skip clearing the restored department filter the first time YmsSelector
+  // reports back its (possibly URL-restored) initial value on mount.
+  const isInitialYmsChange = useRef(true);
 
   const onYmsChange = (id: Key | null) => {
-    setYms(id?.toString() || "");
-    setDepartmentCode("");
+    const newYms = id?.toString() || "";
+
+    setYms(newYms);
+
+    if (isInitialYmsChange.current) {
+      isInitialYmsChange.current = false;
+    } else {
+      setDepartmentCode("");
+    }
+
+    if (!newYms) {
+      setUnits([]);
+      setLocations([]);
+    }
   };
 
   const onDepartmentChange = (id: Key | null) => {
     setDepartmentCode(id?.toString() || "");
   };
 
+  // Keep the URL query string in sync with the current filters so the page
+  // can be bookmarked or shared with the same search results restored.
   useEffect(() => {
-    if (!yms) {
-      setUnits([]);
-      setLocations([]);
+    const params = new URLSearchParams();
 
-      return;
-    }
+    if (yms) params.set(PARAM_YMS, yms);
+    if (departmentCode) params.set(PARAM_DEPARTMENT, departmentCode);
+    if (keyword) params.set(PARAM_KEYWORD, keyword);
+
+    setSearchParams(params, { replace: true });
+    // setSearchParams is stable across renders (identity may change but
+    // behavior doesn't); omitting it avoids re-running this effect from its
+    // own updates while still reacting to filter changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yms, departmentCode, keyword]);
+
+  useEffect(() => {
+    if (!yms) return;
 
     const [year, semester] = yms.split("#");
     const fetchJson = <T,>(url: string, fallback: T): Promise<T> =>
@@ -183,11 +227,12 @@ export const SearchPage = () => {
           <h1 className={title()}>課程查詢</h1>
         </div>
         <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
-          <YmsSelector onChange={onYmsChange} />
+          <YmsSelector initialKey={yms || undefined} onChange={onYmsChange} />
           <ItemSelector
             items={units}
             label="選擇系所"
             placeholder="不限系所"
+            selectedKey={departmentCode || null}
             onChange={onDepartmentChange}
           />
         </div>

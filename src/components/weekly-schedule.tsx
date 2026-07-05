@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   Switch,
@@ -321,16 +321,13 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     null,
   );
 
-  // Settings state
-  const [settings, setSettings] = useState<ScheduleSettings>(DEFAULT_SETTINGS);
+  // Settings state, read synchronously from localStorage on first render
+  // instead of via a mount effect (this is a client-only SPA, so
+  // localStorage is always available when this component renders).
+  const [settings, setSettings] = useState<ScheduleSettings>(loadSettings);
   // Image preview modal state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [previewImageBlob, setPreviewImageBlob] = useState<Blob | null>(null);
-
-  // Load settings on component mount
-  useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
 
   // Save settings whenever they change
   const updateSetting = (key: keyof ScheduleSettings, value: boolean) => {
@@ -382,12 +379,9 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     setPreviewImageBlob(null);
   };
 
-  const currentMapping = useMemo(() => {
-    return (
-      campusTimeMappings.find((mapping) => mapping.campus === currentCampus) ||
-      campusTimeMappings[0]
-    );
-  }, [campusTimeMappings, currentCampus]);
+  const currentMapping =
+    campusTimeMappings.find((mapping) => mapping.campus === currentCampus) ||
+    campusTimeMappings[0];
 
   const handleCampusChange = (isSelected: boolean) => {
     const newCampus = isSelected ? "secondary" : "main";
