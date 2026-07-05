@@ -62,7 +62,7 @@ const routes = {
 
 const siteConfig = {
   name: "UTC 選課小幫手",
-  baseUrl: "https://utc-v2.allen0099.tw",
+  baseUrl: "https://utc.allen0099.tw",
 };
 
 function generateMetaTags(route, routeMeta) {
