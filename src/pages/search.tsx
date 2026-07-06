@@ -19,6 +19,7 @@ import { ItemSelector } from "@/components/selectors/itemSelector.tsx";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
 import {
+  dedupeCourses,
   flattenLocations,
   flattenTeacherUnits,
   mergeCourseSources,
@@ -29,10 +30,18 @@ import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 
 const MAX_DISPLAYED_COURSES = 200;
 
-const COLUMNS: { key: keyof MergedCourseItem; label: string }[] = [
+const COLUMNS: {
+  key: keyof MergedCourseItem;
+  label: string;
+  render?: (item: MergedCourseItem) => string;
+}[] = [
   { key: "code", label: "課程代碼" },
   { key: "name", label: "課程名稱" },
-  { key: "department", label: "系所" },
+  {
+    key: "departments",
+    label: "系所",
+    render: (item) => item.departments?.join("、") || "-",
+  },
   { key: "class", label: "班級名稱" },
   { key: "teacher", label: "教師" },
   { key: "time", label: "時間" },
@@ -76,7 +85,9 @@ const CourseTable = ({ courses }: { courses: MergedCourseItem[] }) => {
               </td>
               {COLUMNS.map((column) => (
                 <td key={column.key} className="p-2 whitespace-nowrap">
-                  {item[column.key] || "-"}
+                  {column.render
+                    ? column.render(item)
+                    : (item[column.key] as string) || "-"}
                 </td>
               ))}
             </tr>
@@ -177,9 +188,11 @@ export const SearchPage = () => {
 
   const allCourses = useMemo(
     () =>
-      mergeCourseSources(
-        flattenTeacherUnits(units),
-        flattenLocations(locations),
+      dedupeCourses(
+        mergeCourseSources(
+          flattenTeacherUnits(units),
+          flattenLocations(locations),
+        ),
       ),
     [units, locations],
   );
@@ -194,7 +207,7 @@ export const SearchPage = () => {
     const normalizedKeyword = keyword.trim().toLowerCase();
 
     return allCourses.filter((course) => {
-      if (departmentCode && course.departmentCode !== departmentCode) {
+      if (departmentCode && !course.departmentCodes?.includes(departmentCode)) {
         return false;
       }
 

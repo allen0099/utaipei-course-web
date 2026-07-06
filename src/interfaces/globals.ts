@@ -47,8 +47,15 @@ export interface MergedCourseItem {
   class: string;
   time: string;
   teacher: string;
+  // Single department, as attached while flattening one unit's course list
+  // (see merge-courses.ts flattenTeacherUnits). A course cross-listed under
+  // multiple units produces one MergedCourseItem per unit at this stage.
   departmentCode?: string;
   department?: string;
+  // All departments a course is cross-listed under, collapsed onto one entry
+  // by merge-courses.ts dedupeCourses. Populated only after deduping.
+  departmentCodes?: string[];
+  departments?: string[];
   locationCode?: string;
   classroom?: string;
 }
