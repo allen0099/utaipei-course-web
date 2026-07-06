@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://utc.allen0099.tw/sitemap.xml
