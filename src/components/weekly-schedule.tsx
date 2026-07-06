@@ -10,9 +10,13 @@ import {
   Label,
 } from "@heroui/react";
 import clsx from "clsx";
-import { Cog6ToothIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import {
+  Cog6ToothIcon,
+  ArrowDownTrayIcon,
+  ExclamationTriangleIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
-import { XCircleIcon } from "@heroicons/react/24/outline";
 
 import {
   WeeklyScheduleProps,
@@ -313,7 +317,12 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   selectedCampus = "main",
   onCampusChange,
   className,
+  conflictCourseCodes = [],
 }) => {
+  const conflictCourseCodeSet = useMemo(
+    () => new Set(conflictCourseCodes),
+    [conflictCourseCodes],
+  );
   const [currentCampus, setCurrentCampus] = useState<"main" | "secondary">(
     selectedCampus,
   );
@@ -496,12 +505,13 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
               const isHovered = hoveredCourseCode === course.code;
               const isDimmed =
                 hoveredCourseCode && hoveredCourseCode !== course.code;
+              const isConflicting = conflictCourseCodeSet.has(course.code);
 
               return (
                 <div
                   key={course.id}
                   className={clsx(
-                    "flex-1 rounded-md p-2 border-2 text-xs transition-all duration-200 cursor-pointer",
+                    "flex-1 rounded-md p-2 border-2 text-xs transition-all duration-200 cursor-pointer relative",
                     courseColorMap[course.code] || COURSE_COLORS[0],
                     {
                       "mb-1": index < coursesInSlot.length - 1, // Add margin between multiple courses
@@ -509,11 +519,20 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                       "ring-2 ring-blue-500 scale-105 shadow-lg": isHovered,
                       // Dim other courses when something is hovered
                       "opacity-30 blur-[1px]": isDimmed,
+                      // Flag conflicting courses with a warning ring
+                      "ring-2 ring-red-500 dark:ring-red-400 border-red-500 dark:border-red-400":
+                        isConflicting,
                     },
                   )}
                   onMouseEnter={() => handleCourseMouseEnter(course.code)}
                   onMouseLeave={handleCourseMouseLeave}
                 >
+                  {isConflicting && (
+                    <ExclamationTriangleIcon
+                      className="absolute top-1 right-1 text-red-600 dark:text-red-400"
+                      width={14}
+                    />
+                  )}
                   <div className="font-semibold text-xs leading-tight mb-1">
                     {course.name}
                   </div>

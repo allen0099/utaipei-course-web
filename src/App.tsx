@@ -10,6 +10,7 @@ import NotFoundPage from "@/pages/not-found";
 import MapPage from "@/pages/map.tsx";
 import TimetablePage from "@/pages/timetable.tsx";
 import LocationSearchPage from "@/pages/schedules/location.tsx";
+import MySchedulePage from "@/pages/my-schedule.tsx";
 
 function App() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ function App() {
       <Route element={<CalendarPage />} path="/calendar" />
       <Route element={<MapPage />} path="/map" />
       <Route element={<SearchPage />} path="/search" />
+      <Route element={<MySchedulePage />} path="/my-schedule" />
       <Route element={<TeacherSchedulePage />} path="/schedules/teacher" />
       <Route element={<ClassSearchPage />} path="/schedules/class" />
       <Route element={<LocationSearchPage />} path="/schedules/location" />

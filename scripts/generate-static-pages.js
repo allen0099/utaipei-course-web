@@ -32,6 +32,12 @@ const routes = {
       "搜尋臺北市立大學課程資訊，快速找到您需要的課程內容與修課資訊。",
     keywords: "臺北市立大學,課程查詢,課程搜尋,修課,UTC",
   },
+  "/my-schedule": {
+    title: "我的課表 - UTC 選課小幫手",
+    description:
+      "整理您勾選的臺北市立大學課程，檢視合併後的週課表並自動偵測衝堂。",
+    keywords: "臺北市立大學,我的課表,選課,衝堂偵測,UTC",
+  },
   "/schedules/teacher": {
     title: "教師課表 - UTC 選課小幫手",
     description: "查詢臺北市立大學教師課表，了解教師授課時間與課程安排。",

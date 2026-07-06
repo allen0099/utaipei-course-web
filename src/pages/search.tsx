@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Separator, SearchField, Spinner } from "@heroui/react";
+import {
+  Separator,
+  SearchField,
+  Spinner,
+  Checkbox,
+  Chip,
+  Link,
+} from "@heroui/react";
 import { Key } from "@react-types/shared";
 
 import { title } from "@/components/primitives";
@@ -18,6 +25,7 @@ import {
 } from "@/utils/merge-courses.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
+import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 
 const MAX_DISPLAYED_COURSES = 200;
 
@@ -31,35 +39,53 @@ const COLUMNS: { key: keyof MergedCourseItem; label: string }[] = [
   { key: "classroom", label: "教室" },
 ];
 
-const CourseTable = ({ courses }: { courses: MergedCourseItem[] }) => (
-  <div className="mt-4 overflow-x-auto">
-    <table className="w-full text-sm border-collapse">
-      <thead>
-        <tr className="border-b border-gray-300 dark:border-gray-700">
-          {COLUMNS.map((column) => (
-            <th key={column.key} className="text-left p-2 whitespace-nowrap">
-              {column.label}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {courses.map((item, index) => (
-          <tr
-            key={`${item.code}-${item.class}-${index}`}
-            className="border-b border-gray-200 dark:border-gray-800"
-          >
+const CourseTable = ({ courses }: { courses: MergedCourseItem[] }) => {
+  const { isSelected, toggleCourse } = useSelectedCourses();
+
+  return (
+    <div className="mt-4 overflow-x-auto">
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr className="border-b border-gray-300 dark:border-gray-700">
+            <th className="text-left p-2 whitespace-nowrap">加入課表</th>
             {COLUMNS.map((column) => (
-              <td key={column.key} className="p-2 whitespace-nowrap">
-                {item[column.key] || "-"}
-              </td>
+              <th key={column.key} className="text-left p-2 whitespace-nowrap">
+                {column.label}
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
+        </thead>
+        <tbody>
+          {courses.map((item, index) => (
+            <tr
+              key={`${item.code}-${item.class}-${index}`}
+              className="border-b border-gray-200 dark:border-gray-800"
+            >
+              <td className="p-2 whitespace-nowrap">
+                <Checkbox
+                  aria-label={`將 ${item.name} (${item.class}) 加入我的課表`}
+                  isSelected={isSelected(item)}
+                  onChange={() => toggleCourse(item)}
+                >
+                  <Checkbox.Content>
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                  </Checkbox.Content>
+                </Checkbox>
+              </td>
+              {COLUMNS.map((column) => (
+                <td key={column.key} className="p-2 whitespace-nowrap">
+                  {item[column.key] || "-"}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 // Query string keys used to sync search filters to the URL so results can
 // be bookmarked/shared.
@@ -86,6 +112,7 @@ export const SearchPage = () => {
   // Skip clearing the restored department filter the first time YmsSelector
   // reports back its (possibly URL-restored) initial value on mount.
   const isInitialYmsChange = useRef(true);
+  const { selectedCourses } = useSelectedCourses();
 
   const onYmsChange = (id: Key | null) => {
     setYms(id?.toString() || "");
@@ -239,6 +266,16 @@ export const SearchPage = () => {
         <div className="inline-block max-w-lg text-center justify-center mb-4">
           <h1 className={title()}>課程查詢</h1>
         </div>
+        {selectedCourses.length > 0 && (
+          <div className="flex items-center gap-2 mb-4">
+            <Chip color="accent" size="sm" variant="tertiary">
+              已選 {selectedCourses.length} 門課程
+            </Chip>
+            <Link className="text-sm" href="/my-schedule">
+              前往我的課表 →
+            </Link>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
           <YmsSelector initialKey={yms || undefined} onChange={onYmsChange} />
           <ItemSelector

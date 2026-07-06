@@ -18,6 +18,10 @@ export const siteConfig = {
       href: "/search",
     },
     {
+      label: "我的課表",
+      href: "/my-schedule",
+    },
+    {
       label: "教師課表",
       href: "/schedules/teacher",
     },
@@ -38,6 +42,10 @@ export const siteConfig = {
     {
       label: "課程查詢",
       href: "/search",
+    },
+    {
+      label: "我的課表",
+      href: "/my-schedule",
     },
     {
       label: "教師課表",
