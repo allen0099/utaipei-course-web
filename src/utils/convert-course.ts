@@ -46,7 +46,7 @@ const convertCourse = (course: CourseItem): WeeklyScheduleCourse[] => {
     }
 
     courses.push({
-      id: `${course.code}-${day}-${startPeriod}`,
+      id: `${course.code}-${course.class}-${course.teacher}-${day}-${startPeriod}`,
       code: course.code,
       name: course.name,
       teacher: course.teacher,

@@ -1,5 +1,6 @@
 import type { JSX } from "react";
 
+import { Fragment } from "react";
 import { Card, Link, Spinner } from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default";
@@ -66,10 +67,9 @@ const renderTextWithLinks = (text: string, hrefs?: AnnounceHrefItem[]) => {
         next && !next.match(/^[\s]/) && !(next && isPunctuation(next[0]));
 
       return (
-        <>
+        <Fragment key={idx}>
           {needSpaceBefore && " "}
           <a
-            key={idx}
             className="text-accent underline hover:text-accent-hover inline-flex items-center gap-0.5"
             href={part.link}
             rel="noopener noreferrer"
@@ -92,7 +92,7 @@ const renderTextWithLinks = (text: string, hrefs?: AnnounceHrefItem[]) => {
             </svg>
           </a>
           {needSpaceAfter && " "}
-        </>
+        </Fragment>
       );
     }
   });
