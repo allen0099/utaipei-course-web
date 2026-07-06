@@ -1,40 +1,50 @@
 import { Spinner, Button, Dropdown, Label } from "@heroui/react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
 import { CalendarItem } from "@/interfaces/globals.ts";
 import { title } from "@/components/primitives.ts";
+import { FetchError } from "@/components/fetch-error.tsx";
+import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { PDFDocument } from "@/components/pdf.tsx";
 
 export const CalendarPage = () => {
-  const [calendarList, setCalendarList] = useState<CalendarItem[]>([]);
-  const [selectedCalendar, setSelectedCalendar] = useState<CalendarItem | null>(
-    null,
+  const {
+    data: rawCalendarList,
+    error,
+    refetch,
+  } = useFetchJson<CalendarItem[]>(
+    `${siteConfig.links.github.api}/calendar.json`,
   );
 
-  useEffect(() => {
-    fetch(`${siteConfig.links.github.api}/calendar.json`)
-      .then((res) => res.json())
-      .then((data: CalendarItem[]) => {
-        const processedData = data.map((item) => ({
-          ...item,
-          link: `${siteConfig.links.github.api}/calendar/${item.year}/${item.title}.pdf`,
-        }));
-        const reversedData = [...processedData].reverse();
+  const calendarList = useMemo(() => {
+    if (!rawCalendarList) return [];
 
-        setCalendarList(reversedData);
-        if (reversedData.length > 0) {
-          setSelectedCalendar(reversedData[0]);
-        }
-      });
-  }, []);
+    const processedData = rawCalendarList.map((item) => ({
+      ...item,
+      link: `${siteConfig.links.github.api}/calendar/${item.year}/${item.title}.pdf`,
+    }));
+
+    return [...processedData].reverse();
+  }, [rawCalendarList]);
+
+  const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
+
+  // Default to the newest calendar until the user picks a different year;
+  // derived directly from render instead of synced via an effect.
+  const selectedCalendar =
+    (selectedTitle
+      ? calendarList.find((item) => item.title === selectedTitle)
+      : undefined) ||
+    calendarList[0] ||
+    null;
 
   const handleYearChange = (key: unknown) => {
     const selected = calendarList.find((item) => item.title === key);
 
     if (selected) {
-      setSelectedCalendar(selected);
+      setSelectedTitle(selected.title);
     }
   };
 
@@ -69,7 +79,12 @@ export const CalendarPage = () => {
           </Dropdown>
         </div>
         <p className="text-gray-500">點擊下方任一頁即可放大檢視</p>
-        {selectedCalendar?.link ? (
+        {error ? (
+          <FetchError
+            message="行事曆載入失敗，請稍後再試。"
+            onRetry={refetch}
+          />
+        ) : selectedCalendar?.link ? (
           <PDFDocument link={selectedCalendar.link} />
         ) : (
           <div className="flex items-center gap-2">

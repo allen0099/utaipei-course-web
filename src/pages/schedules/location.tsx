@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Separator } from "@heroui/react";
+import { useState } from "react";
+import { Separator, Spinner } from "@heroui/react";
 import { Key } from "@react-types/shared";
 
 import DefaultLayout from "@/layouts/default.tsx";
@@ -9,6 +9,8 @@ import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
 import { YmsSelector } from "@/components/selectors/ymsSelector.tsx";
 import { ItemSelector } from "@/components/selectors/itemSelector.tsx";
+import { useFetchJson } from "@/hooks/useFetchJson.ts";
+import { FetchError } from "@/components/fetch-error.tsx";
 
 const LocationTable = ({ courses }: { courses: CourseItem[] }) => {
   const columns = [
@@ -57,8 +59,18 @@ const LocationTable = ({ courses }: { courses: CourseItem[] }) => {
 export const LocationSearchPage = () => {
   const [yms, setYms] = useState<string>("");
   const [location, setLocation] = useState<string>("");
-  const [locations, setLocations] = useState<LocationItem[]>([]);
   const [year, semester] = yms.split("#");
+
+  const {
+    data: locations = [],
+    loading,
+    error,
+    refetch,
+  } = useFetchJson<LocationItem[]>(
+    yms
+      ? `${siteConfig.links.github.api}/${year}/${semester}/locations.json`
+      : null,
+  );
 
   const scheduleTitle = `${year} 學年 (${semester}) ${locations.find((loc) => loc.code === location)?.name || ""} 的課表`;
   const selectedLocation = locations.find((loc) => loc.code === location);
@@ -66,35 +78,11 @@ export const LocationSearchPage = () => {
   const onYmsChange = (id: Key | null) => {
     setYms(id?.toString() || "");
     setLocation("");
-    setLocations([]);
   };
 
   const onLocationChange = (id: Key | null) => {
     setLocation(id?.toString() || "");
   };
-
-  useEffect(() => {
-    if (!yms) {
-      return;
-    }
-    const [year, semester] = yms.split("#");
-    const controller = new AbortController();
-
-    fetch(`${siteConfig.links.github.api}/${year}/${semester}/locations.json`, {
-      signal: controller.signal,
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setLocations(data);
-      })
-      .catch((error) => {
-        if (error.name === "AbortError") return;
-        // eslint-disable-next-line no-console
-        console.error("Failed to fetch locations:", error);
-      });
-
-    return () => controller.abort();
-  }, [yms]);
 
   return (
     <DefaultLayout>
@@ -107,6 +95,19 @@ export const LocationSearchPage = () => {
             onChange={onLocationChange}
           />
         </div>
+        {loading && (
+          <div className="flex items-center gap-2 mt-4">
+            <Spinner />
+            <span>載入地點資料中...</span>
+          </div>
+        )}
+        {error && (
+          <FetchError
+            className="mt-4"
+            message="地點資料載入失敗。"
+            onRetry={refetch}
+          />
+        )}
         <Separator className="my-6 max-w-5xl w-full" />
         <div className="w-full max-w-2xl">
           {selectedLocation ? (

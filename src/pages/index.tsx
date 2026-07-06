@@ -1,13 +1,14 @@
 import type { JSX } from "react";
 
 import { Card, Link, Spinner } from "@heroui/react";
-import { useEffect, useState } from "react";
 
 import DefaultLayout from "@/layouts/default";
 import { AnnounceHrefItem, AnnouncementItem } from "@/interfaces/globals.ts";
 import { CourseFunctions } from "@/components/course-functions.tsx";
+import { FetchError } from "@/components/fetch-error.tsx";
 import { siteConfig } from "@/config/site.ts";
 import { title } from "@/components/primitives.ts";
+import { useFetchJson } from "@/hooks/useFetchJson.ts";
 
 const reDate = /((?:\d{3}\s年)?\s\d{1,2}\s[/\-月]\s\d{1,2}\s日?)(?!\d)/g;
 
@@ -127,18 +128,14 @@ const highlightDate = (text: string) => {
 };
 
 export default function IndexPage() {
-  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`${siteConfig.links.github.api}/announcement.json`)
-      .then((res) => res.json())
-      .then((data) => {
-        setAnnouncements(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+  const {
+    data: announcements = [],
+    loading,
+    error,
+    refetch,
+  } = useFetchJson<AnnouncementItem[]>(
+    `${siteConfig.links.github.api}/announcement.json`,
+  );
 
   return (
     <DefaultLayout>
@@ -176,6 +173,12 @@ export default function IndexPage() {
             <Spinner />
             <span>正在載入校園公告...</span>
           </div>
+        ) : error ? (
+          <FetchError
+            className="mt-8"
+            message="校園公告載入失敗，請稍後再試。"
+            onRetry={refetch}
+          />
         ) : (
           <Card className="border border-warning/30 border-l-4 border-l-warning w-full max-w-2xl bg-surface">
             <Card.Header className="flex justify-center text-center w-full">

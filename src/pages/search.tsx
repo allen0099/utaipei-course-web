@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { Separator, SearchField } from "@heroui/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Separator, SearchField, Spinner } from "@heroui/react";
 import { Key } from "@react-types/shared";
 
 import { title } from "@/components/primitives";
@@ -15,6 +16,8 @@ import {
   flattenTeacherUnits,
   mergeCourseSources,
 } from "@/utils/merge-courses.ts";
+import { useFetchJson } from "@/hooks/useFetchJson.ts";
+import { FetchError } from "@/components/fetch-error.tsx";
 
 const MAX_DISPLAYED_COURSES = 200;
 
@@ -58,49 +61,91 @@ const CourseTable = ({ courses }: { courses: MergedCourseItem[] }) => (
   </div>
 );
 
+// Query string keys used to sync search filters to the URL so results can
+// be bookmarked/shared.
+const PARAM_YMS = "yms";
+const PARAM_DEPARTMENT = "dept";
+const PARAM_KEYWORD = "q";
+
 export const SearchPage = () => {
-  const [yms, setYms] = useState<string>("");
-  const [units, setUnits] = useState<Units[]>([]);
-  const [locations, setLocations] = useState<LocationItem[]>([]);
-  const [keyword, setKeyword] = useState<string>("");
-  const [departmentCode, setDepartmentCode] = useState<string>("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read the initial filter values once from the URL; subsequent user
+  // interaction is the source of truth and is written back to the URL below.
+  const [yms, setYms] = useState<string>(
+    () => searchParams.get(PARAM_YMS) || "",
+  );
+  const [keyword, setKeyword] = useState<string>(
+    () => searchParams.get(PARAM_KEYWORD) || "",
+  );
+  const [departmentCode, setDepartmentCode] = useState<string>(
+    () => searchParams.get(PARAM_DEPARTMENT) || "",
+  );
+  const [year, semester] = yms.split("#");
+
+  // Skip clearing the restored department filter the first time YmsSelector
+  // reports back its (possibly URL-restored) initial value on mount.
+  const isInitialYmsChange = useRef(true);
 
   const onYmsChange = (id: Key | null) => {
     setYms(id?.toString() || "");
-    setDepartmentCode("");
-    setUnits([]);
-    setLocations([]);
+
+    if (isInitialYmsChange.current) {
+      isInitialYmsChange.current = false;
+    } else {
+      setDepartmentCode("");
+    }
   };
 
   const onDepartmentChange = (id: Key | null) => {
     setDepartmentCode(id?.toString() || "");
   };
 
+  // Keep the URL query string in sync with the current filters so the page
+  // can be bookmarked or shared with the same search results restored.
   useEffect(() => {
-    if (!yms) {
-      return;
-    }
+    const params = new URLSearchParams();
 
-    const [year, semester] = yms.split("#");
-    const fetchJson = <T,>(url: string, fallback: T): Promise<T> =>
-      fetch(url)
-        .then((res) => (res.ok ? res.json() : fallback))
-        .catch(() => fallback);
+    if (yms) params.set(PARAM_YMS, yms);
+    if (departmentCode) params.set(PARAM_DEPARTMENT, departmentCode);
+    if (keyword) params.set(PARAM_KEYWORD, keyword);
 
-    Promise.all([
-      fetchJson<Units[]>(
-        `${siteConfig.links.github.api}/${year}/${semester}/teachers.json`,
-        [],
-      ),
-      fetchJson<LocationItem[]>(
-        `${siteConfig.links.github.api}/${year}/${semester}/locations.json`,
-        [],
-      ),
-    ]).then(([teacherData, locationData]: [Units[], LocationItem[]]) => {
-      setUnits(teacherData);
-      setLocations(locationData);
-    });
-  }, [yms]);
+    setSearchParams(params, { replace: true });
+    // setSearchParams is stable across renders (identity may change but
+    // behavior doesn't); omitting it avoids re-running this effect from its
+    // own updates while still reacting to filter changes.
+  }, [yms, departmentCode, keyword]);
+
+  // Fetched in parallel: teachers.json and locations.json are independent
+  // sources merged below into a single course list.
+  const {
+    data: units = [],
+    loading: unitsLoading,
+    error: unitsError,
+    refetch: refetchUnits,
+  } = useFetchJson<Units[]>(
+    yms
+      ? `${siteConfig.links.github.api}/${year}/${semester}/teachers.json`
+      : null,
+  );
+
+  const {
+    data: locations = [],
+    loading: locationsLoading,
+    error: locationsError,
+    refetch: refetchLocations,
+  } = useFetchJson<LocationItem[]>(
+    yms
+      ? `${siteConfig.links.github.api}/${year}/${semester}/locations.json`
+      : null,
+  );
+
+  const loading = unitsLoading || locationsLoading;
+  const error = unitsError || locationsError;
+  const refetch = () => {
+    refetchUnits();
+    refetchLocations();
+  };
 
   const allCourses = useMemo(
     () =>
@@ -140,6 +185,19 @@ export const SearchPage = () => {
   const renderResults = () => {
     if (!yms) {
       return <h3 className="text-lg text-center">請先選擇學年期</h3>;
+    }
+
+    if (error) {
+      return <FetchError message="課程資料載入失敗。" onRetry={refetch} />;
+    }
+
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center gap-2">
+          <Spinner />
+          <span>載入課程資料中...</span>
+        </div>
+      );
     }
 
     if (!hasFilter) {
@@ -182,11 +240,12 @@ export const SearchPage = () => {
           <h1 className={title()}>課程查詢</h1>
         </div>
         <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
-          <YmsSelector onChange={onYmsChange} />
+          <YmsSelector initialKey={yms || undefined} onChange={onYmsChange} />
           <ItemSelector
             items={units}
             label="選擇系所"
             placeholder="不限系所"
+            selectedKey={departmentCode || null}
             onChange={onDepartmentChange}
           />
         </div>

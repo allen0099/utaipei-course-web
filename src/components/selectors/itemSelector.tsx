@@ -10,11 +10,13 @@ type SelectorProps<T extends ItemElement> = {
   items: T[];
   label: string;
   placeholder?: string;
+  selectedKey?: Key | null;
   onChange: (id: Key | null) => void;
 };
 
 export const ItemSelector = (props: SelectorProps<any>) => {
-  const { items, label, placeholder, onChange } = props;
+  const { items, label, placeholder, selectedKey, onChange } = props;
+  // Derived directly from props; no need to mirror it into state.
   const disabled = items.length === 0;
 
   return (
@@ -22,6 +24,7 @@ export const ItemSelector = (props: SelectorProps<any>) => {
       isRequired
       className="max-w-xs"
       isDisabled={disabled}
+      selectedKey={selectedKey}
       onSelectionChange={onChange}
     >
       <Label>{label}</Label>
