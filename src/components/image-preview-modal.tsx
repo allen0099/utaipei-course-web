@@ -18,14 +18,15 @@ export const ImagePreviewModal = ({
 }: ImagePreviewModalProps) => {
   const [imageUrl, setImageUrl] = useState<string>("");
 
-  // Create object URL when modal opens and imageBlob is available
+  // Object URLs are a browser resource with an explicit alloc/free
+  // lifecycle (URL.createObjectURL / revokeObjectURL), so synchronizing
+  // them to the imageBlob/isOpen inputs via an effect is the correct tool
+  // here (this isn't state that could instead be derived during render).
   useEffect(() => {
     if (imageBlob && isOpen) {
       const url = URL.createObjectURL(imageBlob);
 
-      // Object URL must be stored in state to render it; the effect's
-      // setup/cleanup pairing (incl. under StrictMode) keeps this leak-free.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing to the object URL resource created above, not deriving plain state
       setImageUrl(url);
 
       return () => {

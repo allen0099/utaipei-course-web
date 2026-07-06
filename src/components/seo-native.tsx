@@ -70,8 +70,14 @@ export default function SEO({
     updateMetaTag('meta[property="og:url"]', currentUrl);
     updateMetaTag('meta[property="og:site_name"]', siteConfig.name);
 
-    if (seoOgImage) {
-      updateMetaTag('meta[property="og:image"]', seoOgImage);
+    // Resolve to an absolute URL since social crawlers may not correctly
+    // resolve a relative og:image/twitter:image path.
+    const absoluteOgImage = seoOgImage
+      ? new URL(seoOgImage, window.location.origin).toString()
+      : undefined;
+
+    if (absoluteOgImage) {
+      updateMetaTag('meta[property="og:image"]', absoluteOgImage);
     }
 
     // Update Twitter Card tags
@@ -79,8 +85,8 @@ export default function SEO({
     updateMetaTag('meta[name="twitter:title"]', seoTitle);
     updateMetaTag('meta[name="twitter:description"]', seoDescription);
 
-    if (seoOgImage) {
-      updateMetaTag('meta[name="twitter:image"]', seoOgImage);
+    if (absoluteOgImage) {
+      updateMetaTag('meta[name="twitter:image"]', absoluteOgImage);
     }
 
     // Update canonical URL

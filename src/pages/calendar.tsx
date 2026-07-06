@@ -1,5 +1,5 @@
 import { Spinner, Button, Dropdown, Label } from "@heroui/react";
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
@@ -7,7 +7,8 @@ import { CalendarItem } from "@/interfaces/globals.ts";
 import { title } from "@/components/primitives.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
-import { PDFDocument } from "@/components/pdf.tsx";
+
+const PDFDocument = lazy(() => import("@/components/pdf.tsx"));
 
 export const CalendarPage = () => {
   const {
@@ -85,7 +86,16 @@ export const CalendarPage = () => {
             onRetry={refetch}
           />
         ) : selectedCalendar?.link ? (
-          <PDFDocument link={selectedCalendar.link} />
+          <Suspense
+            fallback={
+              <div className="flex items-center gap-2">
+                <Spinner />
+                <span>載入中...</span>
+              </div>
+            }
+          >
+            <PDFDocument link={selectedCalendar.link} />
+          </Suspense>
         ) : (
           <div className="flex items-center gap-2">
             <Spinner />

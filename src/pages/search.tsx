@@ -141,6 +141,7 @@ export const SearchPage = () => {
     // setSearchParams is stable across renders (identity may change but
     // behavior doesn't); omitting it avoids re-running this effect from its
     // own updates while still reacting to filter changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [yms, departmentCode, keyword]);
 
   // Fetched in parallel: teachers.json and locations.json are independent

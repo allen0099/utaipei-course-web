@@ -330,7 +330,9 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     null,
   );
 
-  // Settings state, loaded from localStorage on first render
+  // Settings state, read synchronously from localStorage on first render
+  // instead of via a mount effect (this is a client-only SPA, so
+  // localStorage is always available when this component renders).
   const [settings, setSettings] = useState<ScheduleSettings>(loadSettings);
   // Image preview modal state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);

@@ -48,6 +48,7 @@ export const YmsSelector = ({
     // `initialKey` is read once to restore the initial selection and
     // intentionally not re-applied on every change (the user's own
     // selection should win after the first render).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const [manualKey, setManualKey] = useState<string | null>(null);
@@ -65,6 +66,7 @@ export const YmsSelector = ({
     // Only notify the parent when the computed default itself changes (i.e.
     // once the yms.json fetch resolves); this mirrors the previous behavior
     // without setting local state from inside the effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [computedDefaultKey]);
 
   if (error) {

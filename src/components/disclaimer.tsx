@@ -10,6 +10,8 @@ function hasDisclaimerCookie() {
 }
 
 export const DisclaimerModal = () => {
+  // Initialize synchronously from the cookie so we don't need a mount effect
+  // just to flip this to true/false on first render.
   const [open, setOpen] = useState(() => !hasDisclaimerCookie());
 
   // prevent text selection when modal is open

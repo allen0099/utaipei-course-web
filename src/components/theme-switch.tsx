@@ -8,6 +8,9 @@ export interface ThemeSwitchProps {
 }
 
 export const ThemeSwitch: FC<ThemeSwitchProps> = ({ className }) => {
+  // This is a client-only SPA (no SSR), so the DOM is always available and
+  // the initial theme can be read synchronously instead of via a mount
+  // effect, avoiding an extra render just to reveal the toggle.
   const [isDark, setIsDark] = useState(() =>
     document.documentElement.classList.contains("dark"),
   );
