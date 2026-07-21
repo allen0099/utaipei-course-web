@@ -54,7 +54,7 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-unused-imports": "4.4.1",
     "globals": "17.7.0",
-    "postcss": "8.5.19",
+    "postcss": "8.5.20",
     "prettier": "3.9.5",
     "rollup-plugin-visualizer": "^7.0.1",
     "typescript": "6.0.3",
