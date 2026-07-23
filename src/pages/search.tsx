@@ -9,6 +9,7 @@ import {
   Link,
 } from "@heroui/react";
 import { Key } from "@react-types/shared";
+import clsx from "clsx";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -30,71 +31,162 @@ import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 
 const MAX_DISPLAYED_COURSES = 200;
 
-const COLUMNS: {
+interface Column {
   key: keyof MergedCourseItem;
   label: string;
+  // Shorter header used only in the desktop table (narrow columns); the mobile
+  // card layout keeps the full `label` as its field name.
+  headerLabel?: string;
   render?: (item: MergedCourseItem) => string;
-}[] = [
-  { key: "code", label: "課程代碼" },
-  { key: "name", label: "課程名稱" },
+  // Fixed column width (Tailwind class) for the desktop `table-fixed` layout.
+  // Explicit widths are required because CJK content has ~1-char min-content,
+  // so an auto table would otherwise collapse wrapping columns into thin
+  // ribbons. Percentages sum to ~92% (the checkbox column takes the rest).
+  width: string;
+  // Extra text styling for the desktop body cell (emphasis / muting).
+  cellClassName?: string;
+}
+
+const COLUMNS: Column[] = [
+  {
+    key: "code",
+    label: "課程代碼",
+    headerLabel: "代碼",
+    width: "w-[9%]",
+    cellClassName: "tabular-nums text-gray-500 dark:text-gray-400",
+  },
+  {
+    key: "name",
+    label: "課程名稱",
+    width: "w-[16%]",
+    cellClassName: "font-medium text-gray-900 dark:text-gray-100",
+  },
   {
     key: "departments",
     label: "系所",
     render: (item) => item.departments?.join("、") || "-",
+    width: "w-[26%]",
+    cellClassName: "text-gray-500 dark:text-gray-400",
   },
-  { key: "class", label: "班級名稱" },
-  { key: "teacher", label: "教師" },
-  { key: "time", label: "時間" },
-  { key: "classroom", label: "教室" },
+  { key: "class", label: "班級名稱", headerLabel: "班級", width: "w-[9%]" },
+  { key: "teacher", label: "教師", width: "w-[12%]" },
+  {
+    key: "time",
+    label: "時間",
+    width: "w-[12%]",
+    cellClassName: "tabular-nums text-gray-600 dark:text-gray-300",
+  },
+  {
+    key: "classroom",
+    label: "教室",
+    width: "w-[12%]",
+    cellClassName: "text-gray-600 dark:text-gray-300",
+  },
 ];
+
+// Resolve a column's display value for a course (used by both the desktop
+// table and the mobile card layout).
+const cellValue = (column: Column, item: MergedCourseItem): string =>
+  column.render ? column.render(item) : (item[column.key] as string) || "-";
 
 const CourseTable = ({ courses }: { courses: MergedCourseItem[] }) => {
   const { isSelected, toggleCourse } = useSelectedCourses();
 
+  const renderCheckbox = (item: MergedCourseItem) => (
+    <Checkbox
+      aria-label={`將 ${item.name} (${item.class}) 加入我的課表`}
+      isSelected={isSelected(item)}
+      onChange={() => toggleCourse(item)}
+    >
+      <Checkbox.Content>
+        <Checkbox.Control>
+          <Checkbox.Indicator />
+        </Checkbox.Control>
+      </Checkbox.Content>
+    </Checkbox>
+  );
+
+  // Fields shown in the mobile card body (name and code are promoted to the
+  // card header, so they're excluded here).
+  const cardColumns = COLUMNS.filter(
+    (column) => column.key !== "name" && column.key !== "code",
+  );
+
   return (
-    <div className="mt-4 overflow-x-auto">
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="border-b border-gray-300 dark:border-gray-700">
-            <th className="text-left p-2 whitespace-nowrap">加入課表</th>
+    <>
+      {/* Desktop table (md and up) */}
+      <div className="mt-4 overflow-x-auto hidden md:block rounded-lg border border-gray-200 dark:border-gray-800">
+        <table className="w-full table-fixed text-sm">
+          <colgroup>
+            <col className="w-14" />
             {COLUMNS.map((column) => (
-              <th key={column.key} className="text-left p-2 whitespace-nowrap">
-                {column.label}
-              </th>
+              <col key={column.key} className={column.width} />
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {courses.map((item, index) => (
-            <tr
-              key={`${item.code}-${item.class}-${index}`}
-              className="border-b border-gray-200 dark:border-gray-800"
-            >
-              <td className="p-2 whitespace-nowrap">
-                <Checkbox
-                  aria-label={`將 ${item.name} (${item.class}) 加入我的課表`}
-                  isSelected={isSelected(item)}
-                  onChange={() => toggleCourse(item)}
-                >
-                  <Checkbox.Content>
-                    <Checkbox.Control>
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                  </Checkbox.Content>
-                </Checkbox>
-              </td>
+          </colgroup>
+          <thead>
+            <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-medium tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-400">
+              <th className="px-3 py-2.5 font-medium">加入</th>
               {COLUMNS.map((column) => (
-                <td key={column.key} className="p-2 whitespace-nowrap">
-                  {column.render
-                    ? column.render(item)
-                    : (item[column.key] as string) || "-"}
-                </td>
+                <th key={column.key} className="px-3 py-2.5 font-medium">
+                  {column.headerLabel ?? column.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {courses.map((item, index) => (
+              <tr
+                key={`${item.code}-${item.class}-${index}`}
+                className="border-b border-gray-100 transition-colors last:border-b-0 hover:bg-gray-50 dark:border-gray-800/60 dark:hover:bg-white/[0.03]"
+              >
+                <td className="px-3 py-2.5 align-top">
+                  {renderCheckbox(item)}
+                </td>
+                {COLUMNS.map((column) => (
+                  <td
+                    key={column.key}
+                    className={clsx(
+                      "px-3 py-2.5 align-top break-words leading-relaxed",
+                      column.cellClassName,
+                    )}
+                  >
+                    {cellValue(column, item)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile cards (below md) — no horizontal scroll */}
+      <div className="md:hidden mt-4 flex flex-col gap-3">
+        {courses.map((item, index) => (
+          <div
+            key={`${item.code}-${item.class}-${index}`}
+            className="rounded-lg border border-gray-200 dark:border-gray-800 p-3"
+          >
+            <div className="flex items-start gap-2">
+              <div className="pt-0.5">{renderCheckbox(item)}</div>
+              <div className="min-w-0">
+                <div className="font-semibold break-words">{item.name}</div>
+                <div className="text-xs opacity-70">{item.code}</div>
+              </div>
+            </div>
+            <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+              {cardColumns.map((column) => (
+                <div key={column.key} className="contents">
+                  <dt className="opacity-60 whitespace-nowrap">
+                    {column.label}
+                  </dt>
+                  <dd className="break-words">{cellValue(column, item)}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
+      </div>
+    </>
   );
 };
 
