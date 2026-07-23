@@ -245,6 +245,19 @@ const loadSettings = (): ScheduleSettings => {
     // Silently fall back to default settings if localStorage fails
   }
 
+  // No stored preference yet: on small screens start in a compact layout
+  // (hide the weekend and the start/end times) so the mobile day view isn't
+  // crowded. This only applies to first-time mobile users and is persisted
+  // once they interact with the settings dropdown.
+  const isMobile =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(max-width: 767px)").matches;
+
+  if (isMobile) {
+    return { hideWeekend: true, hideNight: false, hideTimeLabel: true };
+  }
+
   return DEFAULT_SETTINGS;
 };
 
@@ -328,6 +341,11 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   );
   const [hoveredCourseCode, setHoveredCourseCode] = useState<string | null>(
     null,
+  );
+  // Selected day for the mobile single-day/list view. Defaults to today
+  // (converted from JS 0=Sun..6=Sat to our 0=Mon..6=Sun indexing).
+  const [selectedMobileDay, setSelectedMobileDay] = useState<number>(
+    () => (new Date().getDay() + 6) % 7,
   );
 
   // Settings state, read synchronously from localStorage on first render
@@ -600,6 +618,129 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     );
   };
 
+  // --- Mobile single-day / list view -------------------------------------
+
+  // Distinct courses on a given day (one entry per course, sorted by period),
+  // filtered by the current period-visibility setting (hideNight).
+  const getCoursesForDay = (dayIndex: number): WeeklyScheduleCourse[] => {
+    const maxPeriod = getVisiblePeriods().reduce(
+      (max, p) => Math.max(max, p.period),
+      0,
+    );
+
+    return courses
+      .filter((course) => course.day === dayIndex && course.period <= maxPeriod)
+      .sort((a, b) => a.period - b.period);
+  };
+
+  // Build the "第 N〜M 節 · 08:10–10:00" label for a course span.
+  const getCourseTimeLabel = (course: WeeklyScheduleCourse): string => {
+    const duration = course.duration || 1;
+    const endPeriod = course.period + duration - 1;
+    const startInfo = currentMapping.periods.find(
+      (p) => p.period === course.period,
+    );
+    const endInfo = currentMapping.periods.find((p) => p.period === endPeriod);
+
+    const startLabel = startInfo?.label ?? `第 ${course.period} 節`;
+    const periodText =
+      duration > 1
+        ? `${startLabel} ～ ${endInfo?.label ?? `第 ${endPeriod} 節`}`
+        : startLabel;
+
+    if (settings.hideTimeLabel || !startInfo || !endInfo) {
+      return periodText;
+    }
+
+    return `${periodText} · ${startInfo.startTime}–${endInfo.endTime}`;
+  };
+
+  const renderMobileSchedule = () => {
+    const visibleDays = getVisibleDays();
+    const visibleDayIndices = getVisibleDayIndices();
+
+    // Keep the selection within the currently visible days (e.g. when the
+    // weekend is hidden and today is a weekend, fall back to the first day).
+    const activeDay = visibleDayIndices.includes(selectedMobileDay)
+      ? selectedMobileDay
+      : visibleDayIndices[0];
+
+    const dayCourses = getCoursesForDay(activeDay);
+
+    return (
+      <div className="flex flex-col gap-4">
+        {/* Day selector */}
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {visibleDayIndices.map((dayIndex, i) => {
+            const isActive = dayIndex === activeDay;
+
+            return (
+              <button
+                key={dayIndex}
+                className={clsx(
+                  "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-accent text-white shadow"
+                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700",
+                )}
+                type="button"
+                onClick={() => setSelectedMobileDay(dayIndex)}
+              >
+                {visibleDays[i]}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Course list for the selected day */}
+        {dayCourses.length === 0 ? (
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+            <p className="text-sm">這天沒有課程</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {dayCourses.map((course) => {
+              const isConflicting = conflictCourseCodeSet.has(course.code);
+
+              return (
+                <div
+                  key={course.id}
+                  className={clsx(
+                    "rounded-lg border-2 p-3",
+                    courseColorMap[course.code] || COURSE_COLORS[0],
+                    {
+                      "ring-2 ring-red-500 dark:ring-red-400 border-red-500 dark:border-red-400":
+                        isConflicting,
+                    },
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-sm font-semibold leading-snug">
+                      {course.name}
+                    </div>
+                    {isConflicting && (
+                      <ExclamationTriangleIcon
+                        className="shrink-0 text-red-600 dark:text-red-400"
+                        width={18}
+                      />
+                    )}
+                  </div>
+                  <div className="mt-1 text-xs font-medium opacity-80">
+                    {getCourseTimeLabel(course)}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-x-3 text-xs opacity-70">
+                    {course.teacher && <span>{course.teacher}</span>}
+                    {course.class && <span>{course.class}</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Card className={clsx("w-full max-w-7xl", className)}>
       <Card.Header className="flex flex-col space-y-4">
@@ -609,7 +750,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
           </h3>
 
           <div
-            className="flex items-center space-x-3 justify-end pt-2 md:pt-0"
+            className="flex flex-wrap items-center justify-end gap-2 pt-2 md:pt-0"
             id="calendar-toolbox"
           >
             <div className="flex items-center space-x-2">
@@ -618,7 +759,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
               </Chip>
               <Switch
                 isSelected={currentCampus === "secondary"}
-                size="lg"
+                size="md"
                 onChange={(checked) => handleCampusChange(checked)}
               >
                 <Switch.Content>
@@ -718,14 +859,27 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
         <Separator />
       </Card.Header>
 
-      <Card.Content className="overflow-x-auto">
+      <Card.Content>
         {courses.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <p>沒有課程資料</p>
             <p className="text-sm">請重新查詢</p>
           </div>
         ) : (
-          <div className="min-w-[800px]">{renderUnifiedSchedule()}</div>
+          <>
+            {/* Desktop table. Also the source for the "另存圖片" export, so it
+                must stay in the DOM at full size on every screen. On mobile we
+                clip it with h-0/overflow-hidden (NOT display:none) — html-to-image
+                renders #weekly-schedule-grid as a standalone node, so parent
+                clipping doesn't shrink its scrollWidth/scrollHeight and the
+                export keeps working. */}
+            <div className="h-0 overflow-hidden md:h-auto md:overflow-x-auto">
+              <div className="min-w-[800px]">{renderUnifiedSchedule()}</div>
+            </div>
+
+            {/* Mobile single-day / list view */}
+            <div className="md:hidden">{renderMobileSchedule()}</div>
+          </>
         )}
       </Card.Content>
 
