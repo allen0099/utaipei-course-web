@@ -33,6 +33,20 @@ export interface LocationItem {
   courses: CourseItem[];
 }
 
+// 科系 (unt_id) — the same code system as teachers.json units[].code, which is
+// what MergedCourseItem.departmentCodes carries, so it drives course filtering.
+export interface DepartmentItem {
+  code: string;
+  name: string;
+}
+
+// 學院 (dpt_id) grouping its 科系 (unt_id) list; from departments.json.
+export interface CollegeItem {
+  code: string;
+  name: string;
+  departments: DepartmentItem[];
+}
+
 export interface CourseItem {
   code: string;
   name: string;

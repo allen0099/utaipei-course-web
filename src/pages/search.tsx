@@ -14,7 +14,12 @@ import clsx from "clsx";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
-import { LocationItem, MergedCourseItem, Units } from "@/interfaces/globals.ts";
+import {
+  CollegeItem,
+  LocationItem,
+  MergedCourseItem,
+  Units,
+} from "@/interfaces/globals.ts";
 import { YmsSelector } from "@/components/selectors/ymsSelector.tsx";
 import { ItemSelector } from "@/components/selectors/itemSelector.tsx";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
@@ -210,6 +215,9 @@ export const SearchPage = () => {
   const [departmentCode, setDepartmentCode] = useState<string>(
     () => searchParams.get(PARAM_DEPARTMENT) || "",
   );
+  // 學院 (dpt_id) — narrows the 科系 (unt_id) list below. Not persisted in the
+  // URL; on restore it's derived from the department (unt_id) instead.
+  const [collegeCode, setCollegeCode] = useState<string>("");
   const [year, semester] = yms.split("#");
 
   // Skip clearing the restored department filter the first time YmsSelector
@@ -223,8 +231,15 @@ export const SearchPage = () => {
     if (isInitialYmsChange.current) {
       isInitialYmsChange.current = false;
     } else {
+      setCollegeCode("");
       setDepartmentCode("");
     }
+  };
+
+  const onCollegeChange = (id: Key | null) => {
+    setCollegeCode(id?.toString() || "");
+    // A new 學院 invalidates any previously chosen 科系.
+    setDepartmentCode("");
   };
 
   const onDepartmentChange = (id: Key | null) => {
@@ -271,6 +286,15 @@ export const SearchPage = () => {
       : null,
   );
 
+  // 學院→科系 master data. Failures/absence (e.g. an old year without a
+  // backfilled file) are non-fatal: the department selector falls back to the
+  // flat teacher units below, so course search keeps working.
+  const { data: colleges = [] } = useFetchJson<CollegeItem[]>(
+    yms
+      ? `${siteConfig.links.github.api}/${year}/${semester}/departments.json`
+      : null,
+  );
+
   const loading = unitsLoading || locationsLoading;
   const error = unitsError || locationsError;
   const refetch = () => {
@@ -288,6 +312,40 @@ export const SearchPage = () => {
       ),
     [units, locations],
   );
+
+  // Use the 學院→科系 cascade when departments.json is available; otherwise
+  // fall back to the flat teacher units so old years still filter by 科系.
+  const useCascade = colleges.length > 0;
+
+  // Reverse lookup 科系 (unt_id) -> 學院 (dpt_id), used to restore the college
+  // selection from a URL that only carries the department (dept) param.
+  const collegeByDepartment = useMemo(() => {
+    const map = new Map<string, string>();
+
+    colleges.forEach((college) => {
+      college.departments.forEach((dept) => map.set(dept.code, college.code));
+    });
+
+    return map;
+  }, [colleges]);
+
+  // Once colleges load, derive the college from a URL-restored department so
+  // the (dependent) 科系 selector can show it. Only runs while no college is
+  // chosen yet, so it never overrides the user's own selection.
+  useEffect(() => {
+    if (collegeCode || !departmentCode) return;
+
+    const derived = collegeByDepartment.get(departmentCode);
+
+    if (derived) setCollegeCode(derived);
+  }, [collegeByDepartment, departmentCode, collegeCode]);
+
+  // 科系 options: the selected 學院's departments in cascade mode, or the flat
+  // teacher units as a fallback when departments.json is unavailable.
+  const departmentItems = useCascade
+    ? (colleges.find((college) => college.code === collegeCode)?.departments ??
+      [])
+    : units;
 
   const hasFilter = keyword.trim().length > 0 || departmentCode.length > 0;
 
@@ -382,12 +440,23 @@ export const SearchPage = () => {
             </Link>
           </div>
         )}
-        <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
+        <div className="flex flex-col md:flex-row flex-wrap justify-center gap-4 w-full max-w-4xl items-center">
           <YmsSelector initialKey={yms || undefined} onChange={onYmsChange} />
+          {useCascade && (
+            <ItemSelector
+              items={colleges}
+              label="選擇學院"
+              placeholder="不限學院"
+              selectedKey={collegeCode || null}
+              onChange={onCollegeChange}
+            />
+          )}
           <ItemSelector
-            items={units}
+            items={departmentItems}
             label="選擇系所"
-            placeholder="不限系所"
+            placeholder={
+              useCascade && !collegeCode ? "請先選擇學院" : "不限系所"
+            }
             selectedKey={departmentCode || null}
             onChange={onDepartmentChange}
           />
