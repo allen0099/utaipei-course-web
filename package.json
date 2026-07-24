@@ -57,7 +57,7 @@
     "postcss": "8.5.22",
     "prettier": "3.9.6",
     "rollup-plugin-visualizer": "^7.0.1",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "vite": "8.1.5"
   }
 }
