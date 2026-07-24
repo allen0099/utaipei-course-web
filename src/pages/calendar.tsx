@@ -55,11 +55,11 @@ export const CalendarPage = () => {
         <div className="flex max-sm:flex-col max-lg:w-full items-center">
           <h1 className={title()}>{selectedCalendar?.title || "校園行事曆"}</h1>
           <Dropdown>
-            <Dropdown.Trigger>
-              <Button className="ml-8" variant="ghost">
-                切換學年度
-              </Button>
-            </Dropdown.Trigger>
+            {/* Button is the RAC menu trigger directly; wrapping it in
+                Dropdown.Trigger would nest a <button> inside a <button>. */}
+            <Button className="ml-8" variant="ghost">
+              切換學年度
+            </Button>
             <Dropdown.Popover>
               <Dropdown.Menu
                 aria-label="選擇學年度"

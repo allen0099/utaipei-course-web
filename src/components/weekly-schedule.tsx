@@ -801,13 +801,14 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
               </Tooltip>
 
               <Dropdown>
+                {/* HeroUI's Button is itself the RAC menu trigger (wired via
+                    Dropdown's context), so it's used directly — wrapping it in
+                    Dropdown.Trigger would render a <button> inside a <button>. */}
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <Dropdown.Trigger>
-                      <Button isIconOnly size="sm" variant="secondary">
-                        <Cog6ToothIcon width="20" />
-                      </Button>
-                    </Dropdown.Trigger>
+                    <Button isIconOnly size="sm" variant="secondary">
+                      <Cog6ToothIcon width="20" />
+                    </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>設定</Tooltip.Content>
                 </Tooltip>
