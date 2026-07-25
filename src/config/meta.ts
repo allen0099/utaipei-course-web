@@ -11,6 +11,7 @@ export interface PageMeta {
   description: string;
   ogType?: string;
   ogImage?: string;
+  ogImageAlt?: string;
   /** 送 robots noindex 並排除於 sitemap／JSON-LD 之外。 */
   noIndex?: boolean;
 }
@@ -27,4 +28,10 @@ export const defaultMeta: PageMeta = sharedDefaultMeta;
 export const getPageMeta = (pathname: string): PageMeta =>
   sharedGetPageMeta(pathname);
 
-export { SITE, canonicalUrl, buildJsonLd } from "./page-meta.js";
+export {
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_WIDTH,
+  SITE,
+  canonicalUrl,
+  buildJsonLd,
+} from "./page-meta.js";

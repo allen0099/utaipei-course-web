@@ -17,8 +17,13 @@ export const SITE = {
   /** UI 上顯示的短名（navbar、首頁 h1）。 */
   shortName: "選課小幫手",
   baseUrl: "https://utc.allen0099.tw",
-  ogImage: "/CatMeow.png",
-  ogImageAlt: "北市大選課小幫手的貓咪吉祥物",
+  /**
+   * 沒有指定 ogImage 的路由用這張。所有 /og/*.png 都是 1200×630（scripts/
+   * generate-brand-assets.js 產生），改尺寸的話 OG_IMAGE_WIDTH／HEIGHT 與
+   * twitter:card 要一起改。
+   */
+  ogImage: "/og/home.png",
+  ogImageAlt: "北市大選課小幫手",
   locale: "zh-TW",
   ogLocale: "zh_TW",
 };
@@ -39,10 +44,19 @@ export function canonicalUrl(pathname) {
 }
 
 /**
+ * 分享圖尺寸。Facebook／Twitter 都會拿它決定要不要用大圖版型，寫在 meta 裡
+ * 爬蟲就不必先下載圖片才知道，圖也不會先閃一下小圖再換大圖。
+ */
+export const OG_IMAGE_WIDTH = 1200;
+export const OG_IMAGE_HEIGHT = 630;
+
+/**
  * @param {{
  *   name: string,
  *   title?: string,
  *   description: string,
+ *   ogImage?: string,
+ *   ogImageAlt?: string,
  *   noIndex?: boolean,
  * }} meta
  */
@@ -53,7 +67,9 @@ function page(meta) {
     title: meta.title ?? `${meta.name} - ${SITE.name}`,
     description: meta.description,
     ogType: "website",
-    ogImage: SITE.ogImage,
+    // 每頁一張 1200×630 的分享圖；沒指定就退回站台預設的那張。
+    ogImage: meta.ogImage ?? SITE.ogImage,
+    ogImageAlt: meta.ogImageAlt ?? `${meta.name}｜${SITE.name}`,
     noIndex: meta.noIndex ?? false,
   };
 }
@@ -69,26 +85,35 @@ export const pageMeta = {
     title: SITE.name,
     description:
       "臺北市立大學課程查詢與課表工具，可查開課資料、排課表、偵測衝堂，並提供行事曆、校園地圖與節次表。",
+    ogImage: "/og/home.png",
+    // 首頁的 name 是導覽用的「首頁」，當替代文字太模糊，改用品牌全名。
+    ogImageAlt: SITE.name,
   }),
   "/calendar": page({
     name: "校園行事曆",
     description:
       "查看臺北市立大學各學年度學期重要日程，可下載 .ics 或複製訂閱網址，讓學校更新自動同步到個人日曆。",
+    ogImage: "/og/calendar.png",
   }),
   "/search": page({
     name: "課程查詢",
     description:
       "依學年期、學院系所或關鍵字搜尋臺北市立大學開課資料，勾選後即時組成週課表。",
+    ogImage: "/og/search.png",
   }),
   "/my-schedule": page({
     name: "我的課表",
     description:
       "集中管理在課程查詢頁勾選的課程，自動標示衝堂時段，可分享連結或匯出成 .ics 日曆與課表圖片。",
+    ogImage: "/og/my-schedule.png",
   }),
   "/share": page({
     name: "分享的課表",
     description:
       "開啟別人分享的課表連結，唯讀檢視上課時間與衝堂狀況，也能一鍵合併到自己的課表。",
+    // noIndex 不代表不需要分享圖——這頁正是最常被貼進聊天室的那一頁，預覽圖
+    // 是給人看的，跟要不要被搜尋引擎收錄是兩回事。
+    ogImage: "/og/share.png",
     // 每條分享連結的內容都不同且只存在於網址片段裡，收錄進搜尋結果沒有意義，
     // 也不該讓某個人的課表被搜到。noIndex 的路由同時會被排除在 sitemap 與
     // JSON-LD 之外。
@@ -98,27 +123,32 @@ export const pageMeta = {
     name: "教師課表",
     description:
       "依學年期與系級選擇教師，查看該教師整學期的授課科目、上課時間與週課表。",
+    ogImage: "/og/schedules-teacher.png",
   }),
   "/schedules/class": page({
     name: "班級課表",
     description:
       "依班級查詢整學期課表的功能開發中，目前可改用課程查詢的班級關鍵字篩選或教師課表取得相同資訊。",
+    ogImage: "/og/schedules-class.png",
   }),
   "/schedules/location": page({
     // 資料裡不只教室，還有攀岩場地、田徑場、網球場等場地，所以是「地點」不是「教室」。
     name: "地點課表",
     description:
       "查詢教室、球場、田徑場等場地整學期的使用狀況，確認哪些時段已被排課。",
+    ogImage: "/og/schedules-location.png",
   }),
   "/map": page({
     name: "校園地圖",
     description:
       "博愛與天母校區大樓代碼對照表，搭配互動樓層平面圖，快速找到上課教室的位置。",
+    ogImage: "/og/map.png",
   }),
   "/timetable": page({
     name: "校園節次表",
     description:
       "博愛與天母校區各節次的上下課時間對照，確認第幾節課從幾點開始。",
+    ogImage: "/og/timetable.png",
   }),
 };
 

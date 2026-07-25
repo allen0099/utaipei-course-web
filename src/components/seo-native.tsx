@@ -1,13 +1,21 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router";
 
-import { SITE, buildJsonLd, canonicalUrl, getPageMeta } from "@/config/meta";
+import {
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_WIDTH,
+  SITE,
+  buildJsonLd,
+  canonicalUrl,
+  getPageMeta,
+} from "@/config/meta";
 
 interface SEOProps {
   title?: string;
   description?: string;
   ogType?: string;
   ogImage?: string;
+  ogImageAlt?: string;
   noIndex?: boolean;
 }
 
@@ -19,6 +27,7 @@ export default function SEO({
   description,
   ogType,
   ogImage,
+  ogImageAlt,
   noIndex = false,
 }: SEOProps) {
   const location = useLocation();
@@ -28,6 +37,7 @@ export default function SEO({
   const seoDescription = description || pageMeta.description;
   const seoOgType = ogType || pageMeta.ogType || "website";
   const seoOgImage = ogImage || pageMeta.ogImage;
+  const seoOgImageAlt = ogImageAlt || pageMeta.ogImageAlt || SITE.ogImageAlt;
 
   useEffect(() => {
     // Update document title
@@ -75,11 +85,18 @@ export default function SEO({
 
     if (absoluteOgImage) {
       updateMetaTag('meta[property="og:image"]', absoluteOgImage);
-      updateMetaTag('meta[property="og:image:alt"]', SITE.ogImageAlt);
+      // 尺寸讓爬蟲不必先抓圖就知道是大圖，預覽也不會先閃一下小圖再換掉。
+      updateMetaTag('meta[property="og:image:width"]', String(OG_IMAGE_WIDTH));
+      updateMetaTag(
+        'meta[property="og:image:height"]',
+        String(OG_IMAGE_HEIGHT),
+      );
+      updateMetaTag('meta[property="og:image:alt"]', seoOgImageAlt);
     }
 
     // Update Twitter Card tags
-    updateMetaTag('meta[name="twitter:card"]', "summary");
+    // 分享圖是 1200×630 的大圖版型，用 summary 會被裁成小方塊。
+    updateMetaTag('meta[name="twitter:card"]', "summary_large_image");
     updateMetaTag('meta[name="twitter:title"]', seoTitle);
     updateMetaTag('meta[name="twitter:description"]', seoDescription);
 
@@ -132,6 +149,7 @@ export default function SEO({
     seoDescription,
     seoOgType,
     seoOgImage,
+    seoOgImageAlt,
     noIndex,
   ]);
 

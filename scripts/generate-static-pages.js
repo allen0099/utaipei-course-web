@@ -12,6 +12,8 @@ import { fileURLToPath } from 'url';
 
 // 路由表與 app runtime（src/config/meta.ts）共用同一份純 .js 資料，兩邊不會漂移。
 import {
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_WIDTH,
   SITE,
   buildJsonLd,
   canonicalUrl,
@@ -63,10 +65,13 @@ function generateMetaTags(route, routeMeta) {
     <meta property="og:site_name" content="${escapeAttr(SITE.name)}" />
     <meta property="og:locale" content="${escapeAttr(SITE.ogLocale)}" />
     <meta property="og:image" content="${escapeAttr(fullOgImage)}" />
-    <meta property="og:image:alt" content="${escapeAttr(SITE.ogImageAlt)}" />
+    <meta property="og:image:width" content="${OG_IMAGE_WIDTH}" />
+    <meta property="og:image:height" content="${OG_IMAGE_HEIGHT}" />
+    <meta property="og:image:alt" content="${escapeAttr(routeMeta.ogImageAlt || SITE.ogImageAlt)}" />
 
     <!-- Twitter Card meta tags -->
-    <meta name="twitter:card" content="summary" />
+    <!-- 分享圖是 1200×630 的大圖版型，用 summary 會被裁成小方塊。 -->
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeAttr(routeMeta.title)}" />
     <meta name="twitter:description" content="${escapeAttr(routeMeta.description)}" />
     <meta name="twitter:image" content="${escapeAttr(fullOgImage)}" />
