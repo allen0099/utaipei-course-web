@@ -45,6 +45,15 @@ const routes = {
       "集中檢視在課程查詢頁勾選的臺北市立大學課程，自動偵測衝堂，並可匯出成日曆或圖片。",
     keywords: "臺北市立大學,我的課表,選課,衝堂偵測,課表匯出,UTC",
   },
+  "/share": {
+    title: "分享的課表 - UTC 選課小幫手",
+    description:
+      "檢視別人分享的臺北市立大學課表，確認上課時間與衝堂狀況，也可以一鍵加入自己的課表。",
+    keywords: "臺北市立大學,分享課表,課表,選課,UTC",
+    // 每條分享連結的內容都不同且只存在於網址片段裡，收錄進搜尋結果沒有意義，
+    // 也不該讓某個人的課表被搜到。noIndex 的路由同時會被排除在 sitemap 之外。
+    noIndex: true,
+  },
   "/schedules/teacher": {
     title: "教師課表 - UTC 選課小幫手",
     description: "查詢臺北市立大學個別教師在該學期的授課課表與上課時間。",
@@ -84,7 +93,14 @@ function generateMetaTags(route, routeMeta) {
   const fullUrl = `${siteConfig.baseUrl}${route}`;
   const fullOgImage = `${siteConfig.baseUrl}${siteConfig.ogImage}`;
 
-  return `
+  const robotsTag = routeMeta.noIndex
+    ? `
+    <!-- No index for robots -->
+    <meta name="robots" content="noindex,nofollow" />
+`
+    : '';
+
+  return `${robotsTag}
     <!-- Basic meta tags -->
     <meta name="description" content="${routeMeta.description}" />
     <meta name="keywords" content="${routeMeta.keywords}" />
@@ -111,7 +127,11 @@ function generateMetaTags(route, routeMeta) {
 
 function generateSitemap() {
   const today = new Date().toISOString().split('T')[0];
-  const urlEntries = Object.keys(routes)
+  const urlEntries = Object.entries(routes)
+    // A noIndex route asks crawlers to stay away; listing it in the sitemap
+    // would be inviting them in through the other door.
+    .filter(([, routeMeta]) => !routeMeta.noIndex)
+    .map(([route]) => route)
     .map(
       (route) => `  <url>
     <loc>${siteConfig.baseUrl}${route}</loc>
@@ -160,12 +180,29 @@ function generateStaticPages() {
       `<title>${routeMeta.title}</title>`
     );
 
-    // Replace the existing meta tags section with route-specific ones
+    // Replace the existing meta tags section with route-specific ones.
+    //
+    // The block is anchored between the "Default meta tags" comment and the
+    // theme script that follows it in index.html. A regex is only as good as
+    // those anchors, so a miss fails the build instead of silently shipping
+    // every route with the site-wide default description and OG tags.
+    const metaBlock = /<!-- Default meta tags[\s\S]*?<!-- Apply saved theme/;
+
+    if (!metaBlock.test(html)) {
+      console.error(
+        '❌ Could not find the default meta tag block in dist/index.html.',
+      );
+      console.error(
+        'The anchors in index.html changed — update the regex in this script.',
+      );
+      process.exit(1);
+    }
+
     html = html.replace(
-      /<!-- Default meta tags[\s\S]*?<!-- Viewport meta tag -->/,
+      metaBlock,
       `<!-- Route-specific meta tags -->${metaTags}
-    
-    <!-- Viewport meta tag -->`
+
+    <!-- Apply saved theme`
     );
 
     // Determine the file path based on route

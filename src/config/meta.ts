@@ -60,6 +60,16 @@ export const pageMeta: Record<string, PageMeta> = {
     ogType: "website",
     ogImage: DEFAULT_OG_IMAGE,
   },
+  // 內容完全來自網址片段，每條連結的課表都不一樣，對搜尋引擎沒有意義，
+  // 因此頁面本身以 noIndex 呈現（見 pages/share.tsx），也不列入 sitemap。
+  "/share": {
+    title: "分享的課表 - UTC 選課小幫手",
+    description:
+      "檢視別人分享的臺北市立大學課表，確認上課時間與衝堂狀況，也可以一鍵加入自己的課表。",
+    keywords: "臺北市立大學,分享課表,課表,選課,UTC",
+    ogType: "website",
+    ogImage: DEFAULT_OG_IMAGE,
+  },
   "/schedules/teacher": {
     title: "教師課表 - UTC 選課小幫手",
     description: "查詢臺北市立大學個別教師在該學期的授課課表與上課時間。",
