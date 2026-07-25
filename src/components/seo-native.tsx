@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 
 import { getPageMeta } from "@/config/meta";
 import { siteConfig } from "@/config/site";
@@ -47,7 +47,7 @@ export default function SEO({
         meta = document.createElement("meta");
         const parts = selector.split("[")[1].split("=");
         const attr = parts[0];
-        const value = parts[1].replace(/['"]/g, "").replace(/\]/g, "");
+        const value = parts[1].replace(/['"]/g, "").replace(/]/g, "");
 
         meta.setAttribute(attr, value);
         meta.setAttribute("content", content);

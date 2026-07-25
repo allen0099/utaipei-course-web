@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { I18nProvider, RouterProvider } from "react-aria-components";
-import { useHref, useNavigate } from "react-router-dom";
+import { useHref, useNavigate } from "react-router";
 
 export function Provider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();

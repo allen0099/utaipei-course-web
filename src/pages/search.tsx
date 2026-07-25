@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { Separator, SearchField, Checkbox, Chip, Link } from "@heroui/react";
 import { Key } from "@react-types/shared";
 

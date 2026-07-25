@@ -64,7 +64,6 @@ export const CopyButton = ({
       resetStateWithTimeout();
     } catch (err) {
       setCopyState("failed");
-      console.error("複製失敗:", err);
       onError?.(err);
       resetStateWithTimeout();
     }
