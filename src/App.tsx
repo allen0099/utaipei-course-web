@@ -11,6 +11,7 @@ import MapPage from "@/pages/map.tsx";
 import TimetablePage from "@/pages/timetable.tsx";
 import LocationSearchPage from "@/pages/schedules/location.tsx";
 import MySchedulePage from "@/pages/my-schedule.tsx";
+import SharedSchedulePage from "@/pages/share.tsx";
 import ErrorBoundary from "@/components/error-boundary.tsx";
 
 function App() {
@@ -23,7 +24,10 @@ function App() {
       sessionStorage.removeItem("redirect");
       const url = new URL(redirectPath);
 
-      navigate(url.pathname, { replace: true });
+      // Search and hash have to be carried over, not just the path: shared
+      // schedules put their whole payload in the fragment, and /search keeps
+      // its filters in the query string.
+      navigate(url.pathname + url.search + url.hash, { replace: true });
     }
   }, [navigate]);
 
@@ -35,6 +39,7 @@ function App() {
         <Route element={<MapPage />} path="/map" />
         <Route element={<SearchPage />} path="/search" />
         <Route element={<MySchedulePage />} path="/my-schedule" />
+        <Route element={<SharedSchedulePage />} path="/share" />
         <Route element={<TeacherSchedulePage />} path="/schedules/teacher" />
         <Route element={<ClassSearchPage />} path="/schedules/class" />
         <Route element={<LocationSearchPage />} path="/schedules/location" />

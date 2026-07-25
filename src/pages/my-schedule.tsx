@@ -2,114 +2,52 @@ import { useMemo, useState } from "react";
 import { Button, Card, Link, Modal } from "@heroui/react";
 import {
   TrashIcon,
+  ShareIcon,
   ExclamationTriangleIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 
 import { PageHeader } from "@/components/page-header.tsx";
 import DefaultLayout from "@/layouts/default";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
-import { convertCourses } from "@/utils/convert-course.ts";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
-import { findScheduleConflicts } from "@/utils/schedule-conflict.ts";
+import { useScheduleSlots } from "@/hooks/useScheduleSlots.ts";
+import { useYms } from "@/hooks/useYms.ts";
 import { MergedCourseItem } from "@/interfaces/globals.ts";
 import { cardTitle } from "@/components/primitives.ts";
-import { DataTable, DataTableColumn } from "@/components/data-table.tsx";
-import { EmptyState } from "@/components/states.tsx";
+import { DataTable } from "@/components/data-table.tsx";
+import { buildCourseColumns } from "@/components/course-columns.tsx";
+import { EmptyState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
+import { ShareScheduleModal } from "@/components/share-schedule-modal.tsx";
 
 export const MySchedulePage = () => {
-  const { selectedCourses, removeCourse, clearAll } = useSelectedCourses();
+  const { selectedCourses, scheduleYms, removeCourse, clearAll } =
+    useSelectedCourses();
+  const { defaultCode, displayNameOf } = useYms();
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
-  const scheduleCourses = useMemo(
-    () => convertCourses(selectedCourses),
-    [selectedCourses],
-  );
+  const {
+    scheduleCourses,
+    conflictNamesByCourseCode,
+    conflictCourseCodes,
+    hasConflicts,
+  } = useScheduleSlots(selectedCourses);
 
-  const conflicts = useMemo(
-    () => findScheduleConflicts(scheduleCourses),
-    [scheduleCourses],
-  );
-
-  // Map each course code to the names of the other courses it conflicts with.
-  const conflictNamesByCourseCode = useMemo(() => {
-    const result = new Map<string, Set<string>>();
-
-    conflicts.forEach((conflict) => {
-      const slot = scheduleCourses.find((c) => c.id === conflict.slotId);
-
-      if (!slot) return;
-
-      const names = result.get(slot.code) || new Set<string>();
-
-      conflict.conflictingSlotIds.forEach((otherId) => {
-        const otherSlot = scheduleCourses.find((c) => c.id === otherId);
-
-        if (otherSlot && otherSlot.code !== slot.code) {
-          names.add(otherSlot.name);
-        }
-      });
-
-      result.set(slot.code, names);
-    });
-
-    return result;
-  }, [conflicts, scheduleCourses]);
-
-  const hasConflicts = conflictNamesByCourseCode.size > 0;
+  const semesterName = displayNameOf(scheduleYms);
+  // The current 學年期 rolls over while a saved schedule stays put, and a
+  // schedule only ever holds one — so once they diverge, nothing new can be
+  // added until this one is cleared.
+  const isStaleSemester =
+    scheduleYms !== null && defaultCode !== null && scheduleYms !== defaultCode;
 
   const handleRemove = (course: MergedCourseItem) => {
     removeCourse(course);
   };
 
-  const columns: DataTableColumn<MergedCourseItem>[] = useMemo(
-    () => [
-      {
-        key: "code",
-        label: "課程代碼",
-        headerLabel: "代碼",
-        width: "w-[12%]",
-        cellClassName: "tabular-nums text-muted",
-        hideOnCard: true,
-      },
-      {
-        key: "name",
-        label: "課程名稱",
-        width: "w-[20%]",
-        cellClassName: "font-medium text-foreground",
-        hideOnCard: true,
-      },
-      {
-        key: "class",
-        label: "班級名稱",
-        headerLabel: "班級",
-        width: "w-[14%]",
-      },
-      { key: "teacher", label: "教師", width: "w-[12%]" },
-      {
-        key: "time",
-        label: "時間",
-        width: "w-[14%]",
-        cellClassName: "tabular-nums text-foreground/80",
-      },
-      {
-        key: "conflict",
-        label: "衝堂提示",
-        width: "w-[22%]",
-        render: (course) => {
-          const names = conflictNamesByCourseCode.get(course.code);
-
-          if (!names || names.size === 0) return "-";
-
-          return (
-            <span className="inline-flex items-start gap-1 text-danger">
-              <ExclamationTriangleIcon className="mt-0.5 shrink-0" width={16} />
-              與 {Array.from(names).join("、")} 衝堂
-            </span>
-          );
-        },
-      },
-    ],
+  const columns = useMemo(
+    () => buildCourseColumns<MergedCourseItem>(conflictNamesByCourseCode),
     [conflictNamesByCourseCode],
   );
 
@@ -118,7 +56,7 @@ export const MySchedulePage = () => {
       <PageSection>
         <PageHeader
           className="mb-6 max-w-5xl"
-          description="在課程查詢頁勾選的課程會集中在這裡，可匯出成日曆或圖片。"
+          description="在課程查詢頁勾選的課程會集中在這裡，可分享給別人或匯出成日曆、圖片。"
           title="我的課表"
         />
 
@@ -134,28 +72,55 @@ export const MySchedulePage = () => {
           />
         ) : (
           <div className="w-full max-w-5xl flex flex-col gap-6">
+            {isStaleSemester && (
+              <Notice icon={<InformationCircleIcon width={20} />}>
+                此課表為 {semesterName}，目前學期已是{" "}
+                {displayNameOf(defaultCode)}
+                。一份課表只能有一個學年期，要選新學期的課請先清空這份課表。
+              </Notice>
+            )}
+
             {hasConflicts && (
-              <div className="flex items-center gap-2 rounded-lg border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
-                <ExclamationTriangleIcon className="shrink-0" width={20} />
-                <span>
-                  已選課程中有時段衝突，請確認課表下方標示的衝堂課程。
-                </span>
-              </div>
+              <Notice
+                icon={<ExclamationTriangleIcon width={20} />}
+                tone="danger"
+              >
+                已選課程中有時段衝突，請確認課表下方標示的衝堂課程。
+              </Notice>
             )}
 
             <Card className="w-full">
-              <Card.Header className="flex items-center justify-between">
-                <h3 className={cardTitle()}>
-                  已選課程（{selectedCourses.length}）
-                </h3>
-                {/* 清空會直接抹掉 localStorage 且無法復原，先確認再執行。 */}
-                <Button
-                  size="sm"
-                  variant="tertiary"
-                  onPress={() => setConfirmClearOpen(true)}
-                >
-                  清空所有課程
-                </Button>
+              <Card.Header className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-col">
+                  <h3 className={cardTitle()}>
+                    已選課程（{selectedCourses.length}）
+                  </h3>
+                  {semesterName && (
+                    <span className="text-sm text-muted">{semesterName}</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    // scheduleYms is only null for an empty schedule, which
+                    // renders the empty state above — but the link has to carry
+                    // a 學年期, so guard rather than encode an empty one.
+                    isDisabled={!scheduleYms}
+                    size="sm"
+                    variant="ghost"
+                    onPress={() => setShareOpen(true)}
+                  >
+                    <ShareIcon className="size-4" />
+                    分享課表
+                  </Button>
+                  {/* 清空會直接抹掉 localStorage 且無法復原，先確認再執行。 */}
+                  <Button
+                    size="sm"
+                    variant="tertiary"
+                    onPress={() => setConfirmClearOpen(true)}
+                  >
+                    清空所有課程
+                  </Button>
+                </div>
               </Card.Header>
               <Card.Content>
                 <DataTable
@@ -183,10 +148,20 @@ export const MySchedulePage = () => {
             </Card>
 
             <WeeklySchedule
-              conflictCourseCodes={Array.from(conflictNamesByCourseCode.keys())}
+              conflictCourseCodes={conflictCourseCodes}
               courses={scheduleCourses}
               scheduleTitle="我的課表"
             />
+
+            {scheduleYms && (
+              <ShareScheduleModal
+                courses={selectedCourses}
+                defaultTitle={semesterName ? `${semesterName}課表` : "我的課表"}
+                isOpen={shareOpen}
+                yms={scheduleYms}
+                onOpenChange={setShareOpen}
+              />
+            )}
 
             <Modal>
               <Modal.Backdrop
