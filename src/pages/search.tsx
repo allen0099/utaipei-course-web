@@ -1,17 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  Separator,
-  SearchField,
-  Spinner,
-  Checkbox,
-  Chip,
-  Link,
-} from "@heroui/react";
+import { Separator, SearchField, Checkbox, Chip, Link } from "@heroui/react";
 import { Key } from "@react-types/shared";
-import clsx from "clsx";
 
 import { PageHeader } from "@/components/page-header.tsx";
+import { DataTable, DataTableColumn } from "@/components/data-table.tsx";
+import { EmptyState, LoadingState } from "@/components/states.tsx";
+import { PageSection } from "@/components/panel.tsx";
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
 import {
@@ -36,42 +31,30 @@ import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 
 const MAX_DISPLAYED_COURSES = 200;
 
-interface Column {
-  key: keyof MergedCourseItem;
-  label: string;
-  // Shorter header used only in the desktop table (narrow columns); the mobile
-  // card layout keeps the full `label` as its field name.
-  headerLabel?: string;
-  render?: (item: MergedCourseItem) => string;
-  // Fixed column width (Tailwind class) for the desktop `table-fixed` layout.
-  // Explicit widths are required because CJK content has ~1-char min-content,
-  // so an auto table would otherwise collapse wrapping columns into thin
-  // ribbons. Percentages sum to ~92% (the checkbox column takes the rest).
-  width: string;
-  // Extra text styling for the desktop body cell (emphasis / muting).
-  cellClassName?: string;
-}
-
-const COLUMNS: Column[] = [
+// Percentages sum to ~92% (the checkbox column takes the rest).
+const COLUMNS: DataTableColumn<MergedCourseItem>[] = [
   {
     key: "code",
     label: "課程代碼",
     headerLabel: "代碼",
     width: "w-[9%]",
-    cellClassName: "tabular-nums text-gray-500 dark:text-gray-400",
+    cellClassName: "tabular-nums text-muted",
+    // Promoted to the mobile card header.
+    hideOnCard: true,
   },
   {
     key: "name",
     label: "課程名稱",
     width: "w-[16%]",
-    cellClassName: "font-medium text-gray-900 dark:text-gray-100",
+    cellClassName: "font-medium text-foreground",
+    hideOnCard: true,
   },
   {
     key: "departments",
     label: "系所",
     render: (item) => item.departments?.join("、") || "-",
     width: "w-[26%]",
-    cellClassName: "text-gray-500 dark:text-gray-400",
+    cellClassName: "text-muted",
   },
   { key: "class", label: "班級名稱", headerLabel: "班級", width: "w-[9%]" },
   { key: "teacher", label: "教師", width: "w-[12%]" },
@@ -79,119 +62,44 @@ const COLUMNS: Column[] = [
     key: "time",
     label: "時間",
     width: "w-[12%]",
-    cellClassName: "tabular-nums text-gray-600 dark:text-gray-300",
+    cellClassName: "tabular-nums text-foreground/80",
   },
   {
     key: "classroom",
     label: "教室",
     width: "w-[12%]",
-    cellClassName: "text-gray-600 dark:text-gray-300",
+    cellClassName: "text-foreground/80",
   },
 ];
-
-// Resolve a column's display value for a course (used by both the desktop
-// table and the mobile card layout).
-const cellValue = (column: Column, item: MergedCourseItem): string =>
-  column.render ? column.render(item) : (item[column.key] as string) || "-";
 
 const CourseTable = ({ courses }: { courses: MergedCourseItem[] }) => {
   const { isSelected, toggleCourse } = useSelectedCourses();
 
-  const renderCheckbox = (item: MergedCourseItem) => (
-    <Checkbox
-      aria-label={`將 ${item.name} (${item.class}) 加入我的課表`}
-      isSelected={isSelected(item)}
-      onChange={() => toggleCourse(item)}
-    >
-      <Checkbox.Content>
-        <Checkbox.Control>
-          <Checkbox.Indicator />
-        </Checkbox.Control>
-      </Checkbox.Content>
-    </Checkbox>
-  );
-
-  // Fields shown in the mobile card body (name and code are promoted to the
-  // card header, so they're excluded here).
-  const cardColumns = COLUMNS.filter(
-    (column) => column.key !== "name" && column.key !== "code",
-  );
-
   return (
-    <>
-      {/* Desktop table (md and up) */}
-      <div className="mt-4 overflow-x-auto hidden md:block rounded-lg border border-gray-200 dark:border-gray-800">
-        <table className="w-full table-fixed text-sm">
-          <colgroup>
-            <col className="w-14" />
-            {COLUMNS.map((column) => (
-              <col key={column.key} className={column.width} />
-            ))}
-          </colgroup>
-          <thead>
-            <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-medium tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-400">
-              <th className="px-3 py-2.5 font-medium">加入</th>
-              {COLUMNS.map((column) => (
-                <th key={column.key} className="px-3 py-2.5 font-medium">
-                  {column.headerLabel ?? column.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {courses.map((item, index) => (
-              <tr
-                key={`${item.code}-${item.class}-${index}`}
-                className="border-b border-gray-100 transition-colors last:border-b-0 hover:bg-gray-50 dark:border-gray-800/60 dark:hover:bg-white/[0.03]"
-              >
-                <td className="px-3 py-2.5 align-top">
-                  {renderCheckbox(item)}
-                </td>
-                {COLUMNS.map((column) => (
-                  <td
-                    key={column.key}
-                    className={clsx(
-                      "px-3 py-2.5 align-top break-words leading-relaxed",
-                      column.cellClassName,
-                    )}
-                  >
-                    {cellValue(column, item)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile cards (below md) — no horizontal scroll */}
-      <div className="md:hidden mt-4 flex flex-col gap-3">
-        {courses.map((item, index) => (
-          <div
-            key={`${item.code}-${item.class}-${index}`}
-            className="rounded-lg border border-gray-200 dark:border-gray-800 p-3"
+    <DataTable
+      cardSubtitle={(item) => item.code}
+      cardTitle={(item) => item.name}
+      className="mt-4"
+      columns={COLUMNS}
+      leading={{
+        label: "加入",
+        render: (item) => (
+          <Checkbox
+            aria-label={`將 ${item.name} (${item.class}) 加入我的課表`}
+            isSelected={isSelected(item)}
+            onChange={() => toggleCourse(item)}
           >
-            <div className="flex items-start gap-2">
-              <div className="pt-0.5">{renderCheckbox(item)}</div>
-              <div className="min-w-0">
-                <div className="font-semibold break-words">{item.name}</div>
-                <div className="text-xs opacity-70">{item.code}</div>
-              </div>
-            </div>
-            <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-              {cardColumns.map((column) => (
-                <div key={column.key} className="contents">
-                  <dt className="opacity-60 whitespace-nowrap">
-                    {column.label}
-                  </dt>
-                  <dd className="break-words">{cellValue(column, item)}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        ))}
-      </div>
-    </>
+            <Checkbox.Content>
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+            </Checkbox.Content>
+          </Checkbox>
+        ),
+      }}
+      rowKey={(item, index) => `${item.code}-${item.class}-${index}`}
+      rows={courses}
+    />
   );
 };
 
@@ -217,7 +125,14 @@ export const SearchPage = () => {
   );
   // 學院 (dpt_id) — narrows the 科系 (unt_id) list below. Not persisted in the
   // URL; on restore it's derived from the department (unt_id) instead.
-  const [collegeCode, setCollegeCode] = useState<string>("");
+  //
+  // Only the user's *explicit* choice lives in state: `null` means "hasn't
+  // picked one", `""` means they deliberately picked 不限學院. The effective
+  // value is computed during render further down, so a URL-restored department
+  // doesn't need an effect to write the college back into state.
+  const [pickedCollegeCode, setPickedCollegeCode] = useState<string | null>(
+    null,
+  );
   const [year, semester] = yms.split("#");
 
   // Skip clearing the restored department filter the first time YmsSelector
@@ -231,13 +146,14 @@ export const SearchPage = () => {
     if (isInitialYmsChange.current) {
       isInitialYmsChange.current = false;
     } else {
-      setCollegeCode("");
+      // Back to "hasn't picked one" — a new 學年期 has its own 學院 list.
+      setPickedCollegeCode(null);
       setDepartmentCode("");
     }
   };
 
   const onCollegeChange = (id: Key | null) => {
-    setCollegeCode(id?.toString() || "");
+    setPickedCollegeCode(id?.toString() || "");
     // A new 學院 invalidates any previously chosen 科系.
     setDepartmentCode("");
   };
@@ -329,16 +245,17 @@ export const SearchPage = () => {
     return map;
   }, [colleges]);
 
-  // Once colleges load, derive the college from a URL-restored department so
-  // the (dependent) 科系 selector can show it. Only runs while no college is
-  // chosen yet, so it never overrides the user's own selection.
-  useEffect(() => {
-    if (collegeCode || !departmentCode) return;
-
-    const derived = collegeByDepartment.get(departmentCode);
-
-    if (derived) setCollegeCode(derived);
-  }, [collegeByDepartment, departmentCode, collegeCode]);
+  // The 學院 actually in effect. The user's own pick always wins; otherwise it
+  // is derived from a URL-restored department once colleges.json has loaded,
+  // so the dependent 科系 selector has something to list.
+  //
+  // Computed here rather than written back into state from an effect: the
+  // effect version re-rendered the whole page a second time on every
+  // colleges.json load, purely to store a value that is a pure function of
+  // state we already have.
+  const collegeCode =
+    pickedCollegeCode ??
+    (departmentCode ? (collegeByDepartment.get(departmentCode) ?? "") : "");
 
   // 科系 options: the selected 學院's departments in cascade mode, or the flat
   // teacher units as a fallback when departments.json is unavailable.
@@ -375,7 +292,7 @@ export const SearchPage = () => {
 
   const renderResults = () => {
     if (!yms) {
-      return <h3 className="text-lg text-center">請先選擇學年期</h3>;
+      return <EmptyState title="請先選擇學年期" />;
     }
 
     if (error) {
@@ -383,32 +300,33 @@ export const SearchPage = () => {
     }
 
     if (loading) {
-      return (
-        <div className="flex items-center justify-center gap-2">
-          <Spinner />
-          <span>載入課程資料中...</span>
-        </div>
-      );
+      return <LoadingState label="課程資料" />;
     }
 
     if (!hasFilter) {
       return (
-        <h3 className="text-lg text-center">
-          請輸入關鍵字或選擇系所以開始查詢課程
-        </h3>
+        <EmptyState
+          description="也可以只輸入教師姓名或課程代碼。"
+          title="請輸入關鍵字或選擇系所以開始查詢課程"
+        />
       );
     }
 
     if (filteredCourses.length === 0) {
-      return <div className="mt-4 text-center">查無符合的課程</div>;
+      return (
+        <EmptyState
+          description="試試放寬系所條件，或改用更短的關鍵字。"
+          title="查無符合的課程"
+        />
+      );
     }
 
     if (filteredCourses.length > MAX_DISPLAYED_COURSES) {
       return (
-        <div className="mt-4 text-center">
-          符合條件的課程共 {filteredCourses.length}{" "}
-          筆，請輸入更精確的關鍵字以縮小範圍
-        </div>
+        <EmptyState
+          description="請輸入更精確的關鍵字，或加上系所條件以縮小範圍。"
+          title={`符合條件的課程共 ${filteredCourses.length} 筆，超過一次可顯示的上限`}
+        />
       );
     }
 
@@ -416,7 +334,6 @@ export const SearchPage = () => {
       <>
         <CourseTable courses={filteredCourses} />
         <WeeklySchedule
-          className="mt-5"
           courses={convertCourses(filteredCourses)}
           scheduleTitle="搜尋結果課表"
         />
@@ -426,7 +343,7 @@ export const SearchPage = () => {
 
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center py-6 md:py-8 w-full">
+      <PageSection>
         <PageHeader
           actions={
             selectedCourses.length > 0 && (
@@ -478,7 +395,7 @@ export const SearchPage = () => {
         </SearchField>
         <Separator className="my-6 max-w-5xl w-full" />
         <div className="w-full max-w-5xl">{renderResults()}</div>
-      </section>
+      </PageSection>
     </DefaultLayout>
   );
 };
