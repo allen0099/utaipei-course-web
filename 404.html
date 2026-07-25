@@ -2,40 +2,145 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <link href="/favicon.ico" rel="icon" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0" />
 
-    <title>404 - 找不到內容 | UTC 選課小幫手</title>
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+
+    <title>404 - 找不到內容 | 北市大選課小幫手</title>
 
     <!-- No index for robots -->
     <meta name="robots" content="noindex,nofollow" />
 
-    <!-- Default meta tags (will be replaced by build script for static OG support) -->
-    <meta name="description" content="抱歉，您所尋找的頁面不存在。返回 UTC 選課小幫手首頁繼續使用服務。" />
-    <meta name="keywords" content="臺北市立大學,選課,課程查詢,教師課表,校園地圖,UTC" />
-    <meta name="author" content="UTC 選課小幫手" />
-    <meta name="language" content="zh-TW" />
+    <!--
+      GitHub Pages 只有在請求的路徑真的沒有檔案時才會送出這一頁，而每條 SPA 路由
+      在 build 時都產生了實體 index.html，所以會走到這裡的都是不存在的網址。以前
+      這頁會自動跳回首頁，對搜尋引擎就是一個 soft 404；現在原地把 404 顯示完，
+      只有使用者主動點下面那顆按鈕時才把原網址交給 App.tsx 的還原機制。
+
+      這個檔案不經 Vite 處理，樣式只能內嵌。
+    -->
+    <meta name="description" content="這個網址沒有對應的頁面，回到首頁繼續查課程、排課表或看行事曆。" />
+    <meta name="author" content="北市大選課小幫手" />
 
     <!-- Open Graph meta tags -->
-    <meta property="og:title" content="UTC 選課小幫手" />
-    <meta property="og:description" content="抱歉，您所尋找的頁面不存在。返回 UTC 選課小幫手首頁繼續使用服務。" />
+    <meta property="og:title" content="404 - 找不到內容" />
+    <meta property="og:description" content="這個網址沒有對應的頁面，回到首頁繼續查課程、排課表或看行事曆。" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="UTC 選課小幫手" />
+    <meta property="og:url" content="https://utc.allen0099.tw/" />
+    <meta property="og:site_name" content="北市大選課小幫手" />
+    <meta property="og:locale" content="zh_TW" />
+    <meta property="og:image" content="https://utc.allen0099.tw/CatMeow.png" />
+    <meta property="og:image:alt" content="北市大選課小幫手的貓咪吉祥物" />
 
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="UTC 選課小幫手" />
-    <meta name="twitter:description" content="抱歉，您所尋找的頁面不存在。返回 UTC 選課小幫手首頁繼續使用服務。" />
+    <meta name="twitter:title" content="404 - 找不到內容" />
+    <meta name="twitter:description" content="這個網址沒有對應的頁面，回到首頁繼續查課程、排課表或看行事曆。" />
+    <meta name="twitter:image" content="https://utc.allen0099.tw/CatMeow.png" />
 
-    <script>
-      // Store the full path into sessionStorage
-      sessionStorage.redirect = window.location.href;
-      // Redirect to the root of the domain
-      window.location.href = '/';
-    </script>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --fg: #11181c;
+        --muted: #687076;
+        --bg: #ffffff;
+        --accent: #006fee;
+        --border: #e4e4e7;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg: #ecedee;
+          --muted: #a1a1aa;
+          --bg: #000000;
+          --accent: #4d9bff;
+          --border: #27272a;
+        }
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 1.5rem;
+        box-sizing: border-box;
+        text-align: center;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          "Noto Sans TC",
+          "PingFang TC",
+          "Microsoft JhengHei",
+          sans-serif;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 4rem;
+        line-height: 1;
+        letter-spacing: 0.05em;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+        margin-top: 1rem;
+      }
+
+      a.button {
+        display: inline-block;
+        padding: 0.6rem 1.4rem;
+        border-radius: 9999px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        border: 1px solid transparent;
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      a.button.secondary {
+        background: transparent;
+        border-color: var(--border);
+        color: var(--fg);
+      }
+    </style>
   </head>
   <body>
+    <img src="/CatMeow.png" width="96" height="96" alt="" />
+    <h1>404</h1>
+    <p>找不到這個頁面</p>
+    <p>歐歐，你似乎發現了蟲洞。</p>
+    <div class="actions">
+      <a class="button" href="/">返回首頁</a>
+      <a class="button secondary" href="/" id="retry">返回首頁並嘗試開啟此連結</a>
+    </div>
+
+    <script>
+      // 未來若新增了路由卻忘了加進 scripts/generate-static-pages.js 的表，該網址
+      // 就沒有實體檔案而落到這裡。點這顆按鈕會把完整網址交給 App.tsx 還原（它必須
+      // 帶著 search 與 hash：/search 的篩選在 query string，/share 的整包內容在
+      // fragment），等於手動版的 SPA 深連結救援。
+      document.getElementById("retry").addEventListener("click", function () {
+        sessionStorage.redirect = window.location.href;
+      });
+    </script>
   </body>
 </html>
