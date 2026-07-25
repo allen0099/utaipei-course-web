@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { Separator, SearchField, Checkbox, Chip, Link } from "@heroui/react";
 import { Key } from "@react-types/shared";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 import { PageHeader } from "@/components/page-header.tsx";
 import { DataTable, DataTableColumn } from "@/components/data-table.tsx";
-import { EmptyState, LoadingState } from "@/components/states.tsx";
+import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
@@ -29,6 +30,7 @@ import {
   mergeCourseSources,
 } from "@/utils/merge-courses.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
+import { useYms } from "@/hooks/useYms.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 
@@ -75,7 +77,15 @@ const COLUMNS: DataTableColumn<MergedCourseItem>[] = [
   },
 ];
 
-const CourseTable = ({ courses }: { courses: MergedCourseItem[] }) => {
+const CourseTable = ({
+  courses,
+  yms,
+  canAdd,
+}: {
+  courses: MergedCourseItem[];
+  yms: string;
+  canAdd: boolean;
+}) => {
   const { isSelected, toggleCourse } = useSelectedCourses();
 
   return (
@@ -89,8 +99,11 @@ const CourseTable = ({ courses }: { courses: MergedCourseItem[] }) => {
         render: (item) => (
           <Checkbox
             aria-label={`將 ${item.name} (${item.class}) 加入我的課表`}
+            // The column stays rendered (just disabled) when the 學年期 can't
+            // be added to, so switching semesters doesn't reflow the table.
+            isDisabled={!canAdd && !isSelected(item)}
             isSelected={isSelected(item)}
-            onChange={() => toggleCourse(item)}
+            onChange={() => toggleCourse(item, yms)}
           >
             <Checkbox.Content>
               <Checkbox.Control>
@@ -141,7 +154,32 @@ export const SearchPage = () => {
   // Skip clearing the restored department filter the first time YmsSelector
   // reports back its (possibly URL-restored) initial value on mount.
   const isInitialYmsChange = useRef(true);
-  const { selectedCourses } = useSelectedCourses();
+  const { selectedCourses, scheduleYms } = useSelectedCourses();
+  const { defaultCode, displayNameOf } = useYms();
+
+  // 我的課表 only ever holds one 學年期, and only the one the school is
+  // currently enrolling for: everything else is historical or not yet open, so
+  // it stays queryable but not selectable. `defaultCode === null` means
+  // yms.json hasn't loaded (or failed) — fail closed rather than guess.
+  const isCurrentYms = defaultCode !== null && yms === defaultCode;
+  // A schedule saved before the 學年期 rolled over blocks additions until it's
+  // cleared, otherwise two semesters would end up mixed in one schedule.
+  const hasStaleSchedule = scheduleYms !== null && scheduleYms !== yms;
+  const canAdd = isCurrentYms && !hasStaleSchedule;
+
+  const addBlockedReason = (() => {
+    if (canAdd) return null;
+
+    if (defaultCode === null) {
+      return "目前無法確認學校的當前學期，暫時不能將課程加入我的課表。";
+    }
+
+    if (!isCurrentYms) {
+      return `僅能將目前學期（${displayNameOf(defaultCode)}）的課程加入我的課表；其他學年期為歷史／未來資料，僅供查詢。`;
+    }
+
+    return `你的課表屬於 ${displayNameOf(scheduleYms)}，目前學期已是 ${displayNameOf(defaultCode)}。請先到「我的課表」清空後再重新選課。`;
+  })();
 
   const onYmsChange = (id: Key | null) => {
     setYms(id?.toString() || "");
@@ -335,7 +373,12 @@ export const SearchPage = () => {
 
     return (
       <>
-        <CourseTable courses={filteredCourses} />
+        {addBlockedReason && (
+          <Notice icon={<InformationCircleIcon width={18} />}>
+            {addBlockedReason}
+          </Notice>
+        )}
+        <CourseTable canAdd={canAdd} courses={filteredCourses} yms={yms} />
         <WeeklySchedule
           courses={convertCourses(filteredCourses)}
           scheduleTitle="搜尋結果課表"
