@@ -6,3 +6,20 @@
   --accent: oklch(0.646 0.2223 41.12);
   --accent-foreground: var(--snow);
 }
+
+/*
+  Keyboard focus ring for the app's own native elements.
+
+  HeroUI ships a focus ring for its own components, but the hand-rolled
+  <button>/<a> in the navbar, theme switch, calendar grid and schedule toolbar
+  had no focus styling at all — so keyboard users had no idea where they were.
+  `:focus-visible` only fires for keyboard/AT focus, so pointer clicks are
+  unaffected. `:where()` keeps specificity at 0 so any component style wins.
+*/
+@layer base {
+  :where(a, button, [role="button"], summary):focus-visible {
+    outline: 2px solid var(--focus, var(--accent));
+    outline-offset: var(--ring-offset-width, 2px);
+    border-radius: var(--radius, 0.5rem);
+  }
+}

@@ -40,6 +40,45 @@ export const title = tv({
   ],
 });
 
+/**
+ * Heading recipes below `title()` (which is reserved for the page h1 rendered
+ * by PageHeader). Before these existed the app had seven different h2/h3
+ * treatments; everything below the page title should use one of these two.
+ *
+ * - `sectionTitle()` — top-level section within a page (課程功能, 已選課程).
+ * - `cardTitle()`    — heading inside a card, panel or list item.
+ */
+export const sectionTitle = tv({
+  base: "font-semibold tracking-tight",
+  variants: {
+    size: {
+      sm: "text-lg",
+      md: "text-xl",
+      lg: "text-2xl",
+    },
+    align: {
+      center: "text-center",
+    },
+  },
+  defaultVariants: {
+    size: "lg",
+  },
+});
+
+export const cardTitle = tv({
+  base: "font-semibold tracking-tight",
+  variants: {
+    size: {
+      sm: "text-sm",
+      md: "text-base",
+      lg: "text-lg",
+    },
+  },
+  defaultVariants: {
+    size: "lg",
+  },
+});
+
 export const subtitle = tv({
   base: "w-full md:w-1/2 my-2 text-lg lg:text-xl text-muted block max-w-full",
   variants: {
