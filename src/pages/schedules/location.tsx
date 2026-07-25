@@ -12,7 +12,10 @@ import { CourseItem, LocationItem } from "@/interfaces/globals.ts";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
 import { YmsSelector } from "@/components/selectors/ymsSelector.tsx";
-import { ItemSelector } from "@/components/selectors/itemSelector.tsx";
+import {
+  FILTER_FIELD_CLASS,
+  ItemSelector,
+} from "@/components/selectors/itemSelector.tsx";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
@@ -101,9 +104,12 @@ export const LocationSearchPage = () => {
           description="查詢某間教室或場地在該學期的使用課表。"
           title="地點課表"
         />
-        <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
-          <YmsSelector onChange={onYmsChange} />
+        {/* 與標題、分隔線、內容共用同一個量測寬度並靠左；選擇器平分該寬度，
+            右側才不會空出一整條。 */}
+        <div className="flex w-full max-w-5xl flex-col gap-4 md:flex-row md:items-center">
+          <YmsSelector className={FILTER_FIELD_CLASS} onChange={onYmsChange} />
           <ItemSelector
+            className={FILTER_FIELD_CLASS}
             items={locations}
             label="選擇地點"
             onChange={onLocationChange}

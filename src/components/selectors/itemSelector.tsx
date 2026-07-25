@@ -6,6 +6,14 @@ type ItemElement = {
   name: string;
 };
 
+/**
+ * Width for selectors sitting in a page's filter row: they share the row
+ * equally so the row fills the page's content measure. Left at their intrinsic
+ * width they occupy roughly two thirds of it, leaving a conspicuous empty
+ * column down the right-hand side.
+ */
+export const FILTER_FIELD_CLASS = "w-full md:flex-1";
+
 type SelectorProps<T extends ItemElement> = {
   items: T[];
   label: string;

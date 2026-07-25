@@ -11,9 +11,12 @@ import { LoadingState } from "@/components/states.tsx";
 export const YmsSelector = ({
   initialKey,
   onChange,
+  className,
 }: {
   initialKey?: string;
   onChange: (id: Key | null) => void;
+  /** Width override, so a filter row can make all its selectors share it. */
+  className?: string;
 }) => {
   const {
     data: cache,
@@ -88,6 +91,7 @@ export const YmsSelector = ({
   // place so both selectors stay visually and behaviourally identical.
   return (
     <ItemSelector
+      className={className}
       items={items}
       label="選擇學年度"
       selectedKey={defaultKey}

@@ -4,7 +4,10 @@ import { Key } from "@react-types/shared";
 
 import DefaultLayout from "@/layouts/default.tsx";
 import { YmsSelector } from "@/components/selectors/ymsSelector.tsx";
-import { ItemSelector } from "@/components/selectors/itemSelector.tsx";
+import {
+  FILTER_FIELD_CLASS,
+  ItemSelector,
+} from "@/components/selectors/itemSelector.tsx";
 import { siteConfig } from "@/config/site.ts";
 import { TeacherClasses, Units } from "@/interfaces/globals.ts";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
@@ -46,14 +49,18 @@ const Selector = (prop: SelectorProps) => {
   const teachers = useMemo(() => unit?.teachers || [], [unit]);
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-2xl items-center">
-      <div className="flex flex-col md:flex-row gap-4 w-full items-center">
+    // 與標題、分隔線、課表共用同一個量測寬度並靠左，整頁才有一條連續左緣；
+    // 選擇器平分該寬度，右側才不會空出一整條。
+    <div className="flex w-full max-w-5xl flex-col gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center">
         <YmsSelector
+          className={FILTER_FIELD_CLASS}
           onChange={(id: Key | null) => {
             setYms(id?.toString() || "");
           }}
         />
         <ItemSelector
+          className={FILTER_FIELD_CLASS}
           items={units}
           label="請選擇系級"
           onChange={(id) => {
@@ -61,6 +68,7 @@ const Selector = (prop: SelectorProps) => {
           }}
         />
         <ItemSelector
+          className={FILTER_FIELD_CLASS}
           items={teachers}
           label="請選擇教師"
           onChange={(id) => {

@@ -16,7 +16,10 @@ import {
   Units,
 } from "@/interfaces/globals.ts";
 import { YmsSelector } from "@/components/selectors/ymsSelector.tsx";
-import { ItemSelector } from "@/components/selectors/itemSelector.tsx";
+import {
+  FILTER_FIELD_CLASS,
+  ItemSelector,
+} from "@/components/selectors/itemSelector.tsx";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
 import {
@@ -365,10 +368,15 @@ export const SearchPage = () => {
             一條連續的左緣。篩選列本身是靠左排列而不是置中：頁面其餘內容
             （標題、結果表格）都是靠左的，置中的篩選列看起來會像是沒對齊。 */}
         <div className="flex w-full max-w-5xl flex-col gap-4">
-          <div className="flex flex-col flex-wrap gap-4 md:flex-row md:items-center">
-            <YmsSelector initialKey={yms || undefined} onChange={onYmsChange} />
+          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+            <YmsSelector
+              className={FILTER_FIELD_CLASS}
+              initialKey={yms || undefined}
+              onChange={onYmsChange}
+            />
             {useCascade && (
               <ItemSelector
+                className={FILTER_FIELD_CLASS}
                 items={colleges}
                 label="選擇學院"
                 placeholder="不限學院"
@@ -377,6 +385,7 @@ export const SearchPage = () => {
               />
             )}
             <ItemSelector
+              className={FILTER_FIELD_CLASS}
               items={departmentItems}
               label="選擇系所"
               placeholder={
@@ -386,11 +395,7 @@ export const SearchPage = () => {
               onChange={onDepartmentChange}
             />
           </div>
-          <SearchField
-            className="w-full max-w-2xl"
-            value={keyword}
-            onChange={setKeyword}
-          >
+          <SearchField className="w-full" value={keyword} onChange={setKeyword}>
             <SearchField.Group>
               <SearchField.SearchIcon />
               <SearchField.Input placeholder="輸入課程名稱、代碼或教師姓名搜尋" />
