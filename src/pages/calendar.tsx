@@ -17,6 +17,7 @@ import { generateAcademicCalendarICS } from "@/utils/academic-calendar-ics.ts";
 import { downloadICS } from "@/utils/ics-generator.ts";
 import { LoadingState } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
+import CopyButton from "@/components/copy-button.tsx";
 
 const PDFDocument = lazy(() => import("@/components/pdf.tsx"));
 
@@ -53,9 +54,7 @@ export const CalendarPage = () => {
   }, [rawCalendarList]);
 
   const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
-    "idle",
-  );
+  const [showSubscribeUrl, setShowSubscribeUrl] = useState<boolean>(false);
 
   // Default to the newest calendar until the user picks a different year;
   // derived directly from render instead of synced via an effect.
@@ -94,7 +93,7 @@ export const CalendarPage = () => {
 
     if (selected) {
       setSelectedTitle(selected.title);
-      setCopyState("idle");
+      setShowSubscribeUrl(false);
     }
   };
 
@@ -107,17 +106,8 @@ export const CalendarPage = () => {
     );
   };
 
-  const handleCopySubscribeUrl = async () => {
-    if (!subscribeUrl) return;
-
-    // 剪貼簿可能因權限或非安全來源而被擋下，此時改成直接把網址秀出來讓使用者自行複製，
-    // 不要讓按鈕按下去卻毫無反應。
-    try {
-      await navigator.clipboard.writeText(subscribeUrl);
-      setCopyState("copied");
-    } catch {
-      setCopyState("failed");
-    }
+  const showSub = () => {
+    setShowSubscribeUrl(true);
   };
 
   return (
@@ -209,21 +199,20 @@ export const CalendarPage = () => {
                       <ArrowDownTrayIcon className="size-4" />
                       下載 .ics
                     </Button>
-                    <Button
+                    <CopyButton
+                      copiedText={"已複製訂閱網址"}
+                      idleIcon={<ClipboardDocumentIcon className="size-4" />}
+                      idleText={"複製訂閱網址"}
                       size="sm"
                       variant="ghost"
-                      onPress={handleCopySubscribeUrl}
-                    >
-                      <ClipboardDocumentIcon className="size-4" />
-                      {copyState === "copied"
-                        ? "已複製訂閱網址"
-                        : "複製訂閱網址"}
-                    </Button>
+                      writeText={subscribeUrl}
+                      onError={showSub}
+                    />
                   </div>
                   <p className="text-xs text-muted sm:text-right">
                     下載可一次匯入日曆；訂閱網址則會隨學校更新自動同步。
                   </p>
-                  {copyState === "failed" && subscribeUrl && (
+                  {showSubscribeUrl && subscribeUrl && (
                     <input
                       readOnly
                       aria-label="訂閱網址"

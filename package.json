@@ -25,6 +25,7 @@
     "@wojtekmaj/react-hooks": "^2.0.5",
     "clsx": "2.1.1",
     "html-to-image": "^1.11.13",
+    "motion": "^12.42.2",
     "react": "19.2.8",
     "react-aria-components": "^1.17.0",
     "react-dom": "19.2.8",
