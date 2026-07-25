@@ -14,6 +14,20 @@ export interface CalendarItem {
   semester: number;
   title: string;
   link: string;
+  // Whether the crawler could extract structured events from the PDF. False for
+  // 105 學年度, whose PDF stores every Chinese glyph as a bitmap image, so only
+  // the PDF viewer can show it. Older calendar.json files predate this field.
+  parsed?: boolean;
+}
+
+// One dated entry of the academic calendar, parsed from the PDF by the crawler
+// (crawler/utils/pdfCalendar.ts). Published as calendar/<year>/<semester>.json.
+export interface CalendarEvent {
+  date: string; // YYYY-MM-DD
+  endDate?: string; // Only present for events spanning multiple days
+  unit: string | null; // Owning unit as tagged in 【】, e.g. 教 / 秘 / 體
+  title: string;
+  isHoliday: boolean;
 }
 
 export interface YearSemesterItem {

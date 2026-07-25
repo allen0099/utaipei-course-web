@@ -1,12 +1,12 @@
 import { WeeklyScheduleCourse, CampusTimeMapping } from "@/interfaces/globals";
 
 // Helper to format ICS date-time
-const formatICSDateTime = (date: Date): string => {
+export const formatICSDateTime = (date: Date): string => {
   return date.toLocaleString("sv").replace(/[-:]/g, "").replace(/\W/g, "T");
 };
 
 // Helper to wrap long lines as per ICS specification
-const wrapICSLine = (line: string): string => {
+export const wrapICSLine = (line: string): string => {
   if (line.length <= 75) return line;
 
   let result = line.slice(0, 75);
@@ -18,6 +18,22 @@ const wrapICSLine = (line: string): string => {
   }
 
   return result;
+};
+
+/** Trigger a browser download for generated iCalendar text. */
+export const downloadICS = (icsContent: string, fileName: string): void => {
+  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
 };
 
 // Generate ICS content for the course schedule
@@ -139,22 +155,8 @@ export const downloadICSFile = (
   campusTimeMapping: CampusTimeMapping,
   scheduleTitle: string = "課程表",
 ): void => {
-  const icsContent = generateICSContent(
-    courses,
-    campusTimeMapping,
-    scheduleTitle,
+  downloadICS(
+    generateICSContent(courses, campusTimeMapping, scheduleTitle),
+    `${scheduleTitle}.ics`,
   );
-
-  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = `${scheduleTitle}.ics`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  URL.revokeObjectURL(url);
 };
