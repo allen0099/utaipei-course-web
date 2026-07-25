@@ -1,5 +1,6 @@
 import { Card, Link } from "@heroui/react";
 
+import { WipBadge } from "@/components/wip-badge.tsx";
 import {
   CalendarIcon,
   ClassroomIcon,
@@ -9,6 +10,7 @@ import {
   ProfileIcon,
   TimeIcon,
 } from "@/components/svgIcon.tsx";
+import { cardTitle, sectionTitle } from "@/components/primitives.ts";
 
 // title 用各頁的正式名稱（與 config/site.ts 的導覽標籤、頁面 h1 一致）；
 // 動作說明放在下方的 description，不要在標題再加一次「查詢」。
@@ -53,26 +55,28 @@ const functions = [
     title: "班級課表",
     href: "/schedules/class",
     icon: <GraduationIcon className="text-4xl" size={48} />,
-    description: "查詢指定班級的課表",
+    description: "查詢指定班級的課表（開發中）",
+    wip: true,
   },
 ];
 
 export const CourseFunctions = () => {
   return (
     <section className="w-full max-w-4xl mx-auto py-8 md:py-10">
-      <h2 className="text-2xl font-bold text-center mb-6">課程功能</h2>
+      <h2 className={sectionTitle({ align: "center", class: "mb-6" })}>
+        課程功能
+      </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {functions.map((func) => (
           <Link key={func.title} className="w-full" href={func.href}>
             <Card className="h-full w-full border border-transparent hover:border-accent transition-colors duration-200">
               <Card.Header className="flex items-center gap-4">
                 {func.icon}
-                <h3 className="text-lg font-semibold">{func.title}</h3>
+                <h3 className={cardTitle()}>{func.title}</h3>
+                {func.wip && <WipBadge />}
               </Card.Header>
               <Card.Content>
-                <p className="text-gray-600 dark:text-gray-400 text-center">
-                  {func.description}
-                </p>
+                <p className="text-muted text-center">{func.description}</p>
               </Card.Content>
             </Card>
           </Link>

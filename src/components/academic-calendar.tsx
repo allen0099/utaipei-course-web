@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { useMemo, useRef, useState } from "react";
 
 import { CalendarEvent } from "@/interfaces/globals";
+import { cardTitle, sectionTitle } from "@/components/primitives.ts";
 
 export interface AcademicCalendarProps {
   events: CalendarEvent[];
@@ -170,7 +171,9 @@ const MonthCarousel = ({
             key={month.key}
             className="w-full shrink-0 snap-center p-3 sm:w-auto"
           >
-            <h3 className="mb-2 text-center text-sm font-semibold">
+            <h3
+              className={cardTitle({ size: "sm", class: "mb-2 text-center" })}
+            >
               {month.label}
             </h3>
             <div className="grid grid-cols-7 gap-px text-center text-xs">
@@ -179,9 +182,7 @@ const MonthCarousel = ({
                   key={weekday}
                   className={clsx(
                     "py-1 font-medium",
-                    index === 0 || index === 6
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-gray-500",
+                    index === 0 || index === 6 ? "text-danger" : "text-muted",
                   )}
                 >
                   {weekday}
@@ -202,13 +203,12 @@ const MonthCarousel = ({
                     className={clsx(
                       "aspect-square rounded-sm p-1 leading-tight transition-colors",
                       selected && "ring-2 ring-blue-500 dark:ring-blue-400",
-                      dayEvents.length === 0 &&
-                        "text-gray-400 dark:text-gray-600",
+                      dayEvents.length === 0 && "text-muted/60",
                       dayEvents.length > 0 &&
                         !holiday &&
-                        "bg-blue-100 font-medium text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200",
+                        "bg-blue-100 font-medium text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/70",
                       holiday &&
-                        "bg-red-100 font-medium text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-200",
+                        "bg-red-100 font-medium text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-200 dark:hover:bg-red-900/70",
                     )}
                     disabled={dayEvents.length === 0}
                     type="button"
@@ -235,7 +235,7 @@ const MonthCarousel = ({
                 "size-2 rounded-full transition-colors",
                 index === activeMonth
                   ? "bg-blue-500 dark:bg-blue-400"
-                  : "bg-gray-300 dark:bg-gray-600",
+                  : "bg-muted/40",
               )}
               type="button"
               onClick={() => goToMonth(index)}
@@ -319,7 +319,7 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
     <div className="flex w-full flex-col gap-6">
       {units.length > 0 && (
         <div className="order-2 flex flex-wrap items-center gap-2 sm:order-1">
-          <span className="text-sm text-gray-500">篩選單位：</span>
+          <span className="text-sm text-muted">篩選單位：</span>
           {units.map((unit) => (
             <ToggleButton
               key={unit}
@@ -351,10 +351,10 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
 
       <div className="order-3 flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-semibold">
+          <h2 className={sectionTitle({ size: "sm" })}>
             {selectedDate ? `${selectedDate} 的事件` : "本學期事件"}
           </h2>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted">
             共 {listedEvents.length} 筆
           </span>
           {selectedDate && (
@@ -369,7 +369,7 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
         </div>
 
         {listedEvents.length === 0 ? (
-          <p className="py-6 text-center text-gray-500">沒有符合條件的事件。</p>
+          <p className="py-6 text-center text-muted">沒有符合條件的事件。</p>
         ) : (
           <ul className="flex flex-col gap-1">
             {listedEvents.map((event, index) => (
@@ -379,10 +379,10 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
                   "flex flex-col gap-1 rounded-md border-l-4 px-3 py-2 sm:flex-row sm:items-center sm:gap-3",
                   event.isHoliday
                     ? "border-red-500 bg-red-50 dark:border-red-400 dark:bg-red-900/20"
-                    : "border-blue-500 bg-gray-50 dark:border-blue-400 dark:bg-gray-800/40",
+                    : "border-blue-500 bg-background-secondary dark:border-blue-400",
                 )}
               >
-                <span className="shrink-0 font-mono text-sm text-gray-600 dark:text-gray-400 sm:w-48">
+                <span className="shrink-0 font-mono text-sm text-muted sm:w-48">
                   {formatDateLabel(event)}
                 </span>
                 {event.unit && (

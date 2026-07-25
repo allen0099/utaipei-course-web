@@ -12,17 +12,21 @@ type SelectorProps<T extends ItemElement> = {
   placeholder?: string;
   selectedKey?: Key | null;
   onChange: (id: Key | null) => void;
+  className?: string;
 };
 
 export const ItemSelector = (props: SelectorProps<any>) => {
-  const { items, label, placeholder, selectedKey, onChange } = props;
+  const { items, label, placeholder, selectedKey, onChange, className } = props;
   // Derived directly from props; no need to mirror it into state.
   const disabled = items.length === 0;
 
   return (
     <ComboBox
       isRequired
-      className="max-w-xs"
+      // Full width on phones — capping at 320px inside a centred column left
+      // long 系所 names truncated with no way to widen. The cap only applies
+      // once the selectors sit side by side.
+      className={className ?? "w-full md:max-w-xs"}
       isDisabled={disabled}
       selectedKey={selectedKey}
       onSelectionChange={onChange}

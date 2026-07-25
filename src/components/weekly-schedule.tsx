@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Card,
   Switch,
@@ -29,6 +29,8 @@ import {
   generateScheduleImageBlob,
 } from "@/utils/image-generator";
 import ImagePreviewModal from "@/components/image-preview-modal";
+import { sectionTitle } from "@/components/primitives.ts";
+import { downloadBlob } from "@/utils/download.ts";
 
 // Default campus time mappings
 const DEFAULT_CAMPUS_MAPPINGS: CampusTimeMapping[] = [
@@ -275,52 +277,28 @@ const TIME_OF_DAY_COLORS = {
   evening: "bg-purple-50 dark:bg-purple-900/20",
 };
 
+// 12 well-separated hues, plus 4 darker repeats of the most distinct of them.
+// The previous 45-entry list padded itself out with slate/gray/zinc/neutral/
+// stone at the same lightness (indistinguishable) and with -50 variants that
+// were near-identical to their -100 siblings, so the colour stopped carrying
+// any grouping information once a schedule had more than a handful of courses.
 const COURSE_COLORS = [
-  "bg-red-100 border-red-300 text-red-800 dark:bg-red-900/30 dark:border-red-600 dark:text-red-200",
-  "bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-600 dark:text-blue-200",
-  "bg-green-100 border-green-300 text-green-800 dark:bg-green-900/30 dark:border-green-600 dark:text-green-200",
-  "bg-yellow-100 border-yellow-300 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-600 dark:text-yellow-200",
-  "bg-pink-100 border-pink-300 text-pink-800 dark:bg-pink-900/30 dark:border-pink-600 dark:text-pink-200",
-  "bg-indigo-100 border-indigo-300 text-indigo-800 dark:bg-indigo-900/30 dark:border-indigo-600 dark:text-indigo-200",
-  "bg-purple-100 border-purple-300 text-purple-800 dark:bg-purple-900/30 dark:border-purple-600 dark:text-purple-200",
-  "bg-teal-100 border-teal-300 text-teal-800 dark:bg-teal-900/30 dark:border-teal-600 dark:text-teal-200",
-  "bg-orange-100 border-orange-300 text-orange-800 dark:bg-orange-900/30 dark:border-orange-600 dark:text-orange-200",
-  "bg-cyan-100 border-cyan-300 text-cyan-800 dark:bg-cyan-900/30 dark:border-cyan-600 dark:text-cyan-200",
-  "bg-lime-100 border-lime-300 text-lime-800 dark:bg-lime-900/30 dark:border-lime-600 dark:text-lime-200",
-  "bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-900/30 dark:border-emerald-600 dark:text-emerald-200",
-  "bg-violet-100 border-violet-300 text-violet-800 dark:bg-violet-900/30 dark:border-violet-600 dark:text-violet-200",
-  "bg-fuchsia-100 border-fuchsia-300 text-fuchsia-800 dark:bg-fuchsia-900/30 dark:border-fuchsia-600 dark:text-fuchsia-200",
-  "bg-rose-100 border-rose-300 text-rose-800 dark:bg-rose-900/30 dark:border-rose-600 dark:text-rose-200",
-  "bg-sky-100 border-sky-300 text-sky-800 dark:bg-sky-900/30 dark:border-sky-600 dark:text-sky-200",
-  "bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-600 dark:text-amber-200",
-  "bg-slate-100 border-slate-300 text-slate-800 dark:bg-slate-900/30 dark:border-slate-600 dark:text-slate-200",
-  "bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-900/30 dark:border-gray-600 dark:text-gray-200",
-  "bg-zinc-100 border-zinc-300 text-zinc-800 dark:bg-zinc-900/30 dark:border-zinc-600 dark:text-zinc-200",
-  "bg-neutral-100 border-neutral-300 text-neutral-800 dark:bg-neutral-900/30 dark:border-neutral-600 dark:text-neutral-200",
-  "bg-stone-100 border-stone-300 text-stone-800 dark:bg-stone-900/30 dark:border-stone-600 dark:text-stone-200",
-  "bg-red-50 border-red-200 text-red-700 dark:bg-red-800/20 dark:border-red-500 dark:text-red-300",
-  "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-800/20 dark:border-blue-500 dark:text-blue-300",
-  "bg-green-50 border-green-200 text-green-700 dark:bg-green-800/20 dark:border-green-500 dark:text-green-300",
-  "bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-800/20 dark:border-yellow-500 dark:text-yellow-300",
-  "bg-pink-50 border-pink-200 text-pink-700 dark:bg-pink-800/20 dark:border-pink-500 dark:text-pink-300",
-  "bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-800/20 dark:border-indigo-500 dark:text-indigo-300",
-  "bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-800/20 dark:border-purple-500 dark:text-purple-300",
-  "bg-teal-50 border-teal-200 text-teal-700 dark:bg-teal-800/20 dark:border-teal-500 dark:text-teal-300",
-  "bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-800/20 dark:border-orange-500 dark:text-orange-300",
-  "bg-cyan-50 border-cyan-200 text-cyan-700 dark:bg-cyan-800/20 dark:border-cyan-500 dark:text-cyan-300",
-  "bg-lime-50 border-lime-200 text-lime-700 dark:bg-lime-800/20 dark:border-lime-500 dark:text-lime-300",
-  "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-800/20 dark:border-emerald-500 dark:text-emerald-300",
-  "bg-violet-50 border-violet-200 text-violet-700 dark:bg-violet-800/20 dark:border-violet-500 dark:text-violet-300",
-  "bg-fuchsia-50 border-fuchsia-200 text-fuchsia-700 dark:bg-fuchsia-800/20 dark:border-fuchsia-500 dark:text-fuchsia-300",
-  "bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-800/20 dark:border-rose-500 dark:text-rose-300",
-  "bg-sky-50 border-sky-200 text-sky-700 dark:bg-sky-800/20 dark:border-sky-500 dark:text-sky-300",
-  "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-800/20 dark:border-amber-500 dark:text-amber-300",
-  "bg-slate-50 border-slate-200 text-slate-700 dark:bg-slate-800/20 dark:border-slate-500 dark:text-slate-300",
-  "bg-red-200 border-red-400 text-red-900 dark:bg-red-700/30 dark:border-red-400 dark:text-red-100",
-  "bg-blue-200 border-blue-400 text-blue-900 dark:bg-blue-700/30 dark:border-blue-400 dark:text-blue-100",
-  "bg-green-200 border-green-400 text-green-900 dark:bg-green-700/30 dark:border-green-400 dark:text-green-100",
-  "bg-yellow-200 border-yellow-400 text-yellow-900 dark:bg-yellow-700/30 dark:border-yellow-400 dark:text-yellow-100",
-  "bg-pink-200 border-pink-400 text-pink-900 dark:bg-pink-700/30 dark:border-pink-400 dark:text-pink-100",
+  "bg-red-100 border-red-400 text-red-900 dark:bg-red-900/40 dark:border-red-500 dark:text-red-100",
+  "bg-orange-100 border-orange-400 text-orange-900 dark:bg-orange-900/40 dark:border-orange-500 dark:text-orange-100",
+  "bg-amber-100 border-amber-400 text-amber-900 dark:bg-amber-900/40 dark:border-amber-500 dark:text-amber-100",
+  "bg-lime-100 border-lime-400 text-lime-900 dark:bg-lime-900/40 dark:border-lime-500 dark:text-lime-100",
+  "bg-green-100 border-green-400 text-green-900 dark:bg-green-900/40 dark:border-green-500 dark:text-green-100",
+  "bg-teal-100 border-teal-400 text-teal-900 dark:bg-teal-900/40 dark:border-teal-500 dark:text-teal-100",
+  "bg-cyan-100 border-cyan-400 text-cyan-900 dark:bg-cyan-900/40 dark:border-cyan-500 dark:text-cyan-100",
+  "bg-blue-100 border-blue-400 text-blue-900 dark:bg-blue-900/40 dark:border-blue-500 dark:text-blue-100",
+  "bg-indigo-100 border-indigo-400 text-indigo-900 dark:bg-indigo-900/40 dark:border-indigo-500 dark:text-indigo-100",
+  "bg-violet-100 border-violet-400 text-violet-900 dark:bg-violet-900/40 dark:border-violet-500 dark:text-violet-100",
+  "bg-fuchsia-100 border-fuchsia-400 text-fuchsia-900 dark:bg-fuchsia-900/40 dark:border-fuchsia-500 dark:text-fuchsia-100",
+  "bg-rose-100 border-rose-400 text-rose-900 dark:bg-rose-900/40 dark:border-rose-500 dark:text-rose-100",
+  "bg-red-200 border-red-600 text-red-950 dark:bg-red-700/40 dark:border-red-300 dark:text-red-50",
+  "bg-green-200 border-green-600 text-green-950 dark:bg-green-700/40 dark:border-green-300 dark:text-green-50",
+  "bg-blue-200 border-blue-600 text-blue-950 dark:bg-blue-700/40 dark:border-blue-300 dark:text-blue-50",
+  "bg-violet-200 border-violet-600 text-violet-950 dark:bg-violet-700/40 dark:border-violet-300 dark:text-violet-50",
 ];
 
 export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
@@ -355,6 +333,29 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   // Image preview modal state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [previewImageBlob, setPreviewImageBlob] = useState<Blob | null>(null);
+
+  // Tracks the same breakpoint as the `md:` classes below, so the clipped
+  // desktop grid can be taken out of the accessibility tree on phones. The
+  // CSS classes stay the source of truth for layout; this only mirrors them
+  // for the attributes CSS can't set.
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 767px)").matches,
+  );
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+
+    const query = window.matchMedia("(max-width: 767px)");
+    const onChange = (event: MediaQueryListEvent) =>
+      setIsMobileViewport(event.matches);
+
+    query.addEventListener("change", onChange);
+
+    return () => query.removeEventListener("change", onChange);
+  }, []);
 
   // Save settings whenever they change
   const updateSetting = (key: keyof ScheduleSettings, value: boolean) => {
@@ -394,16 +395,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   // Handle confirmed download from preview modal
   const handleConfirmDownload = () => {
     if (previewImageBlob) {
-      const url = URL.createObjectURL(previewImageBlob);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = `${scheduleTitle}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
+      downloadBlob(previewImageBlob, `${scheduleTitle}.png`);
     }
   };
 
@@ -510,10 +502,10 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
       <div
         key={`${day}-${period}`}
         className={clsx(
-          "min-h-[60px] p-1 border border-gray-200 dark:border-gray-700 relative",
+          "min-h-[60px] p-1 border border-border relative",
           TIME_OF_DAY_COLORS[timeOfDay],
           {
-            "hover:bg-gray-100 dark:hover:bg-gray-800": isEmpty,
+            "hover:bg-surface-secondary": isEmpty,
             // Highlight slot if it contains the hovered course
             "ring-2 ring-blue-400 dark:ring-blue-500": hasHoveredCourse,
           },
@@ -549,7 +541,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 >
                   {isConflicting && (
                     <ExclamationTriangleIcon
-                      className="absolute top-1 right-1 text-red-600 dark:text-red-400"
+                      className="absolute top-1 right-1 text-danger"
                       width={14}
                     />
                   )}
@@ -574,20 +566,26 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
     return (
       <div
-        className={`grid gap-0 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden`}
+        aria-label={scheduleTitle}
+        className={`grid gap-0 border border-border rounded-lg overflow-hidden`}
         id="weekly-schedule-grid"
+        role="grid"
         style={{
           gridTemplateColumns: `auto repeat(${visibleDays.length}, 1fr)`,
         }}
       >
         {/* Headers */}
-        <div className="bg-gray-100 dark:bg-gray-800 p-2 border-r border-gray-300 dark:border-gray-600">
+        <div
+          className="bg-surface-secondary p-2 border-r border-border"
+          role="columnheader"
+        >
           <div className="text-xs font-semibold text-center">時間</div>
         </div>
         {visibleDays.map((dayName, visibleIndex) => (
           <div
             key={visibleIndex}
-            className="bg-gray-100 dark:bg-gray-800 p-2 border-r border-gray-300 dark:border-gray-600 last:border-r-0"
+            className="bg-surface-secondary p-2 border-r border-border last:border-r-0"
+            role="columnheader"
           >
             <div className="text-xs font-semibold text-center">{dayName}</div>
           </div>
@@ -596,7 +594,10 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
         {/* Time slots for visible periods */}
         {visiblePeriods.map((timeInfo) => (
           <React.Fragment key={`period-${timeInfo.period}`}>
-            <div className="bg-gray-50 dark:bg-gray-700 p-2 border-r border-gray-300 dark:border-gray-600 border-t">
+            <div
+              className="bg-background-secondary p-2 border-r border-border border-t"
+              role="rowheader"
+            >
               <div className="text-xs text-center">
                 <div className="font-medium">{timeInfo.label}</div>
                 {!settings.hideTimeLabel && (
@@ -681,7 +682,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                   "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-accent text-white shadow"
-                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700",
+                    : "bg-surface-secondary text-foreground hover:bg-surface-tertiary",
                 )}
                 type="button"
                 onClick={() => setSelectedMobileDay(dayIndex)}
@@ -694,7 +695,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
         {/* Course list for the selected day */}
         {dayCourses.length === 0 ? (
-          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-10 text-muted">
             <p className="text-sm">這天沒有課程</p>
           </div>
         ) : (
@@ -720,7 +721,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                     </div>
                     {isConflicting && (
                       <ExclamationTriangleIcon
-                        className="shrink-0 text-red-600 dark:text-red-400"
+                        className="shrink-0 text-danger"
                         width={18}
                       />
                     )}
@@ -742,10 +743,18 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   };
 
   return (
-    <Card className={clsx("w-full max-w-7xl", className)}>
+    // mt-5 was repeated at all three call sites; it belongs to the component.
+    <Card className={clsx("mt-5 w-full max-w-7xl", className)}>
       <Card.Header className="flex flex-col space-y-4">
         <div className="relative flex-row items-center w-full">
-          <h3 className="static md:absolute lg:left-1/2 lg:-translate-x-1/2 text-xl font-bold">
+          <h3
+            className={sectionTitle({
+              size: "md",
+              // Only absolutely position it once it can actually be centred;
+              // between md and lg it used to sit at left:auto over the toolbar.
+              class: "static lg:absolute lg:left-1/2 lg:-translate-x-1/2",
+            })}
+          >
             {scheduleTitle}
           </h3>
 
@@ -775,7 +784,8 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 <Tooltip.Trigger>
                   <Button
                     isIconOnly
-                    className="bg-gradient-to-tl from-cyan-500 to-blue-600 text-white shadow-lg"
+                    aria-label="下載 ICS 行事曆檔案"
+                    className="shadow-lg"
                     size="sm"
                     variant="primary"
                     onPress={handleICSDownload}
@@ -789,9 +799,10 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 <Tooltip.Trigger>
                   <Button
                     isIconOnly
-                    className="bg-green-700 dark:bg-green-900 text-white shadow-lg"
+                    aria-label="將課表另存為圖片"
+                    className="shadow-lg"
                     size="sm"
-                    variant="primary"
+                    variant="secondary"
                     onPress={handleImageDownload}
                   >
                     <ArrowDownTrayIcon width="20" />
@@ -806,7 +817,12 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                     Dropdown.Trigger would render a <button> inside a <button>. */}
                 <Tooltip>
                   <Tooltip.Trigger>
-                    <Button isIconOnly size="sm" variant="secondary">
+                    <Button
+                      isIconOnly
+                      aria-label="課表顯示設定"
+                      size="sm"
+                      variant="secondary"
+                    >
                       <Cog6ToothIcon width="20" />
                     </Button>
                   </Tooltip.Trigger>
@@ -862,7 +878,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
       <Card.Content>
         {courses.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-8 text-muted">
             <p>沒有課程資料</p>
             <p className="text-sm">請重新查詢</p>
           </div>
@@ -874,7 +890,15 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 renders #weekly-schedule-grid as a standalone node, so parent
                 clipping doesn't shrink its scrollWidth/scrollHeight and the
                 export keeps working. */}
-            <div className="h-0 overflow-hidden md:h-auto md:overflow-x-auto">
+            {/* aria-hidden + inert: h-0/overflow-hidden keeps the node
+                measurable for the export but does NOT remove it from the
+                accessibility tree, so on mobile a screen reader would read the
+                whole 7x14 grid and then the day list again. */}
+            <div
+              aria-hidden={isMobileViewport ? "true" : undefined}
+              className="h-0 overflow-hidden md:h-auto md:overflow-x-auto"
+              inert={isMobileViewport}
+            >
               <div className="min-w-[800px]">{renderUnifiedSchedule()}</div>
             </div>
 

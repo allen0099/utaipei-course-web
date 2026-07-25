@@ -1,11 +1,12 @@
 import { Key } from "@react-types/shared";
 import { useEffect, useMemo, useState } from "react";
-import { ComboBox, Input, Label, ListBox, Spinner } from "@heroui/react";
 
 import { YearSemesterItem, YmsCache } from "@/interfaces/globals.ts";
 import { siteConfig } from "@/config/site.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
+import { ItemSelector } from "@/components/selectors/itemSelector.tsx";
+import { LoadingState } from "@/components/states.tsx";
 
 export const YmsSelector = ({
   initialKey,
@@ -35,6 +36,12 @@ export const YmsSelector = ({
 
     return [...cache.data].reverse();
   }, [cache]);
+
+  // ItemSelector renders `name`; yms.json calls the same field `displayName`.
+  const items = useMemo(
+    () => data.map((yms) => ({ code: yms.code, name: yms.displayName })),
+    [data],
+  );
 
   // Prefer restoring a caller-provided key (e.g. from the URL) when it
   // exists in the fetched data, otherwise fall back to the API default.
@@ -74,40 +81,17 @@ export const YmsSelector = ({
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2">
-        <Spinner />
-        <span>載入學年度中...</span>
-      </div>
-    );
+    return <LoadingState label="學年度" />;
   }
 
+  // YmsSelector is ItemSelector plus a fetch — the ComboBox tree lives in one
+  // place so both selectors stay visually and behaviourally identical.
   return (
-    <ComboBox
-      isRequired
-      className="max-w-xs"
+    <ItemSelector
+      items={items}
+      label="選擇學年度"
       selectedKey={defaultKey}
-      onSelectionChange={updateDefaultKey}
-    >
-      <Label>選擇學年度</Label>
-      <ComboBox.InputGroup>
-        <Input placeholder="請選擇..." />
-        <ComboBox.Trigger />
-      </ComboBox.InputGroup>
-      <ComboBox.Popover>
-        <ListBox>
-          {data.map((yms) => (
-            <ListBox.Item
-              key={yms.code}
-              id={yms.code}
-              textValue={yms.displayName}
-            >
-              <Label>{yms.displayName}</Label>
-              <ListBox.ItemIndicator />
-            </ListBox.Item>
-          ))}
-        </ListBox>
-      </ComboBox.Popover>
-    </ComboBox>
+      onChange={updateDefaultKey}
+    />
   );
 };

@@ -59,14 +59,14 @@ export const ImagePreviewModal = ({
         }}
       >
         <Modal.Container className="max-w-4xl" size="lg">
-          <Modal.Dialog className="dark:bg-[#19172c] rounded-lg">
+          <Modal.Dialog className="rounded-lg">
             <Modal.CloseTrigger />
             <Modal.Header>
               <Modal.Heading>預覽課表圖片</Modal.Heading>
             </Modal.Header>
             <Modal.Body>
               <div className="flex flex-col items-center space-y-4">
-                <p className="text-gray-700 dark:text-gray-300 text-center">
+                <p className="text-foreground text-center">
                   確認下載以下圖片？
                 </p>
                 {imageUrl ? (
@@ -78,13 +78,11 @@ export const ImagePreviewModal = ({
                     />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                    <p className="text-gray-500 dark:text-gray-400">
-                      載入預覽圖片中...
-                    </p>
+                  <div className="flex items-center justify-center w-full h-48 border-2 border-dashed border-border rounded-lg">
+                    <p className="text-muted">載入預覽圖片中...</p>
                   </div>
                 )}
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                <p className="text-sm text-muted text-center">
                   文件名稱：{title}.png
                 </p>
               </div>
@@ -93,10 +91,7 @@ export const ImagePreviewModal = ({
               <Button variant="tertiary" onPress={handleClose}>
                 取消
               </Button>
-              <Button
-                className="bg-green-700 dark:bg-green-900 text-white"
-                onPress={handleDownload}
-              >
+              <Button className="" onPress={handleDownload}>
                 確認下載
               </Button>
             </Modal.Footer>

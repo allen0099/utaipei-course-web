@@ -6,7 +6,7 @@ export type TextProps = React.SVGTextElementAttributes<SVGTextElement> & {
 export const TextItem = ({ title, transform, ...props }: TextProps) => {
   return (
     <text
-      className="fill-[#1e1e1e]"
+      className="fill-current"
       fontFamily="Excalifont, Xiaolai, Segoe UI Emoji"
       fontSize={36}
       transform={transform}
