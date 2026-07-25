@@ -11,6 +11,7 @@ import { YmsSelector } from "@/components/selectors/ymsSelector.tsx";
 import { ItemSelector } from "@/components/selectors/itemSelector.tsx";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
+import { PageHeader } from "@/components/page-header.tsx";
 
 const LocationTable = ({ courses }: { courses: CourseItem[] }) => {
   const columns = [
@@ -86,7 +87,12 @@ export const LocationSearchPage = () => {
 
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center py-8 md:py-10 w-full">
+      <section className="flex flex-col items-center py-6 md:py-8 w-full">
+        <PageHeader
+          className="mb-6"
+          description="查詢某間教室或場地在該學期的使用課表。"
+          title="地點課表"
+        />
         <div className="flex flex-col md:flex-row gap-4 w-full max-w-2xl items-center">
           <YmsSelector onChange={onYmsChange} />
           <ItemSelector

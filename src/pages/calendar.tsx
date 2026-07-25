@@ -1,5 +1,6 @@
 import {
   ArrowDownTrayIcon,
+  ChevronDownIcon,
   ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
 import { Spinner, Button, Dropdown, Label, Tabs } from "@heroui/react";
@@ -8,7 +9,7 @@ import { lazy, Suspense, useMemo, useState } from "react";
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
 import { CalendarEvent, CalendarItem } from "@/interfaces/globals.ts";
-import { title } from "@/components/primitives.ts";
+import { PageHeader } from "@/components/page-header.tsx";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { AcademicCalendar } from "@/components/academic-calendar.tsx";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
@@ -20,6 +21,14 @@ const PDFDocument = lazy(() => import("@/components/pdf.tsx"));
 /** 選取中的分頁畫出白色藥丸底色，取代需要額外容器才能運作的 Tabs.Indicator。 */
 const TAB_CLASS =
   "whitespace-nowrap data-[selected=true]:bg-white data-[selected=true]:shadow-sm dark:data-[selected=true]:bg-gray-700";
+
+/**
+ * calendar.json 的 title 是「本校 114 學年度下學期行事曆」，當選單觸發鈕的文字太長，
+ * 22 個學期列出來也不好掃。改用結構化的 year / semester 欄位組出精簡標籤，
+ * 不要去解析 title 字串。
+ */
+const semesterLabel = (item: CalendarItem) =>
+  `${item.year} 學年度${item.semester === 1 ? "上" : "下"}學期`;
 
 const Loading = () => (
   <div className="flex items-center gap-2">
@@ -118,34 +127,46 @@ export const CalendarPage = () => {
 
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-        <div className="flex max-sm:flex-col max-lg:w-full items-center">
-          <h1 className={title()}>{selectedCalendar?.title || "校園行事曆"}</h1>
-          <Dropdown>
-            {/* Button is the RAC menu trigger directly; wrapping it in
-                Dropdown.Trigger would nest a <button> inside a <button>. */}
-            <Button className="ml-8" variant="ghost">
-              切換學年度
-            </Button>
-            <Dropdown.Popover>
-              <Dropdown.Menu
-                aria-label="選擇學年度"
-                className="max-h-60 overflow-y-auto"
-                onAction={handleYearChange}
-              >
-                {calendarList.map((item) => (
-                  <Dropdown.Item
-                    key={item.title}
-                    id={item.title}
-                    textValue={item.title}
+      <section className="flex w-full flex-col gap-6 py-6 md:py-8">
+        {/* 標題固定不隨選取的學期變動，學期改由選單觸發鈕自己顯示：切換時標題不會跳動，
+            也不必把同一份資訊寫兩遍。 */}
+        <PageHeader
+          actions={
+            selectedCalendar && (
+              <Dropdown>
+                {/* Button is the RAC menu trigger directly; wrapping it in
+                    Dropdown.Trigger would nest a <button> inside a <button>. */}
+                <Button
+                  aria-label={`切換學年度，目前為 ${semesterLabel(selectedCalendar)}`}
+                  className="max-sm:w-full max-sm:justify-between"
+                  variant="outline"
+                >
+                  {semesterLabel(selectedCalendar)}
+                  <ChevronDownIcon className="size-4" />
+                </Button>
+                <Dropdown.Popover>
+                  <Dropdown.Menu
+                    aria-label="選擇學年度"
+                    className="max-h-60 overflow-y-auto"
+                    onAction={handleYearChange}
                   >
-                    <Label>{item.title}</Label>
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown.Popover>
-          </Dropdown>
-        </div>
+                    {calendarList.map((item) => (
+                      <Dropdown.Item
+                        key={item.title}
+                        id={item.title}
+                        textValue={semesterLabel(item)}
+                      >
+                        <Label>{semesterLabel(item)}</Label>
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown.Menu>
+                </Dropdown.Popover>
+              </Dropdown>
+            )
+          }
+          description="學校公告的學期重要日程，可下載或訂閱到個人日曆。"
+          title="校園行事曆"
+        />
 
         {error ? (
           <FetchError
@@ -160,27 +181,68 @@ export const CalendarPage = () => {
             className="w-full"
             defaultSelectedKey={hasStructuredData ? "events" : "pdf"}
           >
-            {/* ListContainer 提供分頁列的底色與圓角；少了它，分頁只會是兩段沒有樣式的文字。
-                HeroUI 的 Tabs.Indicator 需要 SharedElementTransition 祖先才能運作，
-                這裡沒有，所以改用 data-selected 自行畫出選取中的底色。 */}
-            <Tabs.ListContainer className="mx-auto w-fit">
-              <Tabs.List aria-label="行事曆檢視方式">
-                {hasStructuredData && (
-                  <Tabs.Tab className={TAB_CLASS} id="events">
-                    行事曆
+            {/* 分頁列與匯出動作併成同一列工具列，讓月曆本體早一點出現在第一屏。
+                匯出按鈕只看 hasStructuredData、不看目前在哪個分頁：改成跟著分頁走就得把
+                Tabs 變成受控元件，而換學期時是靠上面的 key 重新掛載來重設預設分頁的。 */}
+            <div className="flex flex-col gap-3 border-b border-gray-200 pb-3 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800">
+              {/* ListContainer 提供分頁列的底色與圓角；少了它，分頁只會是兩段沒有樣式的文字。
+                  HeroUI 的 Tabs.Indicator 需要 SharedElementTransition 祖先才能運作，
+                  這裡沒有，所以改用 data-selected 自行畫出選取中的底色。 */}
+              <Tabs.ListContainer className="w-fit">
+                <Tabs.List aria-label="行事曆檢視方式">
+                  {hasStructuredData && (
+                    <Tabs.Tab className={TAB_CLASS} id="events">
+                      行事曆
+                    </Tabs.Tab>
+                  )}
+                  <Tabs.Tab className={TAB_CLASS} id="pdf">
+                    PDF 原件
                   </Tabs.Tab>
-                )}
-                <Tabs.Tab className={TAB_CLASS} id="pdf">
-                  PDF 原件
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
+                </Tabs.List>
+              </Tabs.ListContainer>
+
+              {hasStructuredData && (
+                <div className="flex flex-col items-stretch gap-1 sm:items-end">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      // events 還沒載入完就按下去只會靜靜地沒反應，先擋住。
+                      isDisabled={!events}
+                      size="sm"
+                      variant="ghost"
+                      onPress={handleDownload}
+                    >
+                      <ArrowDownTrayIcon className="size-4" />
+                      下載 .ics
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onPress={handleCopySubscribeUrl}
+                    >
+                      <ClipboardDocumentIcon className="size-4" />
+                      {copyState === "copied"
+                        ? "已複製訂閱網址"
+                        : "複製訂閱網址"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 sm:text-right">
+                    下載可一次匯入日曆；訂閱網址則會隨學校更新自動同步。
+                  </p>
+                  {copyState === "failed" && subscribeUrl && (
+                    <input
+                      readOnly
+                      aria-label="訂閱網址"
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-xs sm:max-w-sm dark:border-gray-600 dark:bg-gray-800/40"
+                      value={subscribeUrl}
+                      onFocus={(e) => e.currentTarget.select()}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
 
             {hasStructuredData && (
-              <Tabs.Panel
-                className="flex flex-col items-center gap-4"
-                id="events"
-              >
+              <Tabs.Panel className="flex flex-col gap-4" id="events">
                 {eventsError ? (
                   <FetchError
                     message="行事曆內容載入失敗，可改看 PDF 原件。"
@@ -189,41 +251,7 @@ export const CalendarPage = () => {
                 ) : !events ? (
                   <Loading />
                 ) : (
-                  <>
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onPress={handleDownload}
-                      >
-                        <ArrowDownTrayIcon className="size-4" />
-                        下載 .ics
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onPress={handleCopySubscribeUrl}
-                      >
-                        <ClipboardDocumentIcon className="size-4" />
-                        {copyState === "copied"
-                          ? "已複製訂閱網址"
-                          : "複製訂閱網址"}
-                      </Button>
-                    </div>
-                    {copyState === "failed" && subscribeUrl && (
-                      <input
-                        readOnly
-                        aria-label="訂閱網址"
-                        className="w-full max-w-xl rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-center text-xs dark:border-gray-600 dark:bg-gray-800/40"
-                        value={subscribeUrl}
-                        onFocus={(e) => e.currentTarget.select()}
-                      />
-                    )}
-                    <p className="text-center text-sm text-gray-500">
-                      下載可一次匯入日曆；訂閱網址則會隨學校更新自動同步。
-                    </p>
-                    <AcademicCalendar events={events} />
-                  </>
+                  <AcademicCalendar events={events} />
                 )}
               </Tabs.Panel>
             )}

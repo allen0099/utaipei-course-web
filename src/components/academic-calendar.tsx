@@ -318,7 +318,7 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
   return (
     <div className="flex w-full flex-col gap-6">
       {units.length > 0 && (
-        <div className="order-2 flex flex-wrap items-center justify-center gap-2 sm:order-1">
+        <div className="order-2 flex flex-wrap items-center gap-2 sm:order-1">
           <span className="text-sm text-gray-500">篩選單位：</span>
           {units.map((unit) => (
             <ToggleButton

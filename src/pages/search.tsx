@@ -11,7 +11,7 @@ import {
 import { Key } from "@react-types/shared";
 import clsx from "clsx";
 
-import { title } from "@/components/primitives";
+import { PageHeader } from "@/components/page-header.tsx";
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
 import {
@@ -426,20 +426,24 @@ export const SearchPage = () => {
 
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center py-8 md:py-10 w-full">
-        <div className="inline-block max-w-lg text-center justify-center mb-4">
-          <h1 className={title()}>課程查詢</h1>
-        </div>
-        {selectedCourses.length > 0 && (
-          <div className="flex items-center gap-2 mb-4">
-            <Chip color="accent" size="sm" variant="tertiary">
-              已選 {selectedCourses.length} 門課程
-            </Chip>
-            <Link className="text-sm" href="/my-schedule">
-              前往我的課表 →
-            </Link>
-          </div>
-        )}
+      <section className="flex flex-col items-center py-6 md:py-8 w-full">
+        <PageHeader
+          actions={
+            selectedCourses.length > 0 && (
+              <>
+                <Chip color="accent" size="sm" variant="tertiary">
+                  已選 {selectedCourses.length} 門課程
+                </Chip>
+                <Link className="text-sm" href="/my-schedule">
+                  前往我的課表 →
+                </Link>
+              </>
+            )
+          }
+          className="mb-6"
+          description="依學年度、系所或關鍵字查詢開課資料。"
+          title="課程查詢"
+        />
         <div className="flex flex-col md:flex-row flex-wrap justify-center gap-4 w-full max-w-4xl items-center">
           <YmsSelector initialKey={yms || undefined} onChange={onYmsChange} />
           {useCascade && (

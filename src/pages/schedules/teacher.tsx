@@ -11,6 +11,7 @@ import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
+import { PageHeader } from "@/components/page-header.tsx";
 
 type SelectorProps = {
   setTeacher: Dispatch<SetStateAction<TeacherClasses | undefined>>;
@@ -84,7 +85,12 @@ export const TeacherSchedulePage = () => {
 
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center py-8 md:py-10 w-full">
+      <section className="flex flex-col items-center py-6 md:py-8 w-full">
+        <PageHeader
+          className="mb-6"
+          description="查詢個別教師在該學期的授課課表。"
+          title="教師課表"
+        />
         <Selector setTeacher={setTeacher} />
         <Separator className="my-6 max-w-5xl w-full" />
         {teacher ? (

@@ -5,7 +5,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 
-import { title } from "@/components/primitives";
+import { PageHeader } from "@/components/page-header.tsx";
 import DefaultLayout from "@/layouts/default";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
@@ -59,10 +59,12 @@ export const MySchedulePage = () => {
 
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center py-8 md:py-10 w-full">
-        <div className="inline-block max-w-lg text-center justify-center mb-4">
-          <h1 className={title()}>我的課表</h1>
-        </div>
+      <section className="flex flex-col items-center py-6 md:py-8 w-full">
+        <PageHeader
+          className="mb-6"
+          description="在課程查詢頁勾選的課程會集中在這裡，可匯出成日曆或圖片。"
+          title="我的課表"
+        />
 
         {selectedCourses.length === 0 ? (
           <div className="text-center mt-4">

@@ -13,7 +13,8 @@ export default function DefaultLayout({
       <SEO />
       <DisclaimerModal />
       <Navbar />
-      <main className="container mx-auto max-w-7xl px-6 flex-grow pt-16">
+      {/* Navbar 是 sticky（本身佔版面），不需要再留一段 padding 去避開它。 */}
+      <main className="container mx-auto max-w-7xl px-6 flex-grow">
         {children}
       </main>
       <Footbar />
