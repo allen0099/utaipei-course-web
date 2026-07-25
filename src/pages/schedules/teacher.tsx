@@ -85,7 +85,7 @@ export const TeacherSchedulePage = () => {
     <DefaultLayout>
       <PageSection>
         <PageHeader
-          className="mb-6"
+          className="mb-6 max-w-5xl"
           description="查詢個別教師在該學期的授課課表。"
           title="教師課表"
         />

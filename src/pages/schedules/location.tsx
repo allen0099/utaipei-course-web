@@ -97,7 +97,7 @@ export const LocationSearchPage = () => {
     <DefaultLayout>
       <PageSection>
         <PageHeader
-          className="mb-6"
+          className="mb-6 max-w-5xl"
           description="查詢某間教室或場地在該學期的使用課表。"
           title="地點課表"
         />

@@ -117,7 +117,7 @@ export const MySchedulePage = () => {
     <DefaultLayout>
       <PageSection>
         <PageHeader
-          className="mb-6"
+          className="mb-6 max-w-5xl"
           description="在課程查詢頁勾選的課程會集中在這裡，可匯出成日曆或圖片。"
           title="我的課表"
         />

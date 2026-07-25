@@ -357,7 +357,7 @@ export const SearchPage = () => {
               </>
             )
           }
-          className="mb-6"
+          className="mb-6 max-w-5xl"
           description="依學年度、系所或關鍵字查詢開課資料。"
           title="課程查詢"
         />

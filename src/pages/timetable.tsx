@@ -12,7 +12,11 @@ export const TimetablePage = () => {
   return (
     <DefaultLayout>
       <PageSection className="gap-6">
-        <PageHeader description="各節次的上下課時間對照。" title="校園節次表" />
+        <PageHeader
+          className="max-w-5xl"
+          description="各節次的上下課時間對照。"
+          title="校園節次表"
+        />
         <Suspense fallback={<LoadingState />}>
           <PDFDocument link={`${siteConfig.links.github.api}/timetable.pdf`} />
         </Suspense>
