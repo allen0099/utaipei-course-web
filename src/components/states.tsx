@@ -24,6 +24,38 @@ export const LoadingState = ({ label, className }: LoadingStateProps) => (
   </div>
 );
 
+export interface NoticeProps {
+  /** danger for "something is wrong now", warning for "heads up". */
+  tone?: "warning" | "danger";
+  icon?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}
+
+/**
+ * The inline callout used for 衝堂 warnings, 學年期 mismatches and similar
+ * page-level notices, so they don't each invent their own border and padding.
+ */
+export const Notice = ({
+  tone = "warning",
+  icon,
+  children,
+  className,
+}: NoticeProps) => (
+  <div
+    className={clsx(
+      "flex items-start gap-2 rounded-lg border p-3 text-sm",
+      tone === "danger"
+        ? "border-danger/40 bg-danger/10 text-danger"
+        : "border-warning/40 bg-warning/10 text-warning",
+      className,
+    )}
+  >
+    {icon && <span className="mt-0.5 shrink-0">{icon}</span>}
+    <span>{children}</span>
+  </div>
+);
+
 export interface EmptyStateProps {
   /** One short line saying what is missing or what to do next. */
   title: ReactNode;
