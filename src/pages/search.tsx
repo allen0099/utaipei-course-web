@@ -361,38 +361,43 @@ export const SearchPage = () => {
           description="依學年度、系所或關鍵字查詢開課資料。"
           title="課程查詢"
         />
-        <div className="flex flex-col md:flex-row flex-wrap justify-center gap-4 w-full max-w-4xl items-center">
-          <YmsSelector initialKey={yms || undefined} onChange={onYmsChange} />
-          {useCascade && (
+        {/* 篩選條件與標題、分隔線、結果共用同一個量測寬度並靠左，整頁才有
+            一條連續的左緣。篩選列本身是靠左排列而不是置中：頁面其餘內容
+            （標題、結果表格）都是靠左的，置中的篩選列看起來會像是沒對齊。 */}
+        <div className="flex w-full max-w-5xl flex-col gap-4">
+          <div className="flex flex-col flex-wrap gap-4 md:flex-row md:items-center">
+            <YmsSelector initialKey={yms || undefined} onChange={onYmsChange} />
+            {useCascade && (
+              <ItemSelector
+                items={colleges}
+                label="選擇學院"
+                placeholder="不限學院"
+                selectedKey={collegeCode || null}
+                onChange={onCollegeChange}
+              />
+            )}
             <ItemSelector
-              items={colleges}
-              label="選擇學院"
-              placeholder="不限學院"
-              selectedKey={collegeCode || null}
-              onChange={onCollegeChange}
+              items={departmentItems}
+              label="選擇系所"
+              placeholder={
+                useCascade && !collegeCode ? "請先選擇學院" : "不限系所"
+              }
+              selectedKey={departmentCode || null}
+              onChange={onDepartmentChange}
             />
-          )}
-          <ItemSelector
-            items={departmentItems}
-            label="選擇系所"
-            placeholder={
-              useCascade && !collegeCode ? "請先選擇學院" : "不限系所"
-            }
-            selectedKey={departmentCode || null}
-            onChange={onDepartmentChange}
-          />
+          </div>
+          <SearchField
+            className="w-full max-w-2xl"
+            value={keyword}
+            onChange={setKeyword}
+          >
+            <SearchField.Group>
+              <SearchField.SearchIcon />
+              <SearchField.Input placeholder="輸入課程名稱、代碼或教師姓名搜尋" />
+              <SearchField.ClearButton />
+            </SearchField.Group>
+          </SearchField>
         </div>
-        <SearchField
-          className="max-w-2xl w-full mt-4"
-          value={keyword}
-          onChange={setKeyword}
-        >
-          <SearchField.Group>
-            <SearchField.SearchIcon />
-            <SearchField.Input placeholder="輸入課程名稱、代碼或教師姓名搜尋" />
-            <SearchField.ClearButton />
-          </SearchField.Group>
-        </SearchField>
         <Separator className="my-6 max-w-5xl w-full" />
         <div className="w-full max-w-5xl">{renderResults()}</div>
       </PageSection>
