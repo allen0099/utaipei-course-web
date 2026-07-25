@@ -1,5 +1,16 @@
+import { downloadBlob } from "@/utils/download.ts";
+
 const WARM_BACKGROUND_COLOR = "#fef7ed"; // Warm orange-50 background
+const DARK_BACKGROUND_COLOR = "#1c1917"; // stone-900, matches the dark UI
 const PADDING = 40; // 40px padding on all sides
+
+// The grid is captured as it currently renders, so it carries whatever `dark:`
+// classes are active. Picking the background from the same signal keeps the
+// export from pairing dark cells with a cream page (and vice versa).
+const isDarkMode = () => document.documentElement.classList.contains("dark");
+
+const backgroundColor = () =>
+  isDarkMode() ? DARK_BACKGROUND_COLOR : WARM_BACKGROUND_COLOR;
 
 // Wait for the browser to complete a full layout/paint cycle before measuring.
 // A single rAF can still fire before layout has settled, so we wait for two.
@@ -19,7 +30,7 @@ const htmlToCanvas = async (element: HTMLElement): Promise<Blob | null> => {
   await waitForLayout();
 
   return toBlob(element, {
-    backgroundColor: WARM_BACKGROUND_COLOR, // Warm background color
+    backgroundColor: backgroundColor(),
     height: element.scrollHeight + PADDING * 2, // Add padding to height
     width: element.scrollWidth + PADDING * 2, // Add padding to width
     style: {
@@ -85,17 +96,7 @@ export const downloadScheduleImage = async (
   try {
     const blob = await generateScheduleImageBlob(scheduleTitle);
 
-    // Create download link
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = `${scheduleTitle}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${scheduleTitle}.png`);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("Failed to generate schedule image:", error);
@@ -124,12 +125,12 @@ const createFallbackImage = async (scheduleTitle: string): Promise<void> => {
   canvas.width = 800 + PADDING * 2;
   canvas.height = 600 + PADDING * 2;
 
-  // Fill background with warm color
-  ctx.fillStyle = WARM_BACKGROUND_COLOR;
+  // Fill background with the theme-matching color
+  ctx.fillStyle = backgroundColor();
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Add title with padding offset
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = isDarkMode() ? "#f5f5f4" : "#000000";
   ctx.font = "bold 24px sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(scheduleTitle, canvas.width / 2, 40 + PADDING);
@@ -152,13 +153,5 @@ const createFallbackImage = async (scheduleTitle: string): Promise<void> => {
     throw new Error("Failed to generate fallback image blob");
   }
 
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = `${scheduleTitle}-notice.png`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, `${scheduleTitle}-notice.png`);
 };

@@ -3,7 +3,7 @@ import {
   ChevronDownIcon,
   ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
-import { Spinner, Button, Dropdown, Label, Tabs } from "@heroui/react";
+import { Button, Dropdown, Label, Tabs } from "@heroui/react";
 import { lazy, Suspense, useMemo, useState } from "react";
 
 import DefaultLayout from "@/layouts/default";
@@ -15,12 +15,14 @@ import { AcademicCalendar } from "@/components/academic-calendar.tsx";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { generateAcademicCalendarICS } from "@/utils/academic-calendar-ics.ts";
 import { downloadICS } from "@/utils/ics-generator.ts";
+import { LoadingState } from "@/components/states.tsx";
+import { PageSection } from "@/components/panel.tsx";
 
 const PDFDocument = lazy(() => import("@/components/pdf.tsx"));
 
 /** 選取中的分頁畫出白色藥丸底色，取代需要額外容器才能運作的 Tabs.Indicator。 */
 const TAB_CLASS =
-  "whitespace-nowrap data-[selected=true]:bg-white data-[selected=true]:shadow-sm dark:data-[selected=true]:bg-gray-700";
+  "whitespace-nowrap data-[selected=true]:bg-white data-[selected=true]:shadow-sm dark:data-[selected=true]:bg-surface-tertiary";
 
 /**
  * calendar.json 的 title 是「本校 114 學年度下學期行事曆」，當選單觸發鈕的文字太長，
@@ -29,13 +31,6 @@ const TAB_CLASS =
  */
 const semesterLabel = (item: CalendarItem) =>
   `${item.year} 學年度${item.semester === 1 ? "上" : "下"}學期`;
-
-const Loading = () => (
-  <div className="flex items-center gap-2">
-    <Spinner />
-    <span>載入中...</span>
-  </div>
-);
 
 export const CalendarPage = () => {
   const {
@@ -127,7 +122,7 @@ export const CalendarPage = () => {
 
   return (
     <DefaultLayout>
-      <section className="flex w-full flex-col gap-6 py-6 md:py-8">
+      <PageSection align="stretch" className="gap-6">
         {/* 標題固定不隨選取的學期變動，學期改由選單觸發鈕自己顯示：切換時標題不會跳動，
             也不必把同一份資訊寫兩遍。 */}
         <PageHeader
@@ -174,7 +169,7 @@ export const CalendarPage = () => {
             onRetry={refetch}
           />
         ) : !selectedCalendar ? (
-          <Loading />
+          <LoadingState />
         ) : (
           <Tabs
             key={selectedCalendar.title}
@@ -184,7 +179,7 @@ export const CalendarPage = () => {
             {/* 分頁列與匯出動作併成同一列工具列，讓月曆本體早一點出現在第一屏。
                 匯出按鈕只看 hasStructuredData、不看目前在哪個分頁：改成跟著分頁走就得把
                 Tabs 變成受控元件，而換學期時是靠上面的 key 重新掛載來重設預設分頁的。 */}
-            <div className="flex flex-col gap-3 border-b border-gray-200 pb-3 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800">
+            <div className="flex flex-col gap-3 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
               {/* ListContainer 提供分頁列的底色與圓角；少了它，分頁只會是兩段沒有樣式的文字。
                   HeroUI 的 Tabs.Indicator 需要 SharedElementTransition 祖先才能運作，
                   這裡沒有，所以改用 data-selected 自行畫出選取中的底色。 */}
@@ -225,14 +220,14 @@ export const CalendarPage = () => {
                         : "複製訂閱網址"}
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500 sm:text-right">
+                  <p className="text-xs text-muted sm:text-right">
                     下載可一次匯入日曆；訂閱網址則會隨學校更新自動同步。
                   </p>
                   {copyState === "failed" && subscribeUrl && (
                     <input
                       readOnly
                       aria-label="訂閱網址"
-                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-xs sm:max-w-sm dark:border-gray-600 dark:bg-gray-800/40"
+                      className="w-full rounded-md border border-border bg-background-secondary px-3 py-1.5 text-xs sm:max-w-sm"
                       value={subscribeUrl}
                       onFocus={(e) => e.currentTarget.select()}
                     />
@@ -249,7 +244,7 @@ export const CalendarPage = () => {
                     onRetry={refetchEvents}
                   />
                 ) : !events ? (
-                  <Loading />
+                  <LoadingState />
                 ) : (
                   <AcademicCalendar events={events} />
                 )}
@@ -258,18 +253,18 @@ export const CalendarPage = () => {
 
             <Tabs.Panel className="flex flex-col items-center gap-4" id="pdf">
               {isUnparsable && (
-                <p className="text-center text-sm text-gray-500">
+                <p className="text-center text-sm text-muted">
                   這份行事曆的 PDF 無法擷取文字，僅提供原件檢視。
                 </p>
               )}
-              <p className="text-gray-500">點擊下方任一頁即可放大檢視</p>
-              <Suspense fallback={<Loading />}>
+              <p className="text-muted">點擊下方任一頁即可放大檢視</p>
+              <Suspense fallback={<LoadingState />}>
                 <PDFDocument link={selectedCalendar.link} />
               </Suspense>
             </Tabs.Panel>
           </Tabs>
         )}
-      </section>
+      </PageSection>
     </DefaultLayout>
   );
 };

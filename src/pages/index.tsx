@@ -1,23 +1,26 @@
 import type { JSX } from "react";
 
 import { Fragment } from "react";
-import { Card, Link, Spinner } from "@heroui/react";
+import { Card, Link } from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default";
 import { AnnounceHrefItem, AnnouncementItem } from "@/interfaces/globals.ts";
 import { CourseFunctions } from "@/components/course-functions.tsx";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { siteConfig } from "@/config/site.ts";
-import { title } from "@/components/primitives.ts";
+import { sectionTitle, title } from "@/components/primitives.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
+import { ExternalLinkIcon } from "@/components/icons.tsx";
+import { EmptyState, LoadingState } from "@/components/states.tsx";
 
 const reDate = /((?:\d{3}\s年)?\s\d{1,2}\s[/\-月]\s\d{1,2}\s日?)(?!\d)/g;
 
-// 計算縮排 class
-const getIndentClass = (level: number) => {
-  // level=1 無縮排，level=2 pl-4, level=3 pl-8 ...
-  return `pl-${(level - 1) * 4}`;
-};
+// 計算縮排 class。必須是完整的字面值，Tailwind 無法從拼接字串中擷取 class 名稱。
+// level=1 無縮排，level=2 pl-4，level=3 pl-8 ⋯，超出表格則沿用最深一層。
+const INDENT_CLASSES = ["", "pl-4", "pl-8", "pl-12", "pl-16"];
+
+const getIndentClass = (level: number) =>
+  INDENT_CLASSES[Math.min(Math.max(level, 1), INDENT_CLASSES.length) - 1];
 
 // 將 text 中出現 href.text 的部分轉為 Link，並在 Link 前後自動補空白（若無則補）
 const renderTextWithLinks = (text: string, hrefs?: AnnounceHrefItem[]) => {
@@ -76,20 +79,7 @@ const renderTextWithLinks = (text: string, hrefs?: AnnounceHrefItem[]) => {
             target="_blank"
           >
             {part.text}
-            <svg
-              aria-hidden="true"
-              className="w-3 h-3"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M14 5H20M20 5V11M20 5L11 14M10 3H4C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21H20C20.5523 21 21 20.5523 21 20V14"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ExternalLinkIcon className="w-3 h-3" />
           </a>
           {needSpaceAfter && " "}
         </Fragment>
@@ -112,7 +102,7 @@ const highlightDate = (text: string) => {
       result.push(text.slice(lastIndex, match.index));
     }
     result.push(
-      <span key={match.index} className="text-red-600 font-bold">
+      <span key={match.index} className="text-danger font-bold">
         {match[0]}
       </span>,
     );
@@ -169,10 +159,7 @@ export default function IndexPage() {
         </section>
         <CourseFunctions />
         {loading ? (
-          <div className="flex items-center gap-2 mt-8">
-            <Spinner />
-            <span>正在載入校園公告...</span>
-          </div>
+          <LoadingState className="mt-8" label="校園公告" />
         ) : error ? (
           <FetchError
             className="mt-8"
@@ -182,18 +169,30 @@ export default function IndexPage() {
         ) : (
           <Card className="border border-warning/30 border-l-4 border-l-warning w-full max-w-2xl bg-surface">
             <Card.Header className="flex justify-center text-center w-full">
-              <p className="text-2xl font-bold w-full">校園公告</p>
+              <h2
+                className={sectionTitle({ align: "center", class: "w-full" })}
+              >
+                校園公告
+              </h2>
             </Card.Header>
             <Card.Content>
-              <ul className="space-y-2">
-                {announcements.map((item, idx) => (
-                  <li key={idx} className={getIndentClass(item.level)}>
-                    <span className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {renderTextWithLinks(item.text, item.href)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              {announcements.length === 0 ? (
+                <EmptyState
+                  className="py-4"
+                  description="校務資訊系統目前沒有張貼中的公告。"
+                  title="目前沒有校園公告"
+                />
+              ) : (
+                <ul className="space-y-2">
+                  {announcements.map((item, idx) => (
+                    <li key={idx} className={getIndentClass(item.level)}>
+                      <span className="text-foreground whitespace-pre-line">
+                        {renderTextWithLinks(item.text, item.href)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card.Content>
             <Card.Footer>
               <a
@@ -203,20 +202,7 @@ export default function IndexPage() {
                 target="_blank"
               >
                 詳細公告請見校務資訊系統
-                <svg
-                  aria-hidden="true"
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M14 5H20M20 5V11M20 5L11 14M10 3H4C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21H20C20.5523 21 21 20.5523 21 20V14"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <ExternalLinkIcon />
               </a>
             </Card.Footer>
           </Card>

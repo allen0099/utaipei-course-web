@@ -1,4 +1,4 @@
-import { Separator, Spinner } from "@heroui/react";
+import { Separator } from "@heroui/react";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { Key } from "@react-types/shared";
 
@@ -12,6 +12,9 @@ import { convertCourses } from "@/utils/convert-course.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
+import { sectionTitle } from "@/components/primitives.ts";
+import { EmptyState, LoadingState } from "@/components/states.tsx";
+import { PageSection } from "@/components/panel.tsx";
 
 type SelectorProps = {
   setTeacher: Dispatch<SetStateAction<TeacherClasses | undefined>>;
@@ -69,12 +72,7 @@ const Selector = (prop: SelectorProps) => {
           }}
         />
       </div>
-      {loading && (
-        <div className="flex items-center gap-2">
-          <Spinner />
-          <span>載入系級資料中...</span>
-        </div>
-      )}
+      {loading && <LoadingState label="系級資料" />}
       {error && <FetchError message="系級資料載入失敗。" onRetry={refetch} />}
     </div>
   );
@@ -85,7 +83,7 @@ export const TeacherSchedulePage = () => {
 
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center py-6 md:py-8 w-full">
+      <PageSection>
         <PageHeader
           className="mb-6"
           description="查詢個別教師在該學期的授課課表。"
@@ -94,41 +92,50 @@ export const TeacherSchedulePage = () => {
         <Selector setTeacher={setTeacher} />
         <Separator className="my-6 max-w-5xl w-full" />
         {teacher ? (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-              {teacher.class.map((c) => (
-                <div
-                  key={c.code}
-                  className="w-full max-w-2xl p-4 border rounded-lg shadow-sm mb-4"
-                >
-                  <h2 className="text-xl font-semibold mb-2">
-                    {c.name} ({c.code})
-                  </h2>
-                  <p className="mb-1">
-                    <strong>班級：</strong>
-                    {c.class}
-                  </p>
-                  <p className="mb-1">
-                    <strong>時間：</strong>
-                    {c.time || "時間未定"}
-                  </p>
-                  <p className="mb-1">
-                    <strong>教師：</strong>
-                    {c.teacher}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <WeeklySchedule
-              className="mt-5"
-              courses={convertCourses(teacher.class)}
-              scheduleTitle={`${teacher.name} 教師的課表`}
+          teacher.class.length === 0 ? (
+            <EmptyState
+              description="該教師在此學年期沒有開課紀錄，可以換一個學年期再試。"
+              title={`${teacher.name} 教師查無課程`}
             />
-          </>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {teacher.class.map((c) => (
+                  <div
+                    key={c.code}
+                    className="w-full max-w-2xl p-4 border border-border rounded-lg shadow-sm mb-4"
+                  >
+                    <h2 className={sectionTitle({ size: "md", class: "mb-2" })}>
+                      {c.name} ({c.code})
+                    </h2>
+                    <p className="mb-1">
+                      <strong>班級：</strong>
+                      {c.class}
+                    </p>
+                    <p className="mb-1">
+                      <strong>時間：</strong>
+                      {c.time || "時間未定"}
+                    </p>
+                    <p className="mb-1">
+                      <strong>教師：</strong>
+                      {c.teacher}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <WeeklySchedule
+                courses={convertCourses(teacher.class)}
+                scheduleTitle={`${teacher.name} 教師的課表`}
+              />
+            </>
+          )
         ) : (
-          <p className="text-gray-500">請選擇系級與教師以查看課程。</p>
+          <EmptyState
+            description="依序選擇學年期、系級與教師，就會顯示該教師整學期的課表。"
+            title="請選擇系級與教師以查看課程"
+          />
         )}
-      </section>
+      </PageSection>
     </DefaultLayout>
   );
 };

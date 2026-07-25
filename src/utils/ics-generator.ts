@@ -1,4 +1,5 @@
 import { WeeklyScheduleCourse, CampusTimeMapping } from "@/interfaces/globals";
+import { downloadBlob } from "@/utils/download.ts";
 
 // Helper to format ICS date-time
 export const formatICSDateTime = (date: Date): string => {
@@ -22,18 +23,10 @@ export const wrapICSLine = (line: string): string => {
 
 /** Trigger a browser download for generated iCalendar text. */
 export const downloadICS = (icsContent: string, fileName: string): void => {
-  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  URL.revokeObjectURL(url);
+  downloadBlob(
+    new Blob([icsContent], { type: "text/calendar;charset=utf-8" }),
+    fileName,
+  );
 };
 
 // Generate ICS content for the course schedule

@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { Separator, Spinner } from "@heroui/react";
+import { Separator } from "@heroui/react";
 import { Key } from "@react-types/shared";
 
+import { DataTable, DataTableColumn } from "@/components/data-table.tsx";
+import { EmptyState, LoadingState } from "@/components/states.tsx";
+import { PageSection } from "@/components/panel.tsx";
+import { sectionTitle } from "@/components/primitives.ts";
 import DefaultLayout from "@/layouts/default.tsx";
 import { siteConfig } from "@/config/site.ts";
 import { CourseItem, LocationItem } from "@/interfaces/globals.ts";
@@ -13,47 +17,51 @@ import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
 
-const LocationTable = ({ courses }: { courses: CourseItem[] }) => {
-  const columns = [
-    { key: "code", label: "課程代碼" },
-    { key: "name", label: "課程名稱" },
-    { key: "teacher", label: "教師" },
-    { key: "class", label: "班級名稱" },
-    { key: "time", label: "時間" },
-  ];
+const COLUMNS: DataTableColumn<CourseItem>[] = [
+  {
+    key: "code",
+    label: "課程代碼",
+    headerLabel: "代碼",
+    width: "w-[16%]",
+    cellClassName: "tabular-nums text-muted",
+    hideOnCard: true,
+  },
+  {
+    key: "name",
+    label: "課程名稱",
+    width: "w-[30%]",
+    cellClassName: "font-medium text-foreground",
+    hideOnCard: true,
+  },
+  { key: "teacher", label: "教師", width: "w-[16%]" },
+  { key: "class", label: "班級名稱", headerLabel: "班級", width: "w-[20%]" },
+  {
+    key: "time",
+    label: "時間",
+    width: "w-[18%]",
+    cellClassName: "tabular-nums text-foreground/80",
+  },
+];
 
+const LocationTable = ({ courses }: { courses: CourseItem[] }) => {
   if (!courses || courses.length === 0) {
-    return <div className="mt-4">尚未選擇地點或無資料</div>;
+    return (
+      <EmptyState
+        description="這個地點在本學期沒有排課紀錄。"
+        title="查無課程"
+      />
+    );
   }
 
   return (
-    <div className="mt-4 overflow-x-auto">
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="border-b border-gray-300 dark:border-gray-700">
-            {columns.map((column) => (
-              <th key={column.key} className="text-left p-2 whitespace-nowrap">
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {courses.map((item, index) => (
-            <tr
-              key={`${item.code}-${item.class}-${index}`}
-              className="border-b border-gray-200 dark:border-gray-800"
-            >
-              {columns.map((column) => (
-                <td key={column.key} className="p-2 whitespace-nowrap">
-                  {item[column.key as keyof typeof item]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      cardSubtitle={(item) => item.code}
+      cardTitle={(item) => item.name}
+      className="mt-4"
+      columns={COLUMNS}
+      rowKey={(item, index) => `${item.code}-${item.class}-${index}`}
+      rows={courses}
+    />
   );
 };
 
@@ -87,7 +95,7 @@ export const LocationSearchPage = () => {
 
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center py-6 md:py-8 w-full">
+      <PageSection>
         <PageHeader
           className="mb-6"
           description="查詢某間教室或場地在該學期的使用課表。"
@@ -101,12 +109,7 @@ export const LocationSearchPage = () => {
             onChange={onLocationChange}
           />
         </div>
-        {loading && (
-          <div className="flex items-center gap-2 mt-4">
-            <Spinner />
-            <span>載入地點資料中...</span>
-          </div>
-        )}
+        {loading && <LoadingState className="mt-4" label="地點資料" />}
         {error && (
           <FetchError
             className="mt-4"
@@ -115,29 +118,27 @@ export const LocationSearchPage = () => {
           />
         )}
         <Separator className="my-6 max-w-5xl w-full" />
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-5xl">
           {selectedLocation ? (
             <>
-              <h3 className="text-lg text-center mb-2">{scheduleTitle}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                學期：{semester}
-              </p>
+              {/* scheduleTitle 已含學年期，不再另外重複一行「學期：」 */}
+              <h2 className={sectionTitle({ size: "sm", align: "center" })}>
+                {scheduleTitle}
+              </h2>
+              <LocationTable courses={selectedLocation.courses} />
+              <WeeklySchedule
+                courses={convertCourses(selectedLocation.courses)}
+                scheduleTitle={scheduleTitle}
+              />
             </>
           ) : (
-            <h3 className="text-lg text-center mb-2">尚未選擇地點</h3>
+            <EmptyState
+              description="選擇學年期與地點後，會顯示該教室或場地整學期的使用課表。"
+              title="尚未選擇地點"
+            />
           )}
         </div>
-        {selectedLocation && (
-          <>
-            <LocationTable courses={selectedLocation.courses} />
-            <WeeklySchedule
-              className="mt-5"
-              courses={convertCourses(selectedLocation.courses)}
-              scheduleTitle={scheduleTitle}
-            />
-          </>
-        )}
-      </section>
+      </PageSection>
     </DefaultLayout>
   );
 };

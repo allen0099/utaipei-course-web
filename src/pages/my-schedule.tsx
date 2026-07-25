@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Button, Card } from "@heroui/react";
+import { useMemo, useState } from "react";
+import { Button, Card, Link, Modal } from "@heroui/react";
 import {
   TrashIcon,
   ExclamationTriangleIcon,
@@ -12,9 +12,14 @@ import { convertCourses } from "@/utils/convert-course.ts";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 import { findScheduleConflicts } from "@/utils/schedule-conflict.ts";
 import { MergedCourseItem } from "@/interfaces/globals.ts";
+import { cardTitle } from "@/components/primitives.ts";
+import { DataTable, DataTableColumn } from "@/components/data-table.tsx";
+import { EmptyState } from "@/components/states.tsx";
+import { PageSection } from "@/components/panel.tsx";
 
 export const MySchedulePage = () => {
   const { selectedCourses, removeCourse, clearAll } = useSelectedCourses();
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const scheduleCourses = useMemo(
     () => convertCourses(selectedCourses),
@@ -57,9 +62,60 @@ export const MySchedulePage = () => {
     removeCourse(course);
   };
 
+  const columns: DataTableColumn<MergedCourseItem>[] = useMemo(
+    () => [
+      {
+        key: "code",
+        label: "課程代碼",
+        headerLabel: "代碼",
+        width: "w-[12%]",
+        cellClassName: "tabular-nums text-muted",
+        hideOnCard: true,
+      },
+      {
+        key: "name",
+        label: "課程名稱",
+        width: "w-[20%]",
+        cellClassName: "font-medium text-foreground",
+        hideOnCard: true,
+      },
+      {
+        key: "class",
+        label: "班級名稱",
+        headerLabel: "班級",
+        width: "w-[14%]",
+      },
+      { key: "teacher", label: "教師", width: "w-[12%]" },
+      {
+        key: "time",
+        label: "時間",
+        width: "w-[14%]",
+        cellClassName: "tabular-nums text-foreground/80",
+      },
+      {
+        key: "conflict",
+        label: "衝堂提示",
+        width: "w-[22%]",
+        render: (course) => {
+          const names = conflictNamesByCourseCode.get(course.code);
+
+          if (!names || names.size === 0) return "-";
+
+          return (
+            <span className="inline-flex items-start gap-1 text-danger">
+              <ExclamationTriangleIcon className="mt-0.5 shrink-0" width={16} />
+              與 {Array.from(names).join("、")} 衝堂
+            </span>
+          );
+        },
+      },
+    ],
+    [conflictNamesByCourseCode],
+  );
+
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center py-6 md:py-8 w-full">
+      <PageSection>
         <PageHeader
           className="mb-6"
           description="在課程查詢頁勾選的課程會集中在這裡，可匯出成日曆或圖片。"
@@ -67,19 +123,19 @@ export const MySchedulePage = () => {
         />
 
         {selectedCourses.length === 0 ? (
-          <div className="text-center mt-4">
-            <p className="text-gray-500 dark:text-gray-400">
-              尚未選擇任何課程，請先至
-              <a className="text-accent underline mx-1" href="/search">
-                課程查詢
-              </a>
-              頁面勾選想要加入課表的課程。
-            </p>
-          </div>
+          <EmptyState
+            action={
+              <Link className="mt-2" href="/search">
+                前往課程查詢 →
+              </Link>
+            }
+            description="在課程查詢頁勾選想要的課程，就會集中顯示在這裡。"
+            title="尚未選擇任何課程"
+          />
         ) : (
           <div className="w-full max-w-5xl flex flex-col gap-6">
             {hasConflicts && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 text-sm">
+              <div className="flex items-center gap-2 rounded-lg border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
                 <ExclamationTriangleIcon className="shrink-0" width={20} />
                 <span>
                   已選課程中有時段衝突，請確認課表下方標示的衝堂課程。
@@ -89,94 +145,40 @@ export const MySchedulePage = () => {
 
             <Card className="w-full">
               <Card.Header className="flex items-center justify-between">
-                <h3 className="text-lg font-bold">
+                <h3 className={cardTitle()}>
                   已選課程（{selectedCourses.length}）
                 </h3>
-                <Button size="sm" variant="tertiary" onPress={() => clearAll()}>
+                {/* 清空會直接抹掉 localStorage 且無法復原，先確認再執行。 */}
+                <Button
+                  size="sm"
+                  variant="tertiary"
+                  onPress={() => setConfirmClearOpen(true)}
+                >
                   清空所有課程
                 </Button>
               </Card.Header>
               <Card.Content>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm border-collapse">
-                    <thead>
-                      <tr className="border-b border-gray-300 dark:border-gray-700">
-                        <th className="text-left p-2 whitespace-nowrap">
-                          課程代碼
-                        </th>
-                        <th className="text-left p-2 whitespace-nowrap">
-                          課程名稱
-                        </th>
-                        <th className="text-left p-2 whitespace-nowrap">
-                          班級名稱
-                        </th>
-                        <th className="text-left p-2 whitespace-nowrap">
-                          教師
-                        </th>
-                        <th className="text-left p-2 whitespace-nowrap">
-                          時間
-                        </th>
-                        <th className="text-left p-2 whitespace-nowrap">
-                          衝堂提示
-                        </th>
-                        <th className="text-left p-2 whitespace-nowrap">
-                          移除
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedCourses.map((course) => {
-                        const conflictNames = conflictNamesByCourseCode.get(
-                          course.code,
-                        );
-
-                        return (
-                          <tr
-                            key={`${course.code}-${course.class}`}
-                            className="border-b border-gray-200 dark:border-gray-800"
-                          >
-                            <td className="p-2 whitespace-nowrap">
-                              {course.code}
-                            </td>
-                            <td className="p-2 whitespace-nowrap">
-                              {course.name}
-                            </td>
-                            <td className="p-2 whitespace-nowrap">
-                              {course.class}
-                            </td>
-                            <td className="p-2 whitespace-nowrap">
-                              {course.teacher}
-                            </td>
-                            <td className="p-2 whitespace-nowrap">
-                              {course.time}
-                            </td>
-                            <td className="p-2 whitespace-nowrap">
-                              {conflictNames && conflictNames.size > 0 ? (
-                                <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400">
-                                  <ExclamationTriangleIcon width={16} />與{" "}
-                                  {Array.from(conflictNames).join("、")} 衝堂
-                                </span>
-                              ) : (
-                                "-"
-                              )}
-                            </td>
-                            <td className="p-2 whitespace-nowrap">
-                              <Button
-                                isIconOnly
-                                aria-label={`移除 ${course.name}`}
-                                size="sm"
-                                variant="tertiary"
-                                onPress={() => handleRemove(course)}
-                              >
-                                <TrashIcon width={16} />
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                <DataTable
+                  cardSubtitle={(course) => course.code}
+                  cardTitle={(course) => course.name}
+                  columns={columns}
+                  leading={{
+                    label: "移除",
+                    render: (course) => (
+                      <Button
+                        isIconOnly
+                        aria-label={`移除 ${course.name}`}
+                        size="sm"
+                        variant="tertiary"
+                        onPress={() => handleRemove(course)}
+                      >
+                        <TrashIcon width={16} />
+                      </Button>
+                    ),
+                  }}
+                  rowKey={(course) => `${course.code}-${course.class}`}
+                  rows={selectedCourses}
+                />
               </Card.Content>
             </Card>
 
@@ -185,9 +187,47 @@ export const MySchedulePage = () => {
               courses={scheduleCourses}
               scheduleTitle="我的課表"
             />
+
+            <Modal>
+              <Modal.Backdrop
+                isOpen={confirmClearOpen}
+                onOpenChange={setConfirmClearOpen}
+              >
+                <Modal.Container>
+                  <Modal.Dialog>
+                    <Modal.Header>
+                      <Modal.Heading>清空所有課程？</Modal.Heading>
+                    </Modal.Header>
+                    <Modal.Body>
+                      <p className="text-muted">
+                        將移除目前已選的 {selectedCourses.length}{" "}
+                        門課程，且無法復原。
+                      </p>
+                    </Modal.Body>
+                    <Modal.Footer>
+                      <Button
+                        variant="tertiary"
+                        onPress={() => setConfirmClearOpen(false)}
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onPress={() => {
+                          clearAll();
+                          setConfirmClearOpen(false);
+                        }}
+                      >
+                        清空
+                      </Button>
+                    </Modal.Footer>
+                  </Modal.Dialog>
+                </Modal.Container>
+              </Modal.Backdrop>
+            </Modal>
           </div>
         )}
-      </section>
+      </PageSection>
     </DefaultLayout>
   );
 };
