@@ -1,6 +1,6 @@
 import { Button, Card, Chip, ToggleButton } from "@heroui/react";
 import clsx from "clsx";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { CalendarEvent } from "@/interfaces/globals";
 
@@ -109,9 +109,149 @@ const formatDateLabel = (event: CalendarEvent): string => {
   return `${startLabel} – ${end.getMonth() + 1}/${end.getDate()}（${WEEKDAYS[end.getDay()]}）`;
 };
 
+interface MonthCarouselProps {
+  months: MonthGrid[];
+  eventsByDate: Map<string, CalendarEvent[]>;
+  selectedDate: string | null;
+  onSelectDate: (date: string | null) => void;
+}
+
 /**
- * 學期行事曆：上方月曆格標出有事件的日期，下方依時間順序列出事件。
+ * 桌機把整學期的月份並排成格狀；手機一次只放得下一個月，改用 scroll-snap 輪播，
+ * 直接沿用原生觸控左右滑動。
+ *
+ * 換學期時要回到第一個月，作法是由父層以 key 讓本元件重新掛載，捲動位置與
+ * activeMonth 都會自然歸零，不必在 effect 裡 setState。
+ */
+const MonthCarousel = ({
+  months,
+  eventsByDate,
+  selectedDate,
+  onSelectDate,
+}: MonthCarouselProps) => {
+  const [activeMonth, setActiveMonth] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * 由捲動位置回推目前停在第幾個月。每張卡片剛好等於容器寬度且無間距，
+   * 所以四捨五入即是索引；桌機是格狀排列不會觸發水平捲動。
+   */
+  const handleScroll = () => {
+    const carousel = carouselRef.current;
+
+    if (!carousel || carousel.clientWidth === 0) return;
+
+    setActiveMonth(Math.round(carousel.scrollLeft / carousel.clientWidth));
+  };
+
+  const goToMonth = (index: number) => {
+    const carousel = carouselRef.current;
+
+    if (!carousel) return;
+
+    carousel.scrollTo({
+      left: index * carousel.clientWidth,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <div>
+      {/* 手機：一次一個月的 scroll-snap 輪播。sm 以上回到並排格狀並關掉水平捲動。 */}
+      <div
+        ref={carouselRef}
+        aria-label="每月行事曆"
+        className="flex snap-x snap-mandatory overflow-x-auto sm:grid sm:snap-none sm:grid-cols-2 sm:gap-4 sm:overflow-x-visible xl:grid-cols-3"
+        role="group"
+        onScroll={handleScroll}
+      >
+        {months.map((month) => (
+          <Card
+            key={month.key}
+            className="w-full shrink-0 snap-center p-3 sm:w-auto"
+          >
+            <h3 className="mb-2 text-center text-sm font-semibold">
+              {month.label}
+            </h3>
+            <div className="grid grid-cols-7 gap-px text-center text-xs">
+              {WEEKDAYS.map((weekday, index) => (
+                <div
+                  key={weekday}
+                  className={clsx(
+                    "py-1 font-medium",
+                    index === 0 || index === 6
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-gray-500",
+                  )}
+                >
+                  {weekday}
+                </div>
+              ))}
+              {month.cells.map((date, index) => {
+                if (!date) return <div key={`blank-${index}`} />;
+
+                const dayEvents = eventsByDate.get(date) ?? [];
+                const holiday = dayEvents.some((e) => e.isHoliday);
+                const selected = selectedDate === date;
+
+                return (
+                  <button
+                    key={date}
+                    aria-label={`${date}${dayEvents.length > 0 ? `，${dayEvents.length} 個事件` : ""}`}
+                    aria-pressed={selected}
+                    className={clsx(
+                      "aspect-square rounded-sm p-1 leading-tight transition-colors",
+                      selected && "ring-2 ring-blue-500 dark:ring-blue-400",
+                      dayEvents.length === 0 &&
+                        "text-gray-400 dark:text-gray-600",
+                      dayEvents.length > 0 &&
+                        !holiday &&
+                        "bg-blue-100 font-medium text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200",
+                      holiday &&
+                        "bg-red-100 font-medium text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-200",
+                    )}
+                    disabled={dayEvents.length === 0}
+                    type="button"
+                    onClick={() => onSelectDate(selected ? null : date)}
+                  >
+                    {parseISODate(date).getDate()}
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* 輪播沒有捲軸，用圓點交代總共幾個月、目前在哪一個，也提供不靠滑動的切換方式 */}
+      {months.length > 1 && (
+        <div className="mt-3 flex justify-center gap-2 sm:hidden">
+          {months.map((month, index) => (
+            <button
+              key={month.key}
+              aria-current={index === activeMonth}
+              aria-label={`跳至 ${month.label}`}
+              className={clsx(
+                "size-2 rounded-full transition-colors",
+                index === activeMonth
+                  ? "bg-blue-500 dark:bg-blue-400"
+                  : "bg-gray-300 dark:bg-gray-600",
+              )}
+              type="button"
+              onClick={() => goToMonth(index)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * 學期行事曆：上方月曆標出有事件的日期，下方依時間順序列出事件。
  * 資料來自 crawler 解析 PDF 後發布的 calendar/<year>/<semester>.json。
+ *
+ * 手機把單位篩選移到月曆下方，讓一進畫面就看得到月曆。
  */
 export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
   const [activeUnits, setActiveUnits] = useState<string[]>([]);
@@ -178,7 +318,7 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
   return (
     <div className="flex w-full flex-col gap-6">
       {units.length > 0 && (
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="order-2 flex flex-wrap items-center justify-center gap-2 sm:order-1">
           <span className="text-sm text-gray-500">篩選單位：</span>
           {units.map((unit) => (
             <ToggleButton
@@ -198,63 +338,18 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {months.map((month) => (
-          <Card key={month.key} className="p-3">
-            <h3 className="mb-2 text-center text-sm font-semibold">
-              {month.label}
-            </h3>
-            <div className="grid grid-cols-7 gap-px text-center text-xs">
-              {WEEKDAYS.map((weekday, index) => (
-                <div
-                  key={weekday}
-                  className={clsx(
-                    "py-1 font-medium",
-                    index === 0 || index === 6
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-gray-500",
-                  )}
-                >
-                  {weekday}
-                </div>
-              ))}
-              {month.cells.map((date, index) => {
-                if (!date) return <div key={`blank-${index}`} />;
-
-                const dayEvents = eventsByDate.get(date) ?? [];
-                const holiday = dayEvents.some((e) => e.isHoliday);
-                const selected = selectedDate === date;
-
-                return (
-                  <button
-                    key={date}
-                    aria-label={`${date}${dayEvents.length > 0 ? `，${dayEvents.length} 個事件` : ""}`}
-                    aria-pressed={selected}
-                    className={clsx(
-                      "aspect-square rounded-sm p-1 leading-tight transition-colors",
-                      selected && "ring-2 ring-blue-500 dark:ring-blue-400",
-                      dayEvents.length === 0 &&
-                        "text-gray-400 dark:text-gray-600",
-                      dayEvents.length > 0 &&
-                        !holiday &&
-                        "bg-blue-100 font-medium text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200",
-                      holiday &&
-                        "bg-red-100 font-medium text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-200",
-                    )}
-                    disabled={dayEvents.length === 0}
-                    type="button"
-                    onClick={() => setSelectedDate(selected ? null : date)}
-                  >
-                    {parseISODate(date).getDate()}
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
-        ))}
+      <div className="order-1 sm:order-2">
+        {/* key 讓換學期時整個輪播重新掛載，捲動位置與目前月份自然歸零 */}
+        <MonthCarousel
+          key={months[0]?.key ?? "empty"}
+          eventsByDate={eventsByDate}
+          months={months}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="order-3 flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-lg font-semibold">
             {selectedDate ? `${selectedDate} 的事件` : "本學期事件"}
