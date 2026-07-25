@@ -13,7 +13,13 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Route configurations with meta tags
+// Route configurations with meta tags.
+//
+// This MUST stay in sync with `pageMeta` in src/config/meta.ts, which drives the
+// same tags at runtime. This script runs as plain .js under node after `vite build`,
+// so it cannot import the .ts module — the table is duplicated on purpose.
+// Page <h1>s (the `title` prop on <PageHeader>) and the nav labels in
+// src/config/site.ts must use the same name as the title here.
 const routes = {
   "/": {
     title: "UTC 選課小幫手",
@@ -23,46 +29,48 @@ const routes = {
   },
   "/calendar": {
     title: "校園行事曆 - UTC 選課小幫手",
-    description: "查看臺北市立大學校園行事曆，掌握重要學期日程與課程時間安排。",
-    keywords: "臺北市立大學,行事曆,課程時間,學期,UTC",
+    description:
+      "查看臺北市立大學各學年度校園行事曆，掌握學期重要日程，並可下載或訂閱到個人日曆。",
+    keywords: "臺北市立大學,行事曆,學期日程,行事曆訂閱,ics,UTC",
   },
   "/search": {
     title: "課程查詢 - UTC 選課小幫手",
     description:
-      "搜尋臺北市立大學課程資訊，快速找到您需要的課程內容與修課資訊。",
-    keywords: "臺北市立大學,課程查詢,課程搜尋,修課,UTC",
+      "依學年度、系所或關鍵字查詢臺北市立大學開課資料，快速找到需要的課程。",
+    keywords: "臺北市立大學,課程查詢,課程搜尋,開課資料,選課,UTC",
   },
   "/my-schedule": {
     title: "我的課表 - UTC 選課小幫手",
     description:
-      "整理您勾選的臺北市立大學課程，檢視合併後的週課表並自動偵測衝堂。",
-    keywords: "臺北市立大學,我的課表,選課,衝堂偵測,UTC",
+      "集中檢視在課程查詢頁勾選的臺北市立大學課程，自動偵測衝堂，並可匯出成日曆或圖片。",
+    keywords: "臺北市立大學,我的課表,選課,衝堂偵測,課表匯出,UTC",
   },
   "/schedules/teacher": {
     title: "教師課表 - UTC 選課小幫手",
-    description: "查詢臺北市立大學教師課表，了解教師授課時間與課程安排。",
+    description: "查詢臺北市立大學個別教師在該學期的授課課表與上課時間。",
     keywords: "臺北市立大學,教師課表,授課時間,教師查詢,UTC",
   },
   "/schedules/class": {
-    title: "系所課表 - UTC 選課小幫手",
-    description: "查看臺北市立大學各系所課表，掌握科系課程時間與教室安排。",
-    keywords: "臺北市立大學,系所課表,科系課程,教室,UTC",
+    title: "班級課表 - UTC 選課小幫手",
+    description: "查詢臺北市立大學各班級在該學期的課表。此功能正在建置中。",
+    keywords: "臺北市立大學,班級課表,班級查詢,課表,UTC",
   },
   "/schedules/location": {
-    title: "教室課表 - UTC 選課小幫手",
-    description: "查詢臺北市立大學教室使用狀況，了解各教室的課程安排與時間。",
-    keywords: "臺北市立大學,教室課表,教室查詢,場地,UTC",
+    // 資料裡不只教室，還有攀岩場地、田徑場、網球場等場地，所以是「地點」不是「教室」。
+    title: "地點課表 - UTC 選課小幫手",
+    description: "查詢臺北市立大學教室、球場等場地在該學期的使用課表。",
+    keywords: "臺北市立大學,地點課表,教室課表,場地查詢,UTC",
   },
   "/map": {
     title: "校園地圖 - UTC 選課小幫手",
     description:
-      "臺北市立大學校園地圖，提供建築物位置與樓層平面圖，幫助您快速找到目的地。",
-    keywords: "臺北市立大學,校園地圖,建築物,樓層圖,導航,UTC",
+      "臺北市立大學校園地圖，提供各校區大樓代碼對照與樓層平面圖，幫助您快速找到目的地。",
+    keywords: "臺北市立大學,校園地圖,大樓代碼,樓層圖,博愛校區,天母校區,UTC",
   },
   "/timetable": {
-    title: "課程時刻表 - UTC 選課小幫手",
-    description: "查看臺北市立大學課程時刻表，了解各節次時間與課程安排。",
-    keywords: "臺北市立大學,時刻表,節次時間,課程安排,UTC",
+    title: "校園節次表 - UTC 選課小幫手",
+    description: "臺北市立大學二校區上課節次與時間對照表，了解各節次的上下課時間。",
+    keywords: "臺北市立大學,校園節次表,上課節次,上課時間,UTC",
   },
 };
 

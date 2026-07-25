@@ -10,6 +10,8 @@ import {
   TimeIcon,
 } from "@/components/svgIcon.tsx";
 
+// title 用各頁的正式名稱（與 config/site.ts 的導覽標籤、頁面 h1 一致）；
+// 動作說明放在下方的 description，不要在標題再加一次「查詢」。
 const functions = [
   {
     title: "校園行事曆",
@@ -24,34 +26,34 @@ const functions = [
     description: "查詢校園內各建築物位置",
   },
   {
-    title: "校園節次說明",
+    title: "校園節次表",
     href: "/timetable",
     icon: <TimeIcon className="text-4xl" size={48} />,
     description: "了解校園內的課程節次安排",
   },
   {
-    title: "科目課程查詢",
+    title: "課程查詢",
     href: "/search",
     icon: <CourseIcon className="text-4xl" size={48} />,
     description: "透過篩選器搜尋您想要的課程",
   },
   {
-    title: "教師課表查詢",
+    title: "教師課表",
     href: "/schedules/teacher",
     icon: <ProfileIcon className="text-4xl" size={48} />,
     description: "查詢指定教師的開課時間",
   },
   {
-    title: "場地課表查詢",
+    title: "地點課表",
     href: "/schedules/location",
     icon: <ClassroomIcon className="text-4xl" size={48} />,
     description: "查詢指定教室或場地的使用情況",
   },
   {
-    title: "系所班級課表查詢",
+    title: "班級課表",
     href: "/schedules/class",
     icon: <GraduationIcon className="text-4xl" size={48} />,
-    description: "查詢指定系所班級的課表",
+    description: "查詢指定班級的課表",
   },
 ];
 

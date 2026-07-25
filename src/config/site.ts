@@ -26,7 +26,7 @@ export const siteConfig = {
       href: "/schedules/teacher",
     },
     {
-      label: "系所課表",
+      label: "班級課表",
       href: "/schedules/class",
     },
   ],
@@ -52,7 +52,7 @@ export const siteConfig = {
       href: "/schedules/teacher",
     },
     {
-      label: "系所課表",
+      label: "班級課表",
       href: "/schedules/class",
     },
     {
