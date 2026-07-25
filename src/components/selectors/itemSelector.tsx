@@ -24,9 +24,10 @@ export const ItemSelector = (props: SelectorProps<any>) => {
     <ComboBox
       isRequired
       // Full width on phones — capping at 320px inside a centred column left
-      // long 系所 names truncated with no way to widen. The cap only applies
-      // once the selectors sit side by side.
-      className={className ?? "w-full md:max-w-xs"}
+      // long 系所 names truncated with no way to widen. From md up the width
+      // goes back to intrinsic (`w-auto`): forcing 100% there makes every
+      // selector exactly 320px, and three of them no longer fit on one row.
+      className={className ?? "w-full md:w-auto md:max-w-xs"}
       isDisabled={disabled}
       selectedKey={selectedKey}
       onSelectionChange={onChange}
