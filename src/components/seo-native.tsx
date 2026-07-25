@@ -1,22 +1,22 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router";
 
-import { getPageMeta } from "@/config/meta";
-import { siteConfig } from "@/config/site";
+import { SITE, buildJsonLd, canonicalUrl, getPageMeta } from "@/config/meta";
 
 interface SEOProps {
   title?: string;
   description?: string;
-  keywords?: string;
   ogType?: string;
   ogImage?: string;
   noIndex?: boolean;
 }
 
+/** 靜態 HTML 與這裡輸出的 JSON-LD 共用同一個 id，換頁時覆寫而不是一直疊上去。 */
+const JSON_LD_ID = "seo-jsonld";
+
 export default function SEO({
   title,
   description,
-  keywords,
   ogType,
   ogImage,
   noIndex = false,
@@ -26,7 +26,6 @@ export default function SEO({
 
   const seoTitle = title || pageMeta.title;
   const seoDescription = description || pageMeta.description;
-  const seoKeywords = keywords || pageMeta.keywords;
   const seoOgType = ogType || pageMeta.ogType || "website";
   const seoOgImage = ogImage || pageMeta.ogImage;
 
@@ -34,8 +33,9 @@ export default function SEO({
     // Update document title
     document.title = seoTitle;
 
-    // Build the full URL for og:url
-    const currentUrl = `${window.location.origin}${location.pathname}`;
+    // GitHub Pages 會把 /search 轉址到 /search/，所以正規網址一律用尾斜線版本；
+    // 這裡走的是跟產生靜態 HTML 同一個 canonicalUrl()，兩邊才不會給出不同答案。
+    const currentUrl = canonicalUrl(location.pathname);
 
     // Helper function to update or create meta tag
     const updateMetaTag = (selector: string, content: string) => {
@@ -57,18 +57,15 @@ export default function SEO({
 
     // Update basic meta tags
     updateMetaTag('meta[name="description"]', seoDescription);
-    if (seoKeywords) {
-      updateMetaTag('meta[name="keywords"]', seoKeywords);
-    }
-    updateMetaTag('meta[name="author"]', "UTC 選課小幫手");
-    updateMetaTag('meta[name="language"]', "zh-TW");
+    updateMetaTag('meta[name="author"]', SITE.name);
 
     // Update Open Graph tags
     updateMetaTag('meta[property="og:title"]', seoTitle);
     updateMetaTag('meta[property="og:description"]', seoDescription);
     updateMetaTag('meta[property="og:type"]', seoOgType);
     updateMetaTag('meta[property="og:url"]', currentUrl);
-    updateMetaTag('meta[property="og:site_name"]', siteConfig.name);
+    updateMetaTag('meta[property="og:site_name"]', SITE.name);
+    updateMetaTag('meta[property="og:locale"]', SITE.ogLocale);
 
     // Resolve to an absolute URL since social crawlers may not correctly
     // resolve a relative og:image/twitter:image path.
@@ -78,6 +75,7 @@ export default function SEO({
 
     if (absoluteOgImage) {
       updateMetaTag('meta[property="og:image"]', absoluteOgImage);
+      updateMetaTag('meta[property="og:image:alt"]', SITE.ogImageAlt);
     }
 
     // Update Twitter Card tags
@@ -111,15 +109,30 @@ export default function SEO({
         robotsMeta.remove();
       }
     }
+
+    // 結構化資料。靜態 HTML 已經帶了一份，但 SPA 換頁後那份講的是上一頁，
+    // 所以這裡連內容一起換掉；沒有資料的路由（noIndex）就把節點移除。
+    const jsonLd = noIndex ? null : buildJsonLd(location.pathname);
+    let jsonLdScript = document.getElementById(JSON_LD_ID);
+
+    if (!jsonLd) {
+      jsonLdScript?.remove();
+    } else {
+      if (!jsonLdScript) {
+        jsonLdScript = document.createElement("script");
+        jsonLdScript.id = JSON_LD_ID;
+        jsonLdScript.setAttribute("type", "application/ld+json");
+        document.head.appendChild(jsonLdScript);
+      }
+      jsonLdScript.textContent = JSON.stringify(jsonLd);
+    }
   }, [
     location.pathname,
     seoTitle,
     seoDescription,
-    seoKeywords,
     seoOgType,
     seoOgImage,
     noIndex,
-    location,
   ]);
 
   return null;

@@ -99,8 +99,8 @@ export const MapPage = () => {
     <DefaultLayout>
       <PageSection align="stretch" className="gap-6">
         <PageHeader
-          description="臺北市立大學各校區大樓代碼對照表"
-          title="大樓代碼說明"
+          description="各校區大樓代碼對照與互動樓層平面圖"
+          title="校園地圖"
         />
         <Tabs>
           <Tabs.ListContainer>

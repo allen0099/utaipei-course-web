@@ -5,6 +5,8 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+    /* config/page-meta.js 是 build 腳本與 app 共用的純 .js 資料模組。 */
+    "allowJs": true,
     "paths": {
       "@/*": ["./src/*"]
     },

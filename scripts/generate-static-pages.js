@@ -10,88 +10,29 @@ import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
+// 路由表與 app runtime（src/config/meta.ts）共用同一份純 .js 資料，兩邊不會漂移。
+import {
+  SITE,
+  buildJsonLd,
+  canonicalUrl,
+  pageMeta,
+} from '../src/config/page-meta.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Route configurations with meta tags.
-//
-// This MUST stay in sync with `pageMeta` in src/config/meta.ts, which drives the
-// same tags at runtime. This script runs as plain .js under node after `vite build`,
-// so it cannot import the .ts module — the table is duplicated on purpose.
-// Page <h1>s (the `title` prop on <PageHeader>) and the nav labels in
-// src/config/site.ts must use the same name as the title here.
-const routes = {
-  "/": {
-    title: "UTC 選課小幫手",
-    description:
-      "臺北市立大學選課輔助工具，提供課程查詢、教師課表、校園地圖等功能，讓選課更便利！",
-    keywords: "臺北市立大學,選課,課程查詢,教師課表,校園地圖,UTC",
-  },
-  "/calendar": {
-    title: "校園行事曆 - UTC 選課小幫手",
-    description:
-      "查看臺北市立大學各學年度校園行事曆，掌握學期重要日程，並可下載或訂閱到個人日曆。",
-    keywords: "臺北市立大學,行事曆,學期日程,行事曆訂閱,ics,UTC",
-  },
-  "/search": {
-    title: "課程查詢 - UTC 選課小幫手",
-    description:
-      "依學年度、系所或關鍵字查詢臺北市立大學開課資料，快速找到需要的課程。",
-    keywords: "臺北市立大學,課程查詢,課程搜尋,開課資料,選課,UTC",
-  },
-  "/my-schedule": {
-    title: "我的課表 - UTC 選課小幫手",
-    description:
-      "集中檢視在課程查詢頁勾選的臺北市立大學課程，自動偵測衝堂，並可匯出成日曆或圖片。",
-    keywords: "臺北市立大學,我的課表,選課,衝堂偵測,課表匯出,UTC",
-  },
-  "/share": {
-    title: "分享的課表 - UTC 選課小幫手",
-    description:
-      "檢視別人分享的臺北市立大學課表，確認上課時間與衝堂狀況，也可以一鍵加入自己的課表。",
-    keywords: "臺北市立大學,分享課表,課表,選課,UTC",
-    // 每條分享連結的內容都不同且只存在於網址片段裡，收錄進搜尋結果沒有意義，
-    // 也不該讓某個人的課表被搜到。noIndex 的路由同時會被排除在 sitemap 之外。
-    noIndex: true,
-  },
-  "/schedules/teacher": {
-    title: "教師課表 - UTC 選課小幫手",
-    description: "查詢臺北市立大學個別教師在該學期的授課課表與上課時間。",
-    keywords: "臺北市立大學,教師課表,授課時間,教師查詢,UTC",
-  },
-  "/schedules/class": {
-    title: "班級課表 - UTC 選課小幫手",
-    description: "查詢臺北市立大學各班級在該學期的課表。此功能正在建置中。",
-    keywords: "臺北市立大學,班級課表,班級查詢,課表,UTC",
-  },
-  "/schedules/location": {
-    // 資料裡不只教室，還有攀岩場地、田徑場、網球場等場地，所以是「地點」不是「教室」。
-    title: "地點課表 - UTC 選課小幫手",
-    description: "查詢臺北市立大學教室、球場等場地在該學期的使用課表。",
-    keywords: "臺北市立大學,地點課表,教室課表,場地查詢,UTC",
-  },
-  "/map": {
-    title: "校園地圖 - UTC 選課小幫手",
-    description:
-      "臺北市立大學校園地圖，提供各校區大樓代碼對照與樓層平面圖，幫助您快速找到目的地。",
-    keywords: "臺北市立大學,校園地圖,大樓代碼,樓層圖,博愛校區,天母校區,UTC",
-  },
-  "/timetable": {
-    title: "校園節次表 - UTC 選課小幫手",
-    description: "臺北市立大學二校區上課節次與時間對照表，了解各節次的上下課時間。",
-    keywords: "臺北市立大學,校園節次表,上課節次,上課時間,UTC",
-  },
-};
-
-const siteConfig = {
-  name: "UTC 選課小幫手",
-  baseUrl: "https://utc.allen0099.tw",
-  ogImage: "/CatMeow.png",
-};
+/** 這些字串會被直接塞進 content="…"，一個引號就足以拆掉整個標籤。 */
+function escapeAttr(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 function generateMetaTags(route, routeMeta) {
-  const fullUrl = `${siteConfig.baseUrl}${route}`;
-  const fullOgImage = `${siteConfig.baseUrl}${siteConfig.ogImage}`;
+  const fullUrl = canonicalUrl(route);
+  const fullOgImage = `${SITE.baseUrl}${routeMeta.ogImage || SITE.ogImage}`;
 
   const robotsTag = routeMeta.noIndex
     ? `
@@ -100,41 +41,52 @@ function generateMetaTags(route, routeMeta) {
 `
     : '';
 
+  const jsonLd = buildJsonLd(route);
+  // `<` 轉成跳脫序列，任何一段資料裡的 "</script>" 才不會提早關掉這個標籤。
+  const jsonLdTag = jsonLd
+    ? `
+
+    <!-- Structured data -->
+    <script id="seo-jsonld" type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>`
+    : '';
+
   return `${robotsTag}
     <!-- Basic meta tags -->
-    <meta name="description" content="${routeMeta.description}" />
-    <meta name="keywords" content="${routeMeta.keywords}" />
-    <meta name="author" content="UTC 選課小幫手" />
-    <meta name="language" content="zh-TW" />
+    <meta name="description" content="${escapeAttr(routeMeta.description)}" />
+    <meta name="author" content="${escapeAttr(SITE.name)}" />
 
     <!-- Open Graph meta tags -->
-    <meta property="og:title" content="${routeMeta.title}" />
-    <meta property="og:description" content="${routeMeta.description}" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="${fullUrl}" />
-    <meta property="og:site_name" content="${siteConfig.name}" />
-    <meta property="og:image" content="${fullOgImage}" />
+    <meta property="og:title" content="${escapeAttr(routeMeta.title)}" />
+    <meta property="og:description" content="${escapeAttr(routeMeta.description)}" />
+    <meta property="og:type" content="${escapeAttr(routeMeta.ogType || 'website')}" />
+    <meta property="og:url" content="${escapeAttr(fullUrl)}" />
+    <meta property="og:site_name" content="${escapeAttr(SITE.name)}" />
+    <meta property="og:locale" content="${escapeAttr(SITE.ogLocale)}" />
+    <meta property="og:image" content="${escapeAttr(fullOgImage)}" />
+    <meta property="og:image:alt" content="${escapeAttr(SITE.ogImageAlt)}" />
 
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="${routeMeta.title}" />
-    <meta name="twitter:description" content="${routeMeta.description}" />
-    <meta name="twitter:image" content="${fullOgImage}" />
+    <meta name="twitter:title" content="${escapeAttr(routeMeta.title)}" />
+    <meta name="twitter:description" content="${escapeAttr(routeMeta.description)}" />
+    <meta name="twitter:image" content="${escapeAttr(fullOgImage)}" />
 
     <!-- Canonical URL -->
-    <link rel="canonical" href="${fullUrl}" />`;
+    <link rel="canonical" href="${escapeAttr(fullUrl)}" />${jsonLdTag}`;
 }
 
 function generateSitemap() {
   const today = new Date().toISOString().split('T')[0];
-  const urlEntries = Object.entries(routes)
+  const urlEntries = Object.entries(pageMeta)
     // A noIndex route asks crawlers to stay away; listing it in the sitemap
     // would be inviting them in through the other door.
     .filter(([, routeMeta]) => !routeMeta.noIndex)
     .map(([route]) => route)
     .map(
+      // canonicalUrl() 補上尾斜線，跟頁面裡的 canonical 逐字相同，也避開
+      // GitHub Pages 對無尾斜線網址的 301。
       (route) => `  <url>
-    <loc>${siteConfig.baseUrl}${route}</loc>
+    <loc>${canonicalUrl(route)}</loc>
     <lastmod>${today}</lastmod>
   </url>`,
     )
@@ -149,11 +101,11 @@ ${urlEntries}
 
 function generateStaticPages() {
   console.log('🚀 Generating static HTML pages with pre-rendered meta tags...');
-  
+
   // Read the built template from dist directory
   const builtTemplatePath = join(__dirname, '../dist/index.html');
   let template;
-  
+
   try {
     template = readFileSync(builtTemplatePath, 'utf-8');
   } catch (error) {
@@ -171,13 +123,13 @@ function generateStaticPages() {
   }
 
   // Generate HTML for each route
-  for (const [route, routeMeta] of Object.entries(routes)) {
+  for (const [route, routeMeta] of Object.entries(pageMeta)) {
     const metaTags = generateMetaTags(route, routeMeta);
-    
+
     // Replace the title and meta section
     let html = template.replace(
       /<title>.*?<\/title>/,
-      `<title>${routeMeta.title}</title>`
+      `<title>${escapeAttr(routeMeta.title)}</title>`
     );
 
     // Replace the existing meta tags section with route-specific ones.
@@ -238,7 +190,7 @@ function generateStaticPages() {
   }
 
   console.log('🎉 Static page generation completed!');
-  console.log(`📄 Generated ${Object.keys(routes).length} HTML files with pre-rendered meta tags.`);
+  console.log(`📄 Generated ${Object.keys(pageMeta).length} HTML files with pre-rendered meta tags.`);
   console.log('📝 Social media crawlers will now see proper OG information without JavaScript execution.');
 }
 

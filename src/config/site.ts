@@ -1,3 +1,5 @@
+import { SITE, defaultMeta } from "./page-meta.js";
+
 export type SiteConfig = typeof siteConfig;
 
 export interface NavItem {
@@ -38,9 +40,10 @@ const navGroups: NavGroup[] = [
 ];
 
 export const siteConfig = {
-  name: "UTC 選課小幫手",
-  description:
-    "臺北市立大學選課輔助工具，提供課程查詢、教師課表、校園地圖等功能，讓選課更便利！",
+  /** 顯示用的短名；SEO 標籤要的品牌全名是 config/page-meta.js 的 SITE.name。 */
+  name: SITE.shortName,
+  /** 首頁 lede 與首頁 meta description 共用同一句，避免兩邊各寫一份而漂移。 */
+  description: defaultMeta.description,
   navGroups,
   /** 首頁連結單獨放，兩種導覽都排在最前面且不屬於任何分組。 */
   homeItem: { label: "首頁", href: "/" } as NavItem,

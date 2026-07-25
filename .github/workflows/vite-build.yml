@@ -13,6 +13,9 @@ on:
       - 'index.html'
       - '*.js'
       - '*.ts'
+      # 產生靜態 meta／sitemap 的腳本與 tsconfig 也會改變輸出，漏掉的話改了不會重新部署。
+      - 'scripts/**'
+      - 'tsconfig*.json'
       - 'package.json'
       - 'pnpm-lock.yaml'
 
