@@ -1,5 +1,5 @@
 import { Separator } from "@heroui/react";
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Key } from "@react-types/shared";
 
 import DefaultLayout from "@/layouts/default.tsx";
@@ -8,86 +8,97 @@ import {
   FILTER_FIELD_CLASS,
   ItemSelector,
 } from "@/components/selectors/itemSelector.tsx";
-import { siteConfig } from "@/config/site.ts";
-import { TeacherClasses, Units } from "@/interfaces/globals.ts";
+import { PartialCourse, TeacherUnit } from "@/interfaces/globals.ts";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
-import { useFetchJson } from "@/hooks/useFetchJson.ts";
+import { DataTable } from "@/components/data-table.tsx";
+import { buildCourseColumns } from "@/components/course-columns.tsx";
+import {
+  buildCatalog,
+  resolveCourses,
+  useCourseCatalog,
+  useCourseIndex,
+} from "@/hooks/useCourseCatalog.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
 import { sectionTitle } from "@/components/primitives.ts";
-import { EmptyState, LoadingState } from "@/components/states.tsx";
+import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 
-type SelectorProps = {
-  setTeacher: Dispatch<SetStateAction<TeacherClasses | undefined>>;
-};
+const COLUMNS = buildCourseColumns<PartialCourse>([
+  "code",
+  "name",
+  "class",
+  "credits",
+  "required",
+  "category",
+  "time",
+  "classroom",
+  "capacity",
+]);
 
-const Selector = (prop: SelectorProps) => {
+export const TeacherSchedulePage = () => {
   const [yms, setYms] = useState<string>("");
-  const [unit, setUnit] = useState<Units | undefined>(undefined);
+  const [unitCode, setUnitCode] = useState<string>("");
+  const [teacherCode, setTeacherCode] = useState<string>("");
 
   const [year, semester] = yms.split("#");
 
   const {
-    data: rawUnits,
-    loading,
-    error,
-    refetch,
-  } = useFetchJson<Units[]>(
-    yms
-      ? `${siteConfig.links.github.api}/${year}/${semester}/teachers.json`
-      : null,
-  );
+    data: index,
+    loading: indexLoading,
+    error: indexError,
+    refetch: refetchIndex,
+  } = useCourseIndex<TeacherUnit>(yms, "teachers.json");
+
+  const {
+    data: courses,
+    loading: coursesLoading,
+    error: coursesError,
+    refetch: refetchCourses,
+  } = useCourseCatalog(yms);
 
   // Data input is reversed to show latest first
   const units = useMemo(
-    () => (rawUnits ? [...rawUnits].reverse() : []),
-    [rawUnits],
+    () => (index?.entries ? [...index.entries].reverse() : []),
+    [index],
   );
 
-  const teachers = useMemo(() => unit?.teachers || [], [unit]);
-
-  return (
-    // 與標題、分隔線、課表共用同一個量測寬度並靠左，整頁才有一條連續左緣；
-    // 選擇器平分該寬度，右側才不會空出一整條。
-    <div className="flex w-full max-w-5xl flex-col gap-4">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <YmsSelector
-          className={FILTER_FIELD_CLASS}
-          onChange={(id: Key | null) => {
-            setYms(id?.toString() || "");
-          }}
-        />
-        <ItemSelector
-          className={FILTER_FIELD_CLASS}
-          items={units}
-          label="請選擇系級"
-          onChange={(id) => {
-            setUnit(units.find((u) => u.code === id) || undefined);
-          }}
-        />
-        <ItemSelector
-          className={FILTER_FIELD_CLASS}
-          items={teachers}
-          label="請選擇教師"
-          onChange={(id) => {
-            const teacher = teachers.find((t) => t.code === id);
-
-            if (teacher) {
-              prop.setTeacher(teacher);
-            }
-          }}
-        />
-      </div>
-      {loading && <LoadingState label="系級資料" />}
-      {error && <FetchError message="系級資料載入失敗。" onRetry={refetch} />}
-    </div>
+  const teachers = useMemo(
+    () => units.find((unit) => unit.code === unitCode)?.teachers ?? [],
+    [units, unitCode],
   );
-};
 
-export const TeacherSchedulePage = () => {
-  const [teacher, setTeacher] = useState<TeacherClasses>();
+  const teacher = useMemo(
+    () => teachers.find((item) => item.code === teacherCode),
+    [teachers, teacherCode],
+  );
+
+  const catalog = useMemo(
+    () => buildCatalog(courses, index?.extraCourses),
+    [courses, index],
+  );
+
+  const { courses: teacherCourses, missing } = useMemo(
+    () => resolveCourses(catalog, teacher?.courseCodes),
+    [catalog, teacher],
+  );
+
+  // Each selector feeds the next, so changing one clears everything downstream.
+  const onYmsChange = (id: Key | null) => {
+    setYms(id?.toString() || "");
+    setUnitCode("");
+    setTeacherCode("");
+  };
+
+  const onUnitChange = (id: Key | null) => {
+    setUnitCode(id?.toString() || "");
+    setTeacherCode("");
+  };
+
+  const scheduleTitle = teacher
+    ? `${year} 學年 (${semester}) ${teacher.name} 教師的課表`
+    : "";
 
   return (
     <DefaultLayout>
@@ -97,52 +108,83 @@ export const TeacherSchedulePage = () => {
           description="查詢個別教師在該學期的授課課表。"
           title="教師課表"
         />
-        <Selector setTeacher={setTeacher} />
-        <Separator className="my-6 max-w-5xl w-full" />
-        {teacher ? (
-          teacher.class.length === 0 ? (
-            <EmptyState
-              description="該教師在此學年期沒有開課紀錄，可以換一個學年期再試。"
-              title={`${teacher.name} 教師查無課程`}
+        {/* 與標題、分隔線、課表共用同一個量測寬度並靠左，整頁才有一條連續左緣；
+            選擇器平分該寬度，右側才不會空出一整條。 */}
+        <div className="flex w-full max-w-5xl flex-col gap-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+            <YmsSelector
+              className={FILTER_FIELD_CLASS}
+              onChange={onYmsChange}
             />
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {teacher.class.map((c) => (
-                  <div
-                    key={c.code}
-                    className="w-full max-w-2xl p-4 border border-border rounded-lg shadow-sm mb-4"
-                  >
-                    <h2 className={sectionTitle({ size: "md", class: "mb-2" })}>
-                      {c.name} ({c.code})
-                    </h2>
-                    <p className="mb-1">
-                      <strong>班級：</strong>
-                      {c.class}
-                    </p>
-                    <p className="mb-1">
-                      <strong>時間：</strong>
-                      {c.time || "時間未定"}
-                    </p>
-                    <p className="mb-1">
-                      <strong>教師：</strong>
-                      {c.teacher}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <WeeklySchedule
-                courses={convertCourses(teacher.class)}
-                scheduleTitle={`${teacher.name} 教師的課表`}
+            <ItemSelector
+              className={FILTER_FIELD_CLASS}
+              items={units}
+              label="請選擇系級"
+              selectedKey={unitCode || null}
+              onChange={onUnitChange}
+            />
+            <ItemSelector
+              className={FILTER_FIELD_CLASS}
+              items={teachers}
+              label="請選擇教師"
+              selectedKey={teacherCode || null}
+              onChange={(id) => setTeacherCode(id?.toString() || "")}
+            />
+          </div>
+          {(indexLoading || (!!teacherCode && coursesLoading)) && (
+            <LoadingState label="課程資料" />
+          )}
+          {(indexError || (!!teacherCode && coursesError)) && (
+            <FetchError
+              message="這個學年期尚未收錄教師課表，請改選其他學年期。"
+              onRetry={() => {
+                refetchIndex();
+                refetchCourses();
+              }}
+            />
+          )}
+        </div>
+        <Separator className="my-6 max-w-5xl w-full" />
+        <div className="w-full max-w-5xl">
+          {teacher ? (
+            teacherCourses.length === 0 ? (
+              <EmptyState
+                description="該教師在此學年期沒有開課紀錄，可以換一個學年期再試。"
+                title={`${teacher.name} 教師查無課程`}
               />
-            </>
-          )
-        ) : (
-          <EmptyState
-            description="依序選擇學年期、系級與教師，就會顯示該教師整學期的課表。"
-            title="請選擇系級與教師以查看課程"
-          />
-        )}
+            ) : (
+              <>
+                <h2 className={sectionTitle({ size: "sm", align: "center" })}>
+                  {scheduleTitle}
+                </h2>
+                {/* 索引檔與 courses.json 各有排程，索引可能比課程資料新。
+                    這不是錯誤，但少掉的課要講出來，不能靜默不顯示。 */}
+                {missing > 0 && (
+                  <Notice className="mt-4">
+                    有 {missing} 筆課程的資料尚未更新，暫時無法顯示。
+                  </Notice>
+                )}
+                <DataTable
+                  cardSubtitle={(item) => item.code}
+                  cardTitle={(item) => item.name}
+                  className="mt-4"
+                  columns={COLUMNS}
+                  rowKey={(item) => item.code}
+                  rows={teacherCourses}
+                />
+                <WeeklySchedule
+                  courses={convertCourses(teacherCourses)}
+                  scheduleTitle={scheduleTitle}
+                />
+              </>
+            )
+          ) : (
+            <EmptyState
+              description="依序選擇學年期、系級與教師，就會顯示該教師整學期的課表。"
+              title="請選擇系級與教師以查看課程"
+            />
+          )}
+        </div>
       </PageSection>
     </DefaultLayout>
   );

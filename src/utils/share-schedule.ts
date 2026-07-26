@@ -9,10 +9,16 @@ import { CourseItem } from "@/interfaces/globals.ts";
  * fragment is never sent to the server, so it stays out of request logs,
  * Referer headers and CDN caches.
  *
- * Courses carry only the five fields convert-course.ts and the course table
- * actually read, as a positional tuple to keep the payload small.
+ * v2 carries only 選課代碼, which is unique within a 學年期, and the viewer
+ * looks the rest up in courses.json. That keeps links short and — more
+ * importantly — makes a shared schedule show the same fields as everywhere
+ * else, instead of the five that happened to fit in a URL.
+ *
+ * v1 links inlined those five fields. They are still decoded and rendered
+ * without any network request, so every link handed out before the change
+ * keeps working exactly as it did.
  */
-export interface SharedSchedulePayload {
+export interface SharedScheduleV1 {
   v: 1;
   /** 學年期 code, e.g. "115#1". A schedule is always from a single one. */
   y: string;
@@ -21,6 +27,16 @@ export interface SharedSchedulePayload {
   /** [code, name, class, time, teacher] */
   c: [string, string, string, string, string][];
 }
+
+export interface SharedScheduleV2 {
+  v: 2;
+  y: string;
+  t?: string;
+  /** 選課代碼 only; resolved against courses.json by the viewer. */
+  c: string[];
+}
+
+export type SharedSchedulePayload = SharedScheduleV1 | SharedScheduleV2;
 
 // Deliberately conservative limits. /share deserialises a string that any
 // stranger can hand the user and then offers to write it into localStorage, so
@@ -33,6 +49,8 @@ const MAX_FIELD_LENGTH = 100;
 export const MAX_SHARE_TITLE_LENGTH = 40;
 
 const YMS_PATTERN = /^\d{2,3}#\d$/;
+/** 選課代碼 is a short numeric string ("0089", "3128"). */
+const COURSE_CODE_PATTERN = /^\d{3,5}$/;
 
 // First character of the encoded string: which representation follows.
 const FORMAT_PLAIN = "0";
@@ -161,7 +179,7 @@ const validate = (raw: unknown): SharedSchedulePayload => {
 
   const data = raw as Record<string, unknown>;
 
-  if (data.v !== 1) {
+  if (data.v !== 1 && data.v !== 2) {
     throw new ShareLinkError("分享連結的版本不支援");
   }
 
@@ -175,6 +193,23 @@ const validate = (raw: unknown): SharedSchedulePayload => {
 
   if (data.c.length > MAX_COURSES) {
     throw new ShareLinkError("分享連結的課程數量超過上限");
+  }
+
+  const title =
+    typeof data.t === "string"
+      ? data.t.slice(0, MAX_SHARE_TITLE_LENGTH).trim()
+      : "";
+
+  if (data.v === 2) {
+    const codes = data.c.map((entry) => {
+      if (typeof entry !== "string" || !COURSE_CODE_PATTERN.test(entry)) {
+        throw new ShareLinkError("分享連結的課程代碼不正確");
+      }
+
+      return entry;
+    });
+
+    return { v: 2, y: data.y, ...(title ? { t: title } : {}), c: codes };
   }
 
   const courses = data.c.map((entry) => {
@@ -191,11 +226,6 @@ const validate = (raw: unknown): SharedSchedulePayload => {
     }) as [string, string, string, string, string];
   });
 
-  const title =
-    typeof data.t === "string"
-      ? data.t.slice(0, MAX_SHARE_TITLE_LENGTH).trim()
-      : "";
-
   return {
     v: 1,
     y: data.y,
@@ -211,16 +241,10 @@ export const encodeSchedule = async (
 ): Promise<string> => {
   const trimmed = title?.slice(0, MAX_SHARE_TITLE_LENGTH).trim();
   const payload: SharedSchedulePayload = {
-    v: 1,
+    v: 2,
     y: yms,
     ...(trimmed ? { t: trimmed } : {}),
-    c: courses.map((course) => [
-      course.code,
-      course.name,
-      course.class,
-      course.time,
-      course.teacher,
-    ]),
+    c: courses.map((course) => course.code),
   };
 
   const bytes = new TextEncoder().encode(JSON.stringify(payload));
@@ -279,14 +303,21 @@ export const decodeSchedule = async (
 export const buildShareUrl = (payload: string): string =>
   `${window.location.origin}/share#${payload}`;
 
-/** Payload courses back into the shape the rest of the app renders. */
+/**
+ * A v1 payload's inlined courses, in the shape the rest of the app renders.
+ *
+ * v2 has no inlined courses — the viewer resolves its codes against
+ * courses.json instead — so this returns nothing for it.
+ */
 export const payloadToCourses = (
   payload: SharedSchedulePayload,
 ): CourseItem[] =>
-  payload.c.map(([code, name, className, time, teacher]) => ({
-    code,
-    name,
-    class: className,
-    time,
-    teacher,
-  }));
+  payload.v === 1
+    ? payload.c.map(([code, name, className, time, teacher]) => ({
+        code,
+        name,
+        class: className,
+        time,
+        teacher,
+      }))
+    : [];

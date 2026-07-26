@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Separator } from "@heroui/react";
 import { Key } from "@react-types/shared";
 
-import { DataTable, DataTableColumn } from "@/components/data-table.tsx";
-import { EmptyState, LoadingState } from "@/components/states.tsx";
+import { DataTable } from "@/components/data-table.tsx";
+import { buildCourseColumns } from "@/components/course-columns.tsx";
+import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import { sectionTitle } from "@/components/primitives.ts";
 import DefaultLayout from "@/layouts/default.tsx";
-import { siteConfig } from "@/config/site.ts";
-import { CourseItem, LocationItem } from "@/interfaces/globals.ts";
+import { LocationEntry, PartialCourse } from "@/interfaces/globals.ts";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
 import { YmsSelector } from "@/components/selectors/ymsSelector.tsx";
@@ -16,57 +16,25 @@ import {
   FILTER_FIELD_CLASS,
   ItemSelector,
 } from "@/components/selectors/itemSelector.tsx";
-import { useFetchJson } from "@/hooks/useFetchJson.ts";
+import {
+  buildCatalog,
+  resolveCourses,
+  useCourseCatalog,
+  useCourseIndex,
+} from "@/hooks/useCourseCatalog.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
 
-const COLUMNS: DataTableColumn<CourseItem>[] = [
-  {
-    key: "code",
-    label: "課程代碼",
-    headerLabel: "代碼",
-    width: "w-[16%]",
-    cellClassName: "tabular-nums text-muted",
-    hideOnCard: true,
-  },
-  {
-    key: "name",
-    label: "課程名稱",
-    width: "w-[30%]",
-    cellClassName: "font-medium text-foreground",
-    hideOnCard: true,
-  },
-  { key: "teacher", label: "教師", width: "w-[16%]" },
-  { key: "class", label: "班級名稱", headerLabel: "班級", width: "w-[20%]" },
-  {
-    key: "time",
-    label: "時間",
-    width: "w-[18%]",
-    cellClassName: "tabular-nums text-foreground/80",
-  },
-];
-
-const LocationTable = ({ courses }: { courses: CourseItem[] }) => {
-  if (!courses || courses.length === 0) {
-    return (
-      <EmptyState
-        description="這個地點在本學期沒有排課紀錄。"
-        title="查無課程"
-      />
-    );
-  }
-
-  return (
-    <DataTable
-      cardSubtitle={(item) => item.code}
-      cardTitle={(item) => item.name}
-      className="mt-4"
-      columns={COLUMNS}
-      rowKey={(item, index) => `${item.code}-${item.class}-${index}`}
-      rows={courses}
-    />
-  );
-};
+const COLUMNS = buildCourseColumns<PartialCourse>([
+  "code",
+  "name",
+  "class",
+  "credits",
+  "required",
+  "teacher",
+  "time",
+  "capacity",
+]);
 
 export const LocationSearchPage = () => {
   const [yms, setYms] = useState<string>("");
@@ -74,18 +42,34 @@ export const LocationSearchPage = () => {
   const [year, semester] = yms.split("#");
 
   const {
-    data: locations = [],
-    loading,
-    error,
-    refetch,
-  } = useFetchJson<LocationItem[]>(
-    yms
-      ? `${siteConfig.links.github.api}/${year}/${semester}/locations.json`
-      : null,
+    data: index,
+    loading: indexLoading,
+    error: indexError,
+    refetch: refetchIndex,
+  } = useCourseIndex<LocationEntry>(yms, "locations.json");
+
+  const {
+    data: courses,
+    loading: coursesLoading,
+    error: coursesError,
+    refetch: refetchCourses,
+  } = useCourseCatalog(yms);
+
+  const locations = useMemo(() => index?.entries ?? [], [index]);
+
+  const selectedLocation = locations.find((loc) => loc.code === location);
+
+  const catalog = useMemo(
+    () => buildCatalog(courses, index?.extraCourses),
+    [courses, index],
   );
 
-  const scheduleTitle = `${year} 學年 (${semester}) ${locations.find((loc) => loc.code === location)?.name || ""} 的課表`;
-  const selectedLocation = locations.find((loc) => loc.code === location);
+  const { courses: locationCourses, missing } = useMemo(
+    () => resolveCourses(catalog, selectedLocation?.courseCodes),
+    [catalog, selectedLocation],
+  );
+
+  const scheduleTitle = `${year} 學年 (${semester}) ${selectedLocation?.name || ""} 的課表`;
 
   const onYmsChange = (id: Key | null) => {
     setYms(id?.toString() || "");
@@ -112,31 +96,58 @@ export const LocationSearchPage = () => {
             className={FILTER_FIELD_CLASS}
             items={locations}
             label="選擇地點"
+            selectedKey={location || null}
             onChange={onLocationChange}
           />
         </div>
-        {loading && <LoadingState className="mt-4" label="地點資料" />}
-        {error && (
+        {(indexLoading || (!!location && coursesLoading)) && (
+          <LoadingState className="mt-4" label="課程資料" />
+        )}
+        {(indexError || (!!location && coursesError)) && (
           <FetchError
             className="mt-4"
-            message="地點資料載入失敗。"
-            onRetry={refetch}
+            message="這個學年期尚未收錄地點課表，請改選其他學年期。"
+            onRetry={() => {
+              refetchIndex();
+              refetchCourses();
+            }}
           />
         )}
         <Separator className="my-6 max-w-5xl w-full" />
         <div className="w-full max-w-5xl">
           {selectedLocation ? (
-            <>
-              {/* scheduleTitle 已含學年期，不再另外重複一行「學期：」 */}
-              <h2 className={sectionTitle({ size: "sm", align: "center" })}>
-                {scheduleTitle}
-              </h2>
-              <LocationTable courses={selectedLocation.courses} />
-              <WeeklySchedule
-                courses={convertCourses(selectedLocation.courses)}
-                scheduleTitle={scheduleTitle}
+            locationCourses.length === 0 ? (
+              <EmptyState
+                description="這個地點在本學期沒有排課紀錄。"
+                title="查無課程"
               />
-            </>
+            ) : (
+              <>
+                {/* scheduleTitle 已含學年期，不再另外重複一行「學期：」 */}
+                <h2 className={sectionTitle({ size: "sm", align: "center" })}>
+                  {scheduleTitle}
+                </h2>
+                {/* 索引檔與 courses.json 各有排程，索引可能比課程資料新。
+                    這不是錯誤，但少掉的課要講出來，不能靜默不顯示。 */}
+                {missing > 0 && (
+                  <Notice className="mt-4">
+                    有 {missing} 筆課程的資料尚未更新，暫時無法顯示。
+                  </Notice>
+                )}
+                <DataTable
+                  cardSubtitle={(item) => item.code}
+                  cardTitle={(item) => item.name}
+                  className="mt-4"
+                  columns={COLUMNS}
+                  rowKey={(item) => item.code}
+                  rows={locationCourses}
+                />
+                <WeeklySchedule
+                  courses={convertCourses(locationCourses)}
+                  scheduleTitle={scheduleTitle}
+                />
+              </>
+            )
           ) : (
             <EmptyState
               description="選擇學年期與地點後，會顯示該教室或場地整學期的使用課表。"

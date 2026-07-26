@@ -41,14 +41,8 @@ export interface YmsCache {
   data: YearSemesterItem[];
 }
 
-export interface LocationItem {
-  code: string;
-  name: string;
-  courses: CourseItem[];
-}
-
 // 科系 (unt_id) — the same code system as teachers.json units[].code, which is
-// what MergedCourseItem.departmentCodes carries, so it drives course filtering.
+// what Course.departmentCodes carries, so it drives course filtering.
 export interface DepartmentItem {
   code: string;
   name: string;
@@ -70,13 +64,23 @@ export interface CourseItem {
 }
 
 /**
- * One row of a class's 【班級排課清單】, from classes/<班級代碼>.json.
+ * 一門課的完整資料，來自 courses.json —— 全站唯一的課程來源。
  *
- * Extends CourseItem — `class` carries the 班級 name just as it does in
- * teachers.json and locations.json — so it can be handed to convertCourses()
- * and WeeklySchedule unchanged.
+ * `code`（選課代碼）在一個學年期內唯一，所以它是 teachers / locations /
+ * classes 三個索引檔與 /share 連結共用的 join key。
+ *
+ * 沒有任何單一端點涵蓋全部課程，爬蟲端已做完聯集：ag304 是基底、ag203 補
+ * 英文課名與人數等欄位、ag300 與 ag302 各再補約 200 筆前兩者沒有的課
+ * （放在各自索引檔的 extraCourses）。
+ *
+ * 繼承 CourseItem，所以能原封不動餵給 convertCourses() 與 WeeklySchedule。
  */
-export interface ClassCourseItem extends CourseItem {
+export interface Course extends CourseItem {
+  /**
+   * 開課班級代碼。與檢視中的班級不同時代表是他班開的課（例如資科系一的體育課
+   * 由 19071411 開），班級課表會據此標示。
+   */
+  classCode: string;
   /** 分組，如 "01" */
   group: string;
   /** 學分，如 "3.0"。體育等零學分課為 "0" */
@@ -95,12 +99,34 @@ export interface ClassCourseItem extends CourseItem {
   category: string;
   /** 限制性別，如 "不限" */
   genderLimit: string;
+  /** 教學綱要鍵值 "19071411,05430.20" = 開課班級,科目代碼.分組 */
+  syllabusKey: string;
+  /** 此課程關聯到哪些系所 (unt_id)；/search 的系所篩選吃這個。 */
+  departmentCodes: string[];
+  departments: string[];
+
+  // —— 以下依來源而定，缺就是缺；UI 要顯示「—」而不是假裝有值。——
+  /** 英文課名 */
+  nameEn?: string;
   /**
-   * 實際開課的班級代碼。與所查詢的班級不同時代表是他班開的課（例如資科系一的
-   * 體育課由 19071411 開），課程卡片會據此標示。
+   * 修課人數上下限。刻意沒有「已選」人數 —— 它每天變而爬蟲是週排程，
+   * 發佈出去會過期並誤導選課決定。
    */
-  hostClass: string;
+  capacity?: { max: string; min: string };
+  /** 合班班級 */
+  mixedClass?: string;
+  /** 備註 */
+  note?: string;
+  locationCode?: string;
+  teacherCodes?: string[];
 }
+
+/**
+ * courses.json 以外的來源只看得到 CourseItem 那五欄。索引檔的 extraCourses
+ * 就是這種殘缺資料，畫面上要能分辨「沒抓到」與「本來就空」。
+ */
+export type PartialCourse = CourseItem &
+  Partial<Omit<Course, keyof CourseItem>>;
 
 /** 代碼 + 名稱；班級索引 classes.json 的三層共用。 */
 export interface ClassItem {
@@ -118,40 +144,37 @@ export interface ClassCollege extends ClassItem {
   departments: ClassDepartment[];
 }
 
-/** 單一班級的整學期排課，來自 classes/<班級代碼>.json。 */
+/**
+ * 單一班級的整學期排課，來自 classes/<班級代碼>.json。
+ *
+ * 只有選課代碼，課程內容一律由 courses.json 查表 —— 同一門課不會在 286 個
+ * 班級檔裡各存一份，欄位也不會因為讀到哪個檔而不一致。
+ */
 export interface ClassSchedule extends ClassItem {
-  courses: ClassCourseItem[];
+  courseCodes: string[];
 }
 
-export interface MergedCourseItem {
-  code: string;
-  name: string;
-  class: string;
-  time: string;
-  teacher: string;
-  // Single department, as attached while flattening one unit's course list
-  // (see merge-courses.ts flattenTeacherUnits). A course cross-listed under
-  // multiple units produces one MergedCourseItem per unit at this stage.
-  departmentCode?: string;
-  department?: string;
-  // All departments a course is cross-listed under, collapsed onto one entry
-  // by merge-courses.ts dedupeCourses. Populated only after deduping.
-  departmentCodes?: string[];
-  departments?: string[];
-  locationCode?: string;
-  classroom?: string;
+/**
+ * 索引檔的共同形狀：某個維度 → 選課代碼，外加該來源看得到、但 courses.json
+ * 沒有的課。courses.json 只由 fetchCourses 產生，每個檔案剛好一個 owner。
+ */
+export interface CourseIndex<T> {
+  entries: T[];
+  extraCourses: PartialCourse[];
 }
 
-export interface TeacherClasses {
-  code: string;
-  name: string;
-  class: CourseItem[];
+/** teachers.json：系級 → 教師 → 選課代碼 */
+export interface TeacherEntry extends ClassItem {
+  courseCodes: string[];
 }
 
-export interface Units {
-  code: string;
-  name: string;
-  teachers: TeacherClasses[];
+export interface TeacherUnit extends ClassItem {
+  teachers: TeacherEntry[];
+}
+
+/** locations.json：場地 → 選課代碼 */
+export interface LocationEntry extends ClassItem {
+  courseCodes: string[];
 }
 
 // Weekly Schedule Interfaces

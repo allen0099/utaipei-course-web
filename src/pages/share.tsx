@@ -12,9 +12,15 @@ import DefaultLayout from "@/layouts/default";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { DataTable } from "@/components/data-table.tsx";
 import { buildCourseColumns } from "@/components/course-columns.tsx";
+import {
+  buildCatalog,
+  resolveCourses,
+  useCourseCatalog,
+} from "@/hooks/useCourseCatalog.ts";
 import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { cardTitle } from "@/components/primitives.ts";
-import { CourseItem } from "@/interfaces/globals.ts";
+import { CourseItem, PartialCourse } from "@/interfaces/globals.ts";
+import { FetchError } from "@/components/fetch-error.tsx";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 import { useScheduleSlots } from "@/hooks/useScheduleSlots.ts";
 import { useYms } from "@/hooks/useYms.ts";
@@ -65,10 +71,28 @@ export const SharedSchedulePage = () => {
 
   const payload = state.status === "ok" ? state.payload : null;
 
-  const courses = useMemo(
-    () => (payload ? payloadToCourses(payload) : EMPTY_COURSES),
-    [payload],
-  );
+  // v2 links carry only 選課代碼, so they need courses.json to show anything.
+  // v1 links inline their five fields and must keep rendering with no request
+  // at all — that zero-fetch property is why old links still work offline.
+  const needsCatalog = payload?.v === 2;
+  const {
+    data: catalogCourses,
+    loading: catalogLoading,
+    error: catalogError,
+    refetch: refetchCatalog,
+  } = useCourseCatalog(needsCatalog ? payload.y : "");
+
+  const catalog = useMemo(() => buildCatalog(catalogCourses), [catalogCourses]);
+
+  const { courses, missing } = useMemo(() => {
+    if (!payload) return { courses: EMPTY_COURSES, missing: 0 };
+
+    if (payload.v === 1) {
+      return { courses: payloadToCourses(payload), missing: 0 };
+    }
+
+    return resolveCourses(catalog, payload.c);
+  }, [payload, catalog]);
 
   const {
     scheduleCourses,
@@ -78,7 +102,21 @@ export const SharedSchedulePage = () => {
   } = useScheduleSlots(courses);
 
   const columns = useMemo(
-    () => buildCourseColumns<CourseItem>(conflictNamesByCourseCode),
+    () =>
+      buildCourseColumns<PartialCourse>(
+        [
+          "code",
+          "name",
+          "class",
+          "credits",
+          "required",
+          "teacher",
+          "time",
+          "classroom",
+          "conflict",
+        ],
+        { conflictNamesByCourseCode },
+      ),
     [conflictNamesByCourseCode],
   );
 
@@ -137,8 +175,44 @@ export const SharedSchedulePage = () => {
       );
     }
 
+    // Only v2 links get here without their courses already in hand.
+    if (needsCatalog && catalogLoading) {
+      return <LoadingState label="課程資料" />;
+    }
+
+    if (needsCatalog && catalogError) {
+      return (
+        <FetchError
+          message="無法載入這份課表的課程資料，請稍後再試。"
+          onRetry={refetchCatalog}
+        />
+      );
+    }
+
+    if (courses.length === 0) {
+      return (
+        <EmptyState
+          action={
+            <Link className="mt-2" href="/search">
+              前往課程查詢 →
+            </Link>
+          }
+          description="這份課表的課程可能已從該學年期下架，或該學年期尚未收錄。"
+          title="這份課表沒有可顯示的課程"
+        />
+      );
+    }
+
     return (
       <div className="w-full max-w-5xl flex flex-col gap-6">
+        {/* 分享者的課表裡有、但這個學年期的課程資料查不到的課。可能是課程已
+            下架，或資料還沒更新 —— 不論哪種，少掉的課要講出來。 */}
+        {missing > 0 && (
+          <Notice icon={<InformationCircleIcon width={18} />}>
+            這份課表有 {missing} 門課查不到最新資料，未顯示在下方。
+          </Notice>
+        )}
+
         {hasConflicts && (
           <Notice icon={<ExclamationTriangleIcon width={20} />} tone="danger">
             這份課表中有時段衝突，請確認課表下方標示的衝堂課程。

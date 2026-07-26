@@ -5,16 +5,17 @@ import { Key } from "@react-types/shared";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 import { PageHeader } from "@/components/page-header.tsx";
-import { DataTable, DataTableColumn } from "@/components/data-table.tsx";
+import { DataTable } from "@/components/data-table.tsx";
+import { buildCourseColumns } from "@/components/course-columns.tsx";
 import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
 import {
   CollegeItem,
-  LocationItem,
-  MergedCourseItem,
-  Units,
+  LocationEntry,
+  PartialCourse,
+  TeacherUnit,
 } from "@/interfaces/globals.ts";
 import { YmsSelector } from "@/components/selectors/ymsSelector.tsx";
 import {
@@ -24,11 +25,10 @@ import {
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
 import {
-  dedupeCourses,
-  flattenLocations,
-  flattenTeacherUnits,
-  mergeCourseSources,
-} from "@/utils/merge-courses.ts";
+  buildCatalog,
+  useCourseCatalog,
+  useCourseIndex,
+} from "@/hooks/useCourseCatalog.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { useYms } from "@/hooks/useYms.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
@@ -37,52 +37,25 @@ import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 const MAX_DISPLAYED_COURSES = 200;
 
 // Percentages sum to ~92% (the checkbox column takes the rest).
-const COLUMNS: DataTableColumn<MergedCourseItem>[] = [
-  {
-    key: "code",
-    label: "課程代碼",
-    headerLabel: "代碼",
-    width: "w-[9%]",
-    cellClassName: "tabular-nums text-muted",
-    // Promoted to the mobile card header.
-    hideOnCard: true,
-  },
-  {
-    key: "name",
-    label: "課程名稱",
-    width: "w-[16%]",
-    cellClassName: "font-medium text-foreground",
-    hideOnCard: true,
-  },
-  {
-    key: "departments",
-    label: "系所",
-    render: (item) => item.departments?.join("、") || "-",
-    width: "w-[26%]",
-    cellClassName: "text-muted",
-  },
-  { key: "class", label: "班級名稱", headerLabel: "班級", width: "w-[9%]" },
-  { key: "teacher", label: "教師", width: "w-[12%]" },
-  {
-    key: "time",
-    label: "時間",
-    width: "w-[12%]",
-    cellClassName: "tabular-nums text-foreground/80",
-  },
-  {
-    key: "classroom",
-    label: "教室",
-    width: "w-[12%]",
-    cellClassName: "text-foreground/80",
-  },
-];
+const COLUMNS = buildCourseColumns<PartialCourse>([
+  "code",
+  "name",
+  "department",
+  "class",
+  "credits",
+  "required",
+  "teacher",
+  "time",
+  "classroom",
+  "capacity",
+]);
 
 const CourseTable = ({
   courses,
   yms,
   canAdd,
 }: {
-  courses: MergedCourseItem[];
+  courses: PartialCourse[];
   yms: string;
   canAdd: boolean;
 }) => {
@@ -219,29 +192,26 @@ export const SearchPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [yms, departmentCode, keyword]);
 
-  // Fetched in parallel: teachers.json and locations.json are independent
-  // sources merged below into a single course list.
+  // courses.json is the whole catalogue. The two index files are still fetched
+  // because each carries ~200 courses courses.json does not have (ones no class
+  // takes); without them those courses would silently stop being searchable.
   const {
-    data: units = [],
-    loading: unitsLoading,
-    error: unitsError,
-    refetch: refetchUnits,
-  } = useFetchJson<Units[]>(
-    yms
-      ? `${siteConfig.links.github.api}/${year}/${semester}/teachers.json`
-      : null,
+    data: courses,
+    loading: coursesLoading,
+    error: coursesError,
+    refetch: refetchCourses,
+  } = useCourseCatalog(yms);
+
+  const { data: teacherIndex } = useCourseIndex<TeacherUnit>(
+    yms,
+    "teachers.json",
+  );
+  const { data: locationIndex } = useCourseIndex<LocationEntry>(
+    yms,
+    "locations.json",
   );
 
-  const {
-    data: locations = [],
-    loading: locationsLoading,
-    error: locationsError,
-    refetch: refetchLocations,
-  } = useFetchJson<LocationItem[]>(
-    yms
-      ? `${siteConfig.links.github.api}/${year}/${semester}/locations.json`
-      : null,
-  );
+  const units = teacherIndex?.entries ?? [];
 
   // 學院→科系 master data. Failures/absence (e.g. an old year without a
   // backfilled file) are non-fatal: the department selector falls back to the
@@ -252,22 +222,19 @@ export const SearchPage = () => {
       : null,
   );
 
-  const loading = unitsLoading || locationsLoading;
-  const error = unitsError || locationsError;
-  const refetch = () => {
-    refetchUnits();
-    refetchLocations();
-  };
+  const loading = coursesLoading;
+  const error = coursesError;
+  const refetch = refetchCourses;
 
   const allCourses = useMemo(
-    () =>
-      dedupeCourses(
-        mergeCourseSources(
-          flattenTeacherUnits(units),
-          flattenLocations(locations),
-        ),
-      ),
-    [units, locations],
+    () => [
+      ...buildCatalog(
+        courses,
+        teacherIndex?.extraCourses,
+        locationIndex?.extraCourses,
+      ).byCode.values(),
+    ],
+    [courses, teacherIndex, locationIndex],
   );
 
   // Use the 學院→科系 cascade when departments.json is available; otherwise

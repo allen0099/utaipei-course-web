@@ -13,7 +13,7 @@ import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 import { useScheduleSlots } from "@/hooks/useScheduleSlots.ts";
 import { useYms } from "@/hooks/useYms.ts";
-import { MergedCourseItem } from "@/interfaces/globals.ts";
+import { PartialCourse } from "@/interfaces/globals.ts";
 import { cardTitle } from "@/components/primitives.ts";
 import { DataTable } from "@/components/data-table.tsx";
 import { buildCourseColumns } from "@/components/course-columns.tsx";
@@ -42,12 +42,26 @@ export const MySchedulePage = () => {
   const isStaleSemester =
     scheduleYms !== null && defaultCode !== null && scheduleYms !== defaultCode;
 
-  const handleRemove = (course: MergedCourseItem) => {
+  const handleRemove = (course: PartialCourse) => {
     removeCourse(course);
   };
 
   const columns = useMemo(
-    () => buildCourseColumns<MergedCourseItem>(conflictNamesByCourseCode),
+    () =>
+      buildCourseColumns<PartialCourse>(
+        [
+          "code",
+          "name",
+          "class",
+          "credits",
+          "required",
+          "teacher",
+          "time",
+          "classroom",
+          "conflict",
+        ],
+        { conflictNamesByCourseCode },
+      ),
     [conflictNamesByCourseCode],
   );
 

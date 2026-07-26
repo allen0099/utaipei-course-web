@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import { MergedCourseItem } from "@/interfaces/globals.ts";
+import { PartialCourse } from "@/interfaces/globals.ts";
 import { getCourseKey, SelectedCourseMap } from "@/utils/course-key.ts";
 
 const STORAGE_KEY = "my-schedule-selected-courses";
@@ -26,7 +26,15 @@ const loadSelectedCourses = (): SelectedCourseMap => {
       const parsed = JSON.parse(stored);
 
       if (parsed && typeof parsed === "object") {
-        return parsed as SelectedCourseMap;
+        // Schedules saved before the course-format unification are keyed
+        // `${code}-${class}`; the key is now just the 選課代碼. Re-index them
+        // from each record's own code so an existing schedule survives the
+        // change instead of silently reading back as empty.
+        return Object.fromEntries(
+          Object.entries(parsed as SelectedCourseMap)
+            .filter(([, course]) => course?.code)
+            .map(([, course]) => [getCourseKey(course), course]),
+        );
       }
     }
   } catch {
@@ -70,16 +78,16 @@ const saveScheduleYms = (yms: string | null) => {
 };
 
 interface SelectedCoursesContextValue {
-  selectedCourses: MergedCourseItem[];
+  selectedCourses: PartialCourse[];
   /** The 學年期 every course in the schedule belongs to; null when empty. */
   scheduleYms: string | null;
-  isSelected: (course: { code: string; class: string }) => boolean;
+  isSelected: (course: { code: string }) => boolean;
   /** Returns false when `yms` doesn't match the schedule's existing 學年期. */
-  toggleCourse: (course: MergedCourseItem, yms: string) => boolean;
-  addCourse: (course: MergedCourseItem, yms: string) => boolean;
+  toggleCourse: (course: PartialCourse, yms: string) => boolean;
+  addCourse: (course: PartialCourse, yms: string) => boolean;
   /** Adds many courses at once; returns how many were actually new. */
-  importCourses: (courses: MergedCourseItem[], yms: string) => number;
-  removeCourse: (course: { code: string; class: string }) => void;
+  importCourses: (courses: PartialCourse[], yms: string) => number;
+  removeCourse: (course: { code: string }) => void;
   clearAll: () => void;
 }
 
@@ -114,7 +122,7 @@ export const SelectedCoursesProvider = ({
   }, [scheduleYms]);
 
   const isSelected = useCallback(
-    (course: { code: string; class: string }) =>
+    (course: { code: string }) =>
       Object.prototype.hasOwnProperty.call(selectedMap, getCourseKey(course)),
     [selectedMap],
   );
@@ -128,7 +136,7 @@ export const SelectedCoursesProvider = ({
   );
 
   const addCourse = useCallback(
-    (course: MergedCourseItem, yms: string) => {
+    (course: PartialCourse, yms: string) => {
       if (!canAcceptYms(yms)) return false;
 
       setStoredYms(yms);
@@ -143,7 +151,7 @@ export const SelectedCoursesProvider = ({
   );
 
   const importCourses = useCallback(
-    (courses: MergedCourseItem[], yms: string) => {
+    (courses: PartialCourse[], yms: string) => {
       if (!canAcceptYms(yms) || courses.length === 0) return 0;
 
       // Counted against the current map rather than inside the updater below:
@@ -169,25 +177,22 @@ export const SelectedCoursesProvider = ({
     [canAcceptYms, selectedMap],
   );
 
-  const removeCourse = useCallback(
-    (course: { code: string; class: string }) => {
-      const key = getCourseKey(course);
+  const removeCourse = useCallback((course: { code: string }) => {
+    const key = getCourseKey(course);
 
-      setSelectedMap((prev) => {
-        if (!(key in prev)) return prev;
+    setSelectedMap((prev) => {
+      if (!(key in prev)) return prev;
 
-        const next = { ...prev };
+      const next = { ...prev };
 
-        delete next[key];
+      delete next[key];
 
-        return next;
-      });
-    },
-    [],
-  );
+      return next;
+    });
+  }, []);
 
   const toggleCourse = useCallback(
-    (course: MergedCourseItem, yms: string) => {
+    (course: PartialCourse, yms: string) => {
       if (isSelected(course)) {
         removeCourse(course);
 
