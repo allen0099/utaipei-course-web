@@ -1,5 +1,5 @@
 import { Key } from "@react-types/shared";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { YearSemesterItem, YmsCache } from "@/interfaces/globals.ts";
 import { siteConfig } from "@/config/site.ts";
@@ -54,30 +54,47 @@ export const YmsSelector = ({
       : undefined;
     const defaultItem = restoredItem || data.find((item) => item.default);
 
-    return defaultItem?.code || "";
+    return defaultItem?.code ?? null;
     // `initialKey` is read once to restore the initial selection and
     // intentionally not re-applied on every change (the user's own
     // selection should win after the first render).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
+  // `null` means the user hasn't picked one yet, so the API default fills in.
+  // Anything else is their own pick and always wins — a cleared field must
+  // therefore never be stored here (see `onSelectionChange` below), otherwise
+  // the selector silently drops back onto the default.
   const [manualKey, setManualKey] = useState<string | null>(null);
-  const defaultKey = manualKey ?? computedDefaultKey;
+  const selectedKey = manualKey ?? computedDefaultKey;
 
-  const updateDefaultKey = (key: Key | null) => {
-    setManualKey(key?.toString() || "");
-    onChange(key);
-  };
+  // The field and the page have to agree on one 學年期, so the parent is told
+  // about `selectedKey` — the same value the ComboBox renders — from this one
+  // place, whether it came from the user or from the fetched default. The ref
+  // makes it idempotent: pages pass a fresh `onChange` on every render, and
+  // re-announcing the same key would restart their fetches in a loop.
+  const reportedKey = useRef<string | null>(null);
 
   useEffect(() => {
-    if (computedDefaultKey) {
-      onChange(computedDefaultKey);
+    if (selectedKey === null || selectedKey === reportedKey.current) {
+      return;
     }
-    // Only notify the parent when the computed default itself changes (i.e.
-    // once the yms.json fetch resolves); this mirrors the previous behavior
-    // without setting local state from inside the effect.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [computedDefaultKey]);
+
+    reportedKey.current = selectedKey;
+    onChange(selectedKey);
+  }, [selectedKey, onChange]);
+
+  const handleSelectionChange = (key: Key | null) => {
+    // ComboBox reports `null` whenever the input is emptied — clearing it by
+    // hand, but also mid-edit while retyping over the current value. The field
+    // is required and every page needs a 學年期 to fetch anything, so keep the
+    // current pick and let react-aria restore its text when the field blurs.
+    if (key === null) {
+      return;
+    }
+
+    setManualKey(key.toString());
+  };
 
   if (error) {
     return <FetchError message="學年度資料載入失敗。" onRetry={refetch} />;
@@ -94,8 +111,8 @@ export const YmsSelector = ({
       className={className}
       items={items}
       label="選擇學年度"
-      selectedKey={defaultKey}
-      onChange={updateDefaultKey}
+      selectedKey={selectedKey}
+      onChange={handleSelectionChange}
     />
   );
 };
