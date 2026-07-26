@@ -128,7 +128,7 @@ export const pageMeta = {
   "/schedules/class": page({
     name: "班級課表",
     description:
-      "依班級查詢整學期課表的功能開發中，目前可改用課程查詢的班級關鍵字篩選或教師課表取得相同資訊。",
+      "依學年期、學院、系所選擇班級，查看該班整學期的排課清單與週課表，含學分、必選修、教師、時間與教室。",
     ogImage: "/og/schedules-class.png",
   }),
   "/schedules/location": page({
