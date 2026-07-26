@@ -1,5 +1,5 @@
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { Chip } from "@heroui/react";
+import { Chip, Tooltip } from "@heroui/react";
 
 import { DataTableColumn } from "@/components/data-table.tsx";
 import { siteConfig } from "@/config/site.ts";
@@ -135,9 +135,18 @@ export const buildCourseColumns = <T extends PartialCourse>(
             {viewingClassCode &&
               course.classCode &&
               course.classCode !== viewingClassCode && (
-                <Chip size="sm" variant="soft">
-                  他班開課
-                </Chip>
+                <>
+                  <Tooltip delay={0}>
+                    <Tooltip.Trigger>
+                      <Chip size="sm" variant="soft">
+                        他班開課
+                      </Chip>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>
+                      <p>該課程非本系所課程，僅在資料中列出，通常為共用課程</p>
+                    </Tooltip.Content>
+                  </Tooltip>
+                </>
               )}
           </span>
           {course.nameEn && (

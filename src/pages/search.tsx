@@ -424,6 +424,11 @@ export const SearchPage = () => {
           </SearchField>
         </div>
         <Separator className="my-6 max-w-5xl w-full" />
+        {filteredCourses.length > 0 && (
+          <div className="w-full max-w-5xl mx-auto text-right">
+            共計：{filteredCourses.length} 筆資料
+          </div>
+        )}
         <div className="w-full max-w-5xl">{renderResults()}</div>
       </PageSection>
     </DefaultLayout>
