@@ -1,4 +1,5 @@
 import { Card, Link } from "@heroui/react";
+import { ReactNode } from "react";
 
 import { WipBadge } from "@/components/wip-badge.tsx";
 import {
@@ -12,9 +13,17 @@ import {
 } from "@/components/svgIcon.tsx";
 import { cardTitle, sectionTitle } from "@/components/primitives.ts";
 
+interface Functions {
+  title: string;
+  href: string;
+  icon: ReactNode;
+  description: string;
+  wip?: boolean;
+}
+
 // title 用各頁的正式名稱（與 config/site.ts 的導覽標籤、頁面 h1 一致）；
 // 動作說明放在下方的 description，不要在標題再加一次「查詢」。
-const functions = [
+const functions: Array<Functions> = [
   {
     title: "校園行事曆",
     href: "/calendar",
@@ -55,8 +64,7 @@ const functions = [
     title: "班級課表",
     href: "/schedules/class",
     icon: <GraduationIcon className="text-4xl" size={48} />,
-    description: "查詢指定班級的課表（開發中）",
-    wip: true,
+    description: "查詢指定班級的課表",
   },
 ];
 
