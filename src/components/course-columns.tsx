@@ -59,6 +59,43 @@ const syllabusUrl = (yms: string, syllabusKey: string): string => {
   return `${siteConfig.links.utaipei.syllabus}?${params}`;
 };
 
+const restrictionUrl = (yms: string, code: string): string => {
+  const [year, semester] = yms.split("#");
+  const params = new URLSearchParams({
+    uid: "guest",
+    yms_yms: yms,
+    ls_year: year,
+    ls_sms: semester,
+    data: code,
+  });
+
+  return `${siteConfig.links.utaipei.restriction}?${params}`;
+};
+
+/**
+ * 外部連結一律用原生 <a>，不要用 HeroUI 的 Link：provider.tsx 把 RouterProvider
+ * 接上 react-router，HeroUI Link 會把 href 當成站內路徑導航，外部網址會被解析成
+ * /search/https:/shcourse...。footbar 的外部連結也是為了同一個原因用原生 <a>。
+ */
+const ExternalLink = ({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className?: string;
+  children: React.ReactNode;
+}) => (
+  <a
+    className={className ?? "text-accent hover:underline"}
+    href={href}
+    rel="noopener noreferrer"
+    target="_blank"
+  >
+    {children}
+  </a>
+);
+
 /**
  * 課程欄位的單一定義處。
  *
@@ -112,6 +149,16 @@ export const buildCourseColumns = <T extends PartialCourse>(
             <span className="text-xs font-normal text-warning">
               {course.note}
             </span>
+          )}
+          {/* 擋修條件。放在這裡而不是自成一欄，是因為只有少數課有 —— 一整欄會
+              大半都是「—」；學校自己也是把這顆按鈕放在備註欄。 */}
+          {course.hasRestriction && yms && (
+            <ExternalLink
+              className="text-xs font-normal text-danger hover:underline"
+              href={restrictionUrl(yms, course.code)}
+            >
+              有擋修條件
+            </ExternalLink>
           )}
         </span>
       ),
@@ -237,18 +284,10 @@ export const buildCourseColumns = <T extends PartialCourse>(
       render: (course) => {
         if (!yms || !course.syllabusKey) return "—";
 
-        // 刻意用原生 <a> 而非 HeroUI Link：provider.tsx 把 RouterProvider 接上
-        // react-router，HeroUI 的 Link 會把 href 當成站內路徑去導航，外部網址會
-        // 被解析成 /search/https:/shcourse... footbar 的外部連結也是這個原因。
         return (
-          <a
-            className="text-accent hover:underline"
-            href={syllabusUrl(yms, course.syllabusKey)}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
+          <ExternalLink href={syllabusUrl(yms, course.syllabusKey)}>
             綱要
-          </a>
+          </ExternalLink>
         );
       },
     },

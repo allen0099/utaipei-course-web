@@ -63,6 +63,12 @@ export const siteConfig = {
        */
       syllabus:
         "https://shcourse.utaipei.edu.tw/utaipei/ag_pro/ag064_print.jsp",
+      /**
+       * 相關限修資料（擋修條件）。同樣是學校用 POST 開、但 GET 也通的頁面。
+       * 需要 uid / yms_yms / ls_year / ls_sms / data=選課代碼。
+       */
+      restriction:
+        "https://shcourse.utaipei.edu.tw/utaipei/ag_pro/ag203_limit.jsp",
     },
     hero_ui: {
       github: "https://github.com/frontio-ai/heroui",

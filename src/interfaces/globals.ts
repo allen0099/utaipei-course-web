@@ -117,6 +117,14 @@ export interface Course extends CourseItem {
   mixedClass?: string;
   /** 備註 */
   note?: string;
+  /**
+   * 這門課有沒有擋修條件（限修年級／科系／班級／科目／身份）。
+   *
+   * 只有有沒有，內容要連到學校的 ag203_limit.jsp 看 —— 那是四個初選階段 × 五類
+   * 條件的一整頁，塞進課程列表會把表格撐爆。未定義不代表沒有限修，只代表爬到
+   * 這門課的來源看不到（ag304 沒有這個欄位）。
+   */
+  hasRestriction?: boolean;
   locationCode?: string;
   teacherCodes?: string[];
 }
