@@ -58,11 +58,13 @@ export const MySchedulePage = () => {
           "teacher",
           "time",
           "classroom",
+          "syllabus",
           "conflict",
         ],
-        { conflictNamesByCourseCode },
+        // scheduleYms 是這份課表所屬的學年期，教學綱要連結要靠它。
+        { conflictNamesByCourseCode, yms: scheduleYms ?? undefined },
       ),
-    [conflictNamesByCourseCode],
+    [conflictNamesByCourseCode, scheduleYms],
   );
 
   return (

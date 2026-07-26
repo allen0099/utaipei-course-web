@@ -89,6 +89,11 @@ export const ClassSearchPage = () => {
 
   const catalog = useMemo(() => buildCatalog(courses), [courses]);
 
+  // 統一格式前的班級檔存的是整包 courses 而非 courseCodes。爬蟲每次只回填一個
+  // 舊學年期，所以還沒輪到的學年期會一直是舊格式；當成「尚未收錄」處理，才不會
+  // 顯示成「這個班級沒有課」。
+  const isLegacySchedule = !!schedule && !Array.isArray(schedule.courseCodes);
+
   const { courses: classCourses, missing } = useMemo(
     () => resolveCourses(catalog, schedule?.courseCodes),
     [catalog, schedule],
@@ -127,14 +132,16 @@ export const ClassSearchPage = () => {
           "credits",
           "required",
           "category",
+          "genderLimit",
           "teacher",
           "time",
           "classroom",
           "capacity",
+          "syllabus",
         ],
-        { viewingClassCode: classCode },
+        { viewingClassCode: classCode, yms },
       ),
-    [classCode],
+    [classCode, yms],
   );
 
   const scheduleTitle = selectedClass
@@ -145,7 +152,8 @@ export const ClassSearchPage = () => {
   // so without this an uncrawled semester reports "載入失敗" down here as well
   // as the 「尚未收錄」 notice above, before the user has chosen anything.
   const loading = !!classCode && (scheduleLoading || coursesLoading);
-  const failed = !!classCode && (scheduleError || coursesError);
+  const failed =
+    !!classCode && (scheduleError || coursesError || isLegacySchedule);
 
   return (
     <DefaultLayout>
@@ -195,7 +203,11 @@ export const ClassSearchPage = () => {
           {loading && <LoadingState label="班級課表" />}
           {failed && (
             <FetchError
-              message="班級課表載入失敗。"
+              message={
+                isLegacySchedule
+                  ? "這個學年期的班級課表尚未更新為新格式，請改選其他學年期。"
+                  : "班級課表載入失敗。"
+              }
               onRetry={() => {
                 refetchSchedule();
                 refetchCourses();

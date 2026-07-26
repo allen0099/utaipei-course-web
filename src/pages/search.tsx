@@ -6,7 +6,10 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 import { PageHeader } from "@/components/page-header.tsx";
 import { DataTable } from "@/components/data-table.tsx";
-import { buildCourseColumns } from "@/components/course-columns.tsx";
+import {
+  buildCourseColumns,
+  CourseColumnKey,
+} from "@/components/course-columns.tsx";
 import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import DefaultLayout from "@/layouts/default";
@@ -36,19 +39,21 @@ import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 
 const MAX_DISPLAYED_COURSES = 200;
 
-// Percentages sum to ~92% (the checkbox column takes the rest).
-const COLUMNS = buildCourseColumns<PartialCourse>([
+// 系所欄拿掉了：共同課會關聯十幾個系所，那一欄佔掉的寬度遠大於它的價值，而
+// 系所本來就是上方的篩選條件，看結果時不必再重複一次。
+const COLUMN_KEYS: CourseColumnKey[] = [
   "code",
   "name",
-  "department",
   "class",
   "credits",
   "required",
+  "genderLimit",
   "teacher",
   "time",
   "classroom",
   "capacity",
-]);
+  "syllabus",
+];
 
 const CourseTable = ({
   courses,
@@ -60,13 +65,18 @@ const CourseTable = ({
   canAdd: boolean;
 }) => {
   const { isSelected, toggleCourse } = useSelectedCourses();
+  // 教學綱要連結要帶學年期，所以欄位定義得跟著 yms 走。
+  const columns = useMemo(
+    () => buildCourseColumns<PartialCourse>(COLUMN_KEYS, { yms }),
+    [yms],
+  );
 
   return (
     <DataTable
       cardSubtitle={(item) => item.code}
       cardTitle={(item) => item.name}
       className="mt-4"
-      columns={COLUMNS}
+      columns={columns}
       leading={{
         label: "加入",
         render: (item) => (

@@ -26,12 +26,32 @@ export interface CourseCatalog {
 export const useCourseCatalog = (yms: string): UseFetchJsonResult<Course[]> =>
   useFetchJson<Course[]>(dataUrl(yms, "courses.json"), { cache: true });
 
-/** 教師／地點／班級索引檔，形狀都是 { entries, extraCourses }。 */
+/**
+ * 教師／地點／班級索引檔，形狀都是 { entries, extraCourses }。
+ *
+ * 統一格式前的 teachers.json / locations.json 頂層是陣列，而爬蟲只會重抓當前
+ * 學年度 —— 舊學年期的檔案會一直是舊格式，當前學年度也有「courses.json 已更新、
+ * 索引檔還沒」的空窗。直接讀會得到 undefined 的 entries，畫面就是一個沒有任何
+ * 說明的空下拉選單。這裡把舊格式當成「尚未收錄」，讓頁面顯示既有的提示訊息。
+ */
 export const useCourseIndex = <T>(
   yms: string,
   file: string,
-): UseFetchJsonResult<CourseIndex<T>> =>
-  useFetchJson<CourseIndex<T>>(dataUrl(yms, file), { cache: true });
+): UseFetchJsonResult<CourseIndex<T>> => {
+  const result = useFetchJson<CourseIndex<T>>(dataUrl(yms, file), {
+    cache: true,
+  });
+
+  const isLegacy = Array.isArray(result.data);
+
+  return {
+    ...result,
+    data: isLegacy ? undefined : result.data,
+    error: isLegacy
+      ? new Error(`${file} is in the pre-unification format`)
+      : result.error,
+  };
+};
 
 /**
  * 把 courses.json 與各索引檔的 extraCourses 併成一張查表。

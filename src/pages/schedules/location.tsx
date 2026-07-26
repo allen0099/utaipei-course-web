@@ -3,7 +3,10 @@ import { Separator } from "@heroui/react";
 import { Key } from "@react-types/shared";
 
 import { DataTable } from "@/components/data-table.tsx";
-import { buildCourseColumns } from "@/components/course-columns.tsx";
+import {
+  buildCourseColumns,
+  CourseColumnKey,
+} from "@/components/course-columns.tsx";
 import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import { sectionTitle } from "@/components/primitives.ts";
@@ -25,16 +28,18 @@ import {
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
 
-const COLUMNS = buildCourseColumns<PartialCourse>([
+const COLUMN_KEYS: CourseColumnKey[] = [
   "code",
   "name",
   "class",
   "credits",
   "required",
+  "genderLimit",
   "teacher",
   "time",
   "capacity",
-]);
+  "syllabus",
+];
 
 export const LocationSearchPage = () => {
   const [yms, setYms] = useState<string>("");
@@ -67,6 +72,11 @@ export const LocationSearchPage = () => {
   const { courses: locationCourses, missing } = useMemo(
     () => resolveCourses(catalog, selectedLocation?.courseCodes),
     [catalog, selectedLocation],
+  );
+
+  const columns = useMemo(
+    () => buildCourseColumns<PartialCourse>(COLUMN_KEYS, { yms }),
+    [yms],
   );
 
   const scheduleTitle = `${year} 學年 (${semester}) ${selectedLocation?.name || ""} 的課表`;
@@ -138,7 +148,7 @@ export const LocationSearchPage = () => {
                   cardSubtitle={(item) => item.code}
                   cardTitle={(item) => item.name}
                   className="mt-4"
-                  columns={COLUMNS}
+                  columns={columns}
                   rowKey={(item) => item.code}
                   rows={locationCourses}
                 />

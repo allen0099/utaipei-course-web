@@ -113,11 +113,12 @@ export const SharedSchedulePage = () => {
           "teacher",
           "time",
           "classroom",
+          "syllabus",
           "conflict",
         ],
-        { conflictNamesByCourseCode },
+        { conflictNamesByCourseCode, yms: payload?.y },
       ),
-    [conflictNamesByCourseCode],
+    [conflictNamesByCourseCode, payload],
   );
 
   const semesterName = payload ? displayNameOf(payload.y) : "";

@@ -56,6 +56,13 @@ export const siteConfig = {
     utaipei: {
       official: "https://www.utaipei.edu.tw/",
       sky: "https://my.utaipei.edu.tw/utaipei/index_sky.html",
+      /**
+       * 教學綱要。學校頁面是用 POST 打開的，但實測同樣參數走 GET 也會回傳完整
+       * 課綱（課程目標、每週大綱、用書、評分標準），所以可以直接做成連結。
+       * 需要 uid / arg01=學年 / arg02=學期 / arg04=教學綱要鍵值。
+       */
+      syllabus:
+        "https://shcourse.utaipei.edu.tw/utaipei/ag_pro/ag064_print.jsp",
     },
     hero_ui: {
       github: "https://github.com/frontio-ai/heroui",

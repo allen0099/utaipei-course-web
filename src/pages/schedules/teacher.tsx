@@ -12,7 +12,10 @@ import { PartialCourse, TeacherUnit } from "@/interfaces/globals.ts";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
 import { DataTable } from "@/components/data-table.tsx";
-import { buildCourseColumns } from "@/components/course-columns.tsx";
+import {
+  buildCourseColumns,
+  CourseColumnKey,
+} from "@/components/course-columns.tsx";
 import {
   buildCatalog,
   resolveCourses,
@@ -25,17 +28,19 @@ import { sectionTitle } from "@/components/primitives.ts";
 import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 
-const COLUMNS = buildCourseColumns<PartialCourse>([
+const COLUMN_KEYS: CourseColumnKey[] = [
   "code",
   "name",
   "class",
   "credits",
   "required",
   "category",
+  "genderLimit",
   "time",
   "classroom",
   "capacity",
-]);
+  "syllabus",
+];
 
 export const TeacherSchedulePage = () => {
   const [yms, setYms] = useState<string>("");
@@ -95,6 +100,11 @@ export const TeacherSchedulePage = () => {
     setUnitCode(id?.toString() || "");
     setTeacherCode("");
   };
+
+  const columns = useMemo(
+    () => buildCourseColumns<PartialCourse>(COLUMN_KEYS, { yms }),
+    [yms],
+  );
 
   const scheduleTitle = teacher
     ? `${year} 學年 (${semester}) ${teacher.name} 教師的課表`
@@ -168,7 +178,7 @@ export const TeacherSchedulePage = () => {
                   cardSubtitle={(item) => item.code}
                   cardTitle={(item) => item.name}
                   className="mt-4"
-                  columns={COLUMNS}
+                  columns={columns}
                   rowKey={(item) => item.code}
                   rows={teacherCourses}
                 />

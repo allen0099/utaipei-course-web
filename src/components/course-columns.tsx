@@ -2,6 +2,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { Chip } from "@heroui/react";
 
 import { DataTableColumn } from "@/components/data-table.tsx";
+import { siteConfig } from "@/config/site.ts";
 import { PartialCourse } from "@/interfaces/globals.ts";
 
 export type CourseColumnKey =
@@ -12,11 +13,12 @@ export type CourseColumnKey =
   | "credits"
   | "required"
   | "category"
-  | "department"
+  | "genderLimit"
   | "teacher"
   | "time"
   | "classroom"
   | "capacity"
+  | "syllabus"
   | "conflict";
 
 export interface CourseColumnOptions {
@@ -27,44 +29,72 @@ export interface CourseColumnOptions {
    * 體育課其實掛在 19071411 底下，不標的話使用者會以為課表跑錯班級。
    */
   viewingClassCode?: string;
+  /** 學年期，如 "114#1"。教學綱要連結需要它才組得出來。 */
+  yms?: string;
 }
 
 /** 缺值一律顯示「—」，不要用空字串假裝這門課沒有這個屬性。 */
 const orDash = (value: string | undefined) => value || "—";
+
+/** 「未定」的值刻意壓低對比：它是真的還沒排，不是重點資訊。 */
+const undecided = (value: string | undefined) =>
+  !value || value.includes("未定");
+
+const mutedIfUndecided = (value: string | undefined) =>
+  undecided(value) ? (
+    <span className="text-muted">{orDash(value)}</span>
+  ) : (
+    value
+  );
+
+const syllabusUrl = (yms: string, syllabusKey: string): string => {
+  const [year, semester] = yms.split("#");
+  const params = new URLSearchParams({
+    uid: "guest",
+    arg01: year,
+    arg02: semester,
+    arg04: syllabusKey,
+  });
+
+  return `${siteConfig.links.utaipei.syllabus}?${params}`;
+};
 
 /**
  * 課程欄位的單一定義處。
  *
  * 課程查詢、我的課表、分享頁與三個課表頁以前各自寫一份欄位陣列，同一個欄位在
  * 不同頁的標題、寬度與缺值處理都不一樣。現在共用這張表，各頁只挑要哪幾欄。
+ *
+ * 學分與時數併成一欄：兩者都是學生會看的，但欄位總數已經逼近一列放得下的
+ * 上限，各佔一欄會把其他欄擠到換行；併成「3.0 / 2.0」既省寬度又看得到差異
+ * （體育課就是 0 學分 2 時數）。
  */
 export const buildCourseColumns = <T extends PartialCourse>(
   keys: CourseColumnKey[],
   options: CourseColumnOptions = {},
 ): DataTableColumn<T>[] => {
-  const { conflictNamesByCourseCode, viewingClassCode } = options;
+  const { conflictNamesByCourseCode, viewingClassCode, yms } = options;
 
   const all: Record<CourseColumnKey, DataTableColumn<T>> = {
     code: {
       key: "code",
       label: "選課代碼",
       headerLabel: "代碼",
-      width: "w-[9%]",
+      width: "w-[7%]",
       cellClassName: "tabular-nums text-muted",
       hideOnCard: true,
     },
     name: {
       key: "name",
       label: "科目",
-      width: "w-[20%]",
+      width: "w-[19%]",
       cellClassName: "font-medium text-foreground",
       // 手機卡片改用 cardTitle 呈現，見各頁的 DataTable 設定。
       hideOnCard: true,
       render: (course) => (
-        <span className="flex flex-col gap-1">
+        <span className="flex flex-col gap-0.5">
           <span className="inline-flex flex-wrap items-center gap-1.5">
-            {/* 英文課名放 title，滑過才看得到，不佔版面 */}
-            <span title={course.nameEn || undefined}>{course.name}</span>
+            {course.name}
             {viewingClassCode &&
               course.classCode &&
               course.classCode !== viewingClassCode && (
@@ -73,8 +103,15 @@ export const buildCourseColumns = <T extends PartialCourse>(
                 </Chip>
               )}
           </span>
+          {course.nameEn && (
+            <span className="text-xs font-normal text-muted">
+              {course.nameEn}
+            </span>
+          )}
           {course.note && (
-            <span className="text-xs text-muted">{course.note}</span>
+            <span className="text-xs font-normal text-warning">
+              {course.note}
+            </span>
           )}
         </span>
       ),
@@ -83,7 +120,7 @@ export const buildCourseColumns = <T extends PartialCourse>(
       key: "class",
       label: "班級名稱",
       headerLabel: "班級",
-      width: "w-[12%]",
+      width: "w-[10%]",
       render: (course) =>
         course.mixedClass
           ? `${orDash(course.class)}（合 ${course.mixedClass}）`
@@ -92,105 +129,133 @@ export const buildCourseColumns = <T extends PartialCourse>(
     group: {
       key: "group",
       label: "分組",
-      width: "w-[7%]",
+      width: "w-[6%]",
       cellClassName: "tabular-nums",
       render: (course) => orDash(course.group),
     },
     credits: {
       key: "credits",
-      label: "學分",
-      width: "w-[7%]",
+      label: "學分／時數",
+      headerLabel: "學分/時數",
+      width: "w-[9%]",
       cellClassName: "tabular-nums",
-      render: (course) => orDash(course.credits),
+      render: (course) => {
+        if (!course.credits && !course.hours) return "—";
+
+        return (
+          <span>
+            <span className="font-medium text-foreground">
+              {orDash(course.credits)}
+            </span>
+            <span className="text-muted"> / {orDash(course.hours)}</span>
+          </span>
+        );
+      },
     },
     required: {
       key: "required",
       label: "必選修",
-      width: "w-[10%]",
-      // 開課別絕大多數是「學期」，每列都印只會讓這欄換行，只在「學年」等其他
-      // 值時才標出來。
-      render: (course) =>
-        orDash(
-          [
-            course.required,
-            course.courseType && course.courseType !== "學期"
-              ? course.courseType
-              : "",
-          ]
-            .filter(Boolean)
-            .join("・"),
-        ),
+      width: "w-[8%]",
+      // 必修用警示色：這是「不選不行」的資訊，選修則不需要搶注意力。
+      // 開課別絕大多數是「學期」，只在「學年」等其他值時才標，否則每列都換行。
+      render: (course) => {
+        if (!course.required) return "—";
+
+        const extra =
+          course.courseType && course.courseType !== "學期"
+            ? course.courseType
+            : "";
+
+        return (
+          <span
+            className={
+              course.required.includes("必") ? "font-medium text-danger" : ""
+            }
+          >
+            {course.required}
+            {extra && <span className="text-muted">・{extra}</span>}
+          </span>
+        );
+      },
     },
     category: {
       key: "category",
       label: "領域類",
-      width: "w-[11%]",
-      // 限制性別絕大多數是「不限」，只有實際有限制時才值得佔版面。
-      render: (course) =>
-        orDash(
-          [
-            course.category,
-            course.genderLimit && course.genderLimit !== "不限"
-              ? course.genderLimit
-              : "",
-          ]
-            .filter(Boolean)
-            .join("・"),
-        ),
+      width: "w-[10%]",
+      render: (course) => orDash(course.category),
     },
-    department: {
-      key: "department",
-      label: "開課系所",
-      headerLabel: "系所",
-      width: "w-[14%]",
-      cellClassName: "text-muted",
-      // 共同課（體育、通識）會關聯到十幾個系所，全部列出來會把整欄撐成一直條。
-      // 只列前兩個，其餘收成數量，完整清單放 title。
+    genderLimit: {
+      key: "genderLimit",
+      label: "限制性別",
+      headerLabel: "性別",
+      width: "w-[6%]",
+      // 絕大多數是「不限」，所以「不限」壓成低對比、有限制的才標色 —— 掃過表格
+      // 時真正需要注意的那幾列才會跳出來。
       render: (course) => {
-        const names = course.departments;
+        if (!course.genderLimit) return "—";
 
-        if (!names || names.length === 0) return "—";
-
-        return (
-          <span title={names.join("、")}>
-            {names.slice(0, 2).join("、")}
-            {names.length > 2 && ` 等 ${names.length} 系所`}
-          </span>
+        return course.genderLimit === "不限" ? (
+          <span className="text-muted">不限</span>
+        ) : (
+          <span className="font-medium text-warning">{course.genderLimit}</span>
         );
       },
     },
     teacher: {
       key: "teacher",
       label: "教師",
-      width: "w-[11%]",
-      render: (course) => orDash(course.teacher),
+      width: "w-[9%]",
+      render: (course) => mutedIfUndecided(course.teacher),
     },
     time: {
       key: "time",
       label: "時間",
-      width: "w-[11%]",
-      cellClassName: "tabular-nums text-foreground/80",
-      render: (course) => orDash(course.time),
+      width: "w-[9%]",
+      cellClassName: "tabular-nums",
+      render: (course) => mutedIfUndecided(course.time),
     },
     classroom: {
       // 教室已含校區前綴（「博愛 G313」），所以不另開校區欄。
       key: "classroom",
       label: "教室",
-      width: "w-[13%]",
-      render: (course) => orDash(course.classroom),
+      width: "w-[11%]",
+      render: (course) => mutedIfUndecided(course.classroom),
     },
     capacity: {
       key: "capacity",
       label: "人數上限",
       headerLabel: "上限",
-      width: "w-[8%]",
+      width: "w-[5%]",
       cellClassName: "tabular-nums",
       render: (course) => orDash(course.capacity?.max),
+    },
+    syllabus: {
+      key: "syllabus",
+      label: "教學綱要",
+      headerLabel: "綱要",
+      width: "w-[6%]",
+      render: (course) => {
+        if (!yms || !course.syllabusKey) return "—";
+
+        // 刻意用原生 <a> 而非 HeroUI Link：provider.tsx 把 RouterProvider 接上
+        // react-router，HeroUI 的 Link 會把 href 當成站內路徑去導航，外部網址會
+        // 被解析成 /search/https:/shcourse... footbar 的外部連結也是這個原因。
+        return (
+          <a
+            className="text-accent hover:underline"
+            href={syllabusUrl(yms, course.syllabusKey)}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            綱要
+          </a>
+        );
+      },
     },
     conflict: {
       key: "conflict",
       label: "衝堂提示",
-      width: "w-[18%]",
+      width: "w-[16%]",
       render: (course) => {
         const names = conflictNamesByCourseCode?.get(course.code);
 
