@@ -17,14 +17,7 @@
     <!-- No index for robots -->
     <meta name="robots" content="noindex,nofollow" />
 
-    <!--
-      GitHub Pages 只有在請求的路徑真的沒有檔案時才會送出這一頁，而每條 SPA 路由
-      在 build 時都產生了實體 index.html，所以會走到這裡的都是不存在的網址。以前
-      這頁會自動跳回首頁，對搜尋引擎就是一個 soft 404；現在原地把 404 顯示完，
-      只有使用者主動點下面那顆按鈕時才把原網址交給 App.tsx 的還原機制。
-
-      這個檔案不經 Vite 處理，樣式只能內嵌。
-    -->
+    <!-- Add metadata -->
     <meta name="description" content="這個網址沒有對應的頁面，回到首頁繼續查課程、排課表或看行事曆。" />
     <meta name="author" content="北市大選課小幫手" />
 
@@ -45,6 +38,14 @@
     <meta name="twitter:title" content="404 - 找不到內容" />
     <meta name="twitter:description" content="這個網址沒有對應的頁面，回到首頁繼續查課程、排課表或看行事曆。" />
     <meta name="twitter:image" content="https://utc.allen0099.tw/og/home.png" />
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-NZ6SQS67');</script>
+    <!-- End Google Tag Manager -->
 
     <style>
       :root {
@@ -129,6 +130,10 @@
     </style>
   </head>
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZ6SQS67"
+                      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <img src="/CatMeow.png" width="96" height="96" alt="" />
     <h1>404</h1>
     <p>找不到這個頁面</p>
