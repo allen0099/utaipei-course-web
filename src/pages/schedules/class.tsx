@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Separator } from "@heroui/react";
 import { Key } from "@react-types/shared";
 
-import { DataTable } from "@/components/data-table.tsx";
+import { SelectableCourseTable } from "@/components/selectable-course-table.tsx";
+import { BulkAddCourses } from "@/components/bulk-add-courses.tsx";
 import { buildCourseColumns } from "@/components/course-columns.tsx";
 import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
@@ -27,6 +28,8 @@ import {
   useCourseCatalog,
 } from "@/hooks/useCourseCatalog.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
+import { useCourseAddGate } from "@/hooks/useCourseAddGate.ts";
+import { isOtherClassCourse } from "@/utils/course-class.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
 
@@ -98,6 +101,17 @@ export const ClassSearchPage = () => {
     () => resolveCourses(catalog, schedule?.courseCodes),
     [catalog, schedule],
   );
+
+  const { canAdd, blockedReason } = useCourseAddGate(yms);
+
+  // 學校把共用課程也掛在這個班底下（選課代碼相同，但不是這班真的要修的課），
+  // 一鍵加入時排除；使用者仍可在表格裡個別勾選加入。
+  const ownClassCourses = useMemo(
+    () =>
+      classCourses.filter((course) => !isOtherClassCourse(course, classCode)),
+    [classCourses, classCode],
+  );
+  const otherClassCount = classCourses.length - ownClassCourses.length;
 
   // Each selector feeds the next, so changing one has to clear everything
   // downstream — otherwise a stale 系所 or 班級 stays selected and the page
@@ -233,13 +247,25 @@ export const ClassSearchPage = () => {
                     有 {missing} 筆課程的資料尚未更新，暫時無法顯示。
                   </Notice>
                 )}
-                <DataTable
-                  cardSubtitle={(item) => item.code}
-                  cardTitle={(item) => item.name}
+                <BulkAddCourses
+                  blockedReason={blockedReason}
+                  bulkCourses={ownClassCourses}
+                  canAdd={canAdd}
+                  className="mt-4"
+                  courses={classCourses}
+                  excludedNote={
+                    otherClassCount > 0
+                      ? `已排除 ${otherClassCount} 門他班開課的課程（多為共用課程，不一定是本班要修的）；需要的話可在下方個別勾選加入。`
+                      : undefined
+                  }
+                  yms={yms}
+                />
+                <SelectableCourseTable
+                  canAdd={canAdd}
                   className="mt-4"
                   columns={columns}
-                  rowKey={(item) => item.code}
-                  rows={classCourses}
+                  courses={classCourses}
+                  yms={yms}
                 />
                 <WeeklySchedule
                   courses={convertCourses(classCourses)}

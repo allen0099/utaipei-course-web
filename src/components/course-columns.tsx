@@ -4,6 +4,7 @@ import { Chip, Tooltip } from "@heroui/react";
 import { DataTableColumn } from "@/components/data-table.tsx";
 import { siteConfig } from "@/config/site.ts";
 import { PartialCourse } from "@/interfaces/globals.ts";
+import { isOtherClassCourse } from "@/utils/course-class.ts";
 
 export type CourseColumnKey =
   | "code"
@@ -132,22 +133,20 @@ export const buildCourseColumns = <T extends PartialCourse>(
         <span className="flex flex-col gap-0.5">
           <span className="inline-flex flex-wrap items-center gap-1.5">
             {course.name}
-            {viewingClassCode &&
-              course.classCode &&
-              course.classCode !== viewingClassCode && (
-                <>
-                  <Tooltip delay={0}>
-                    <Tooltip.Trigger>
-                      <Chip size="sm" variant="soft">
-                        他班開課
-                      </Chip>
-                    </Tooltip.Trigger>
-                    <Tooltip.Content>
-                      <p>該課程非本系所課程，僅在資料中列出，通常為共用課程</p>
-                    </Tooltip.Content>
-                  </Tooltip>
-                </>
-              )}
+            {isOtherClassCourse(course, viewingClassCode) && (
+              <>
+                <Tooltip delay={0}>
+                  <Tooltip.Trigger>
+                    <Chip size="sm" variant="soft">
+                      他班開課
+                    </Chip>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <p>該課程非本系所課程，僅在資料中列出，通常為共用課程</p>
+                  </Tooltip.Content>
+                </Tooltip>
+              </>
+            )}
           </span>
           {course.nameEn && (
             <span className="text-xs font-normal text-muted">

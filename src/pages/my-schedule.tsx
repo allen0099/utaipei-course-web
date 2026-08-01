@@ -72,7 +72,7 @@ export const MySchedulePage = () => {
       <PageSection>
         <PageHeader
           className="mb-6 max-w-5xl"
-          description="在課程查詢頁勾選的課程會集中在這裡，可分享給別人或匯出成日曆、圖片。"
+          description="在課程查詢或班級／教師課表勾選的課程會集中在這裡，可分享給別人或匯出成日曆、圖片。"
           title="我的課表"
         />
 
@@ -83,7 +83,7 @@ export const MySchedulePage = () => {
                 前往課程查詢 →
               </Link>
             }
-            description="在課程查詢頁勾選想要的課程，就會集中顯示在這裡。"
+            description="在課程查詢或班級／教師課表勾選想要的課程，就會集中顯示在這裡。"
             title="尚未選擇任何課程"
           />
         ) : (

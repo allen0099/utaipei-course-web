@@ -104,7 +104,7 @@ export const pageMeta = {
   "/my-schedule": page({
     name: "我的課表",
     description:
-      "集中管理在課程查詢頁勾選的課程，自動標示衝堂時段，可分享連結或匯出成 .ics 日曆與課表圖片。",
+      "集中管理在課程查詢或班級／教師課表勾選的課程，自動標示衝堂時段，可分享連結或匯出成 .ics 日曆與課表圖片。",
     ogImage: "/og/my-schedule.png",
   }),
   "/share": page({

@@ -11,7 +11,8 @@ import {
 import { PartialCourse, TeacherUnit } from "@/interfaces/globals.ts";
 import WeeklySchedule from "@/components/weekly-schedule.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
-import { DataTable } from "@/components/data-table.tsx";
+import { SelectableCourseTable } from "@/components/selectable-course-table.tsx";
+import { BulkAddCourses } from "@/components/bulk-add-courses.tsx";
 import {
   buildCourseColumns,
   CourseColumnKey,
@@ -22,6 +23,7 @@ import {
   useCourseCatalog,
   useCourseIndex,
 } from "@/hooks/useCourseCatalog.ts";
+import { useCourseAddGate } from "@/hooks/useCourseAddGate.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
 import { sectionTitle } from "@/components/primitives.ts";
@@ -88,6 +90,8 @@ export const TeacherSchedulePage = () => {
     () => resolveCourses(catalog, teacher?.courseCodes),
     [catalog, teacher],
   );
+
+  const { canAdd, blockedReason } = useCourseAddGate(yms);
 
   // Each selector feeds the next, so changing one clears everything downstream.
   const onYmsChange = (id: Key | null) => {
@@ -174,13 +178,19 @@ export const TeacherSchedulePage = () => {
                     有 {missing} 筆課程的資料尚未更新，暫時無法顯示。
                   </Notice>
                 )}
-                <DataTable
-                  cardSubtitle={(item) => item.code}
-                  cardTitle={(item) => item.name}
+                <BulkAddCourses
+                  blockedReason={blockedReason}
+                  canAdd={canAdd}
+                  className="mt-4"
+                  courses={teacherCourses}
+                  yms={yms}
+                />
+                <SelectableCourseTable
+                  canAdd={canAdd}
                   className="mt-4"
                   columns={columns}
-                  rowKey={(item) => item.code}
-                  rows={teacherCourses}
+                  courses={teacherCourses}
+                  yms={yms}
                 />
                 <WeeklySchedule
                   courses={convertCourses(teacherCourses)}
