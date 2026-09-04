@@ -36,7 +36,7 @@
     "tailwindcss": "4.3.3"
   },
   "devDependencies": {
-    "@eslint/compat": "2.1.0",
+    "@eslint/compat": "2.1.1",
     "@eslint/eslintrc": "3.3.7",
     "@eslint/js": "10.0.1",
     "@resvg/resvg-js": "^2.6.2",
@@ -47,7 +47,7 @@
     "@typescript-eslint/parser": "8.69.0",
     "@vitejs/plugin-react": "6.1.1",
     "esbuild": "0.28.2",
-    "eslint": "10.9.1",
+    "eslint": "10.10.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jsx-a11y": "6.10.2",
