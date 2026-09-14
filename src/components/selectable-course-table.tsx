@@ -1,8 +1,12 @@
-import { Checkbox } from "@heroui/react";
+import { useMemo } from "react";
+import { Checkbox, Tooltip } from "@heroui/react";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 import { DataTable, DataTableColumn } from "@/components/data-table.tsx";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 import { PartialCourse } from "@/interfaces/globals.ts";
+import { convertCourses } from "@/utils/convert-course.ts";
+import { findConflictsAgainstSchedule } from "@/utils/schedule-conflict.ts";
 
 export interface SelectableCourseTableProps {
   courses: PartialCourse[];
@@ -27,7 +31,44 @@ export const SelectableCourseTable = ({
   canAdd,
   className,
 }: SelectableCourseTableProps) => {
-  const { isSelected, toggleCourse } = useSelectedCourses();
+  const { isSelected, toggleCourse, selectedCourses } = useSelectedCourses();
+
+  // 衝堂 used to surface only on 我的課表, i.e. after the user had left this
+  // page -- so picking courses meant committing first and finding out later.
+  // Annotate the row itself instead, at the moment the decision is made.
+  const conflictNames = useMemo(
+    () =>
+      findConflictsAgainstSchedule(
+        convertCourses(courses),
+        convertCourses(selectedCourses),
+      ),
+    [courses, selectedCourses],
+  );
+
+  const renderConflictWarning = (item: PartialCourse) => {
+    const names = conflictNames.get(item.code);
+
+    if (!names || names.size === 0) return null;
+
+    const label = `與 ${Array.from(names).join("、")} 衝堂`;
+
+    return (
+      <Tooltip>
+        <Tooltip.Trigger>
+          <span
+            aria-label={label}
+            className="text-danger"
+            // Tooltips never fire on touch, so the label has to be reachable
+            // without hover as well.
+            title={label}
+          >
+            <ExclamationTriangleIcon width={16} />
+          </span>
+        </Tooltip.Trigger>
+        <Tooltip.Content>{label}</Tooltip.Content>
+      </Tooltip>
+    );
+  };
 
   return (
     <DataTable
@@ -38,20 +79,23 @@ export const SelectableCourseTable = ({
       leading={{
         label: "加入",
         render: (item) => (
-          <Checkbox
-            aria-label={`將 ${item.name} (${item.class}) 加入我的課表`}
-            // The column stays rendered (just disabled) when the 學年期 can't
-            // be added to, so switching semesters doesn't reflow the table.
-            isDisabled={!canAdd && !isSelected(item)}
-            isSelected={isSelected(item)}
-            onChange={() => toggleCourse(item, yms)}
-          >
-            <Checkbox.Content>
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-            </Checkbox.Content>
-          </Checkbox>
+          <div className="flex items-center gap-1">
+            <Checkbox
+              aria-label={`將 ${item.name} (${item.class}) 加入我的課表`}
+              // The column stays rendered (just disabled) when the 學年期 can't
+              // be added to, so switching semesters doesn't reflow the table.
+              isDisabled={!canAdd && !isSelected(item)}
+              isSelected={isSelected(item)}
+              onChange={() => toggleCourse(item, yms)}
+            >
+              <Checkbox.Content>
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+              </Checkbox.Content>
+            </Checkbox>
+            {renderConflictWarning(item)}
+          </div>
         ),
       }}
       rowKey={(item, index) => `${item.code}-${item.class}-${index}`}

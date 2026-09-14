@@ -70,3 +70,42 @@ export const findScheduleConflicts = (
 
   return conflicts;
 };
+
+/**
+ * Which already-scheduled courses each candidate would clash with.
+ *
+ * findScheduleConflicts answers "what clashes inside this one schedule",
+ * which only helps once a course is already added. 課程查詢 needs the
+ * question asked the other way round -- "would adding this clash with what I
+ * already have" -- so the warning can be shown on the row *before* the user
+ * commits to it.
+ *
+ * Returns course code → names of the existing courses it overlaps with.
+ * Candidates already in the schedule are skipped: a course cannot clash with
+ * itself, and it is the schedule's own conflict display that covers those.
+ */
+export const findConflictsAgainstSchedule = (
+  candidates: WeeklyScheduleCourse[],
+  scheduled: WeeklyScheduleCourse[],
+): Map<string, Set<string>> => {
+  const result = new Map<string, Set<string>>();
+
+  if (scheduled.length === 0) return result;
+
+  const scheduledCodes = new Set(scheduled.map((slot) => slot.code));
+
+  for (const candidate of candidates) {
+    if (scheduledCodes.has(candidate.code)) continue;
+
+    for (const slot of scheduled) {
+      if (!periodsOverlap(candidate, slot)) continue;
+
+      const names = result.get(candidate.code) ?? new Set<string>();
+
+      names.add(slot.name);
+      result.set(candidate.code, names);
+    }
+  }
+
+  return result;
+};
