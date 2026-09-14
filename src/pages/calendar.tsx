@@ -7,6 +7,7 @@ import { Button, Dropdown, Label, Tabs } from "@heroui/react";
 import { lazy, Suspense, useMemo, useState } from "react";
 
 import DefaultLayout from "@/layouts/default";
+import { useYms } from "@/hooks/useYms.ts";
 import { siteConfig } from "@/config/site.ts";
 import { CalendarEvent, CalendarItem } from "@/interfaces/globals.ts";
 import { PageHeader } from "@/components/page-header.tsx";
@@ -56,12 +57,35 @@ export const CalendarPage = () => {
   const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
   const [showSubscribeUrl, setShowSubscribeUrl] = useState<boolean>(false);
 
-  // Default to the newest calendar until the user picks a different year;
-  // derived directly from render instead of synced via an effect.
+  // Default to the 學年期 the school is currently enrolling for -- not to the
+  // newest calendar on file. The school publishes next semester's calendar
+  // well in advance, so calendarList[0] opened this page on a semester months
+  // away (in 115 上學期 it landed on 115 下學期, i.e. spring of the next year)
+  // while /search, which reads yms.json, correctly showed the current one.
+  // The two pages disagreed about what "now" is.
+  //
+  // Falling back to calendarList[0] still matters: yms.json may not have
+  // loaded, and the current semester's calendar may not be published yet.
+  const { defaultCode } = useYms();
+
+  const currentCalendar = useMemo(() => {
+    if (!defaultCode) return null;
+
+    const [year, semester] = defaultCode.split("#");
+
+    return (
+      calendarList.find(
+        (item) =>
+          String(item.year) === year && String(item.semester) === semester,
+      ) || null
+    );
+  }, [calendarList, defaultCode]);
+
   const selectedCalendar =
     (selectedTitle
       ? calendarList.find((item) => item.title === selectedTitle)
       : undefined) ||
+    currentCalendar ||
     calendarList[0] ||
     null;
 
