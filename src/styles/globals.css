@@ -8,6 +8,33 @@
 }
 
 /*
+  Light-theme contrast corrections. Scoped to :root:not(.dark) on purpose —
+  .dark is the only way the dark theme is applied (see the inline script in
+  index.html), and these are all *darkenings*: on a dark ground they would
+  reduce contrast rather than improve it. Plain :root would have applied them
+  to both themes and made dark mode worse.
+
+  An audit of 380 text nodes on 課程查詢 found 10 AA failures, all in light
+  mode:
+
+  --accent  3.60:1 on white. Fine as a large fill, but it paints the 綱要
+            link, the selected day tab (white on orange — the same pair) and
+            primary button labels. 0.54 gives 5.57:1 on white and 4.67:1 on
+            the grey footer surface, where the footer's accent link sits.
+  --danger  3.57:1, and it is what marks 必修 — required vs elective is
+            information, not decoration.
+  --muted   4.05:1 on the grey footer surface (it passes on white), used for
+            the footer links.
+
+  Hue and chroma are unchanged, so the brand still reads the same.
+*/
+:root:not(.dark) {
+  --accent: oklch(0.54 0.2223 41.12);
+  --danger: oklch(0.58 0.2328 25.74);
+  --muted: oklch(0.5 0.0138 285.94);
+}
+
+/*
   Keyboard focus ring for the app's own native elements.
 
   HeroUI ships a focus ring for its own components, but the hand-rolled
