@@ -127,10 +127,16 @@ export const PDFDocument = ({ link }: { link: string }) => {
   return (
     <div className="w-full flex justify-center">
       <div className="w-full max-w-5xl">
+        {/* react-pdf 11 turns Suspense on by default, which sends load
+            failures to an Error Boundary and ignores `loading`/`onLoadError`.
+            Nothing above this tree is a boundary, so a failed PDF would crash
+            the page instead of rendering <FetchError />. Opting out keeps the
+            behaviour these two props were written against. */}
         <Document
           className="flex flex-wrap justify-center gap-4"
           file={pdfFile}
           loading={<LoadingState />}
+          suspense={false}
           onLoadError={() => setError(true)}
           onLoadSuccess={onDocumentLoadSuccess}
         >
@@ -176,7 +182,11 @@ export const PDFDocument = ({ link }: { link: string }) => {
                     transformOrigin: "top center",
                   }}
                 >
-                  <Document file={pdfFile} loading={<LoadingState />}>
+                  <Document
+                    file={pdfFile}
+                    loading={<LoadingState />}
+                    suspense={false}
+                  >
                     <div className="rounded-md bg-white p-1">
                       <ResponsivePage pageNumber={activePage} />
                     </div>
