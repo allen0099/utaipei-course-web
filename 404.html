@@ -127,6 +127,45 @@
         border-color: var(--border);
         color: var(--fg);
       }
+
+      .places {
+        margin-top: 1.75rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--border);
+        max-width: 32rem;
+      }
+
+      .places h2 {
+        margin: 0 0 0.6rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .places ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 1.1rem;
+        justify-content: center;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .places a {
+        color: var(--accent);
+        font-size: 0.95rem;
+      }
+
+      .recover {
+        margin-top: 1.5rem;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .recover a {
+        color: var(--muted);
+      }
     </style>
   </head>
   <body>
@@ -140,14 +179,36 @@
     <p>歐歐，你似乎發現了蟲洞。</p>
     <div class="actions">
       <a class="button" href="/">返回首頁</a>
-      <a class="button secondary" href="/" id="retry">返回首頁並嘗試開啟此連結</a>
     </div>
+
+    <!-- 這頁是獨立的靜態檔，沒有 React 的導覽列與頁尾，使用者到這裡等於被困住，
+         只剩「回首頁」一條路。這份清單就是替代的導覽，直接連到各主要功能。 -->
+    <nav class="places">
+      <h2>或是直接前往</h2>
+      <ul>
+        <li><a href="/search/">課程查詢</a></li>
+        <li><a href="/my-schedule/">我的課表</a></li>
+        <li><a href="/schedules/teacher/">教師課表</a></li>
+        <li><a href="/schedules/class/">班級課表</a></li>
+        <li><a href="/calendar/">校園行事曆</a></li>
+        <li><a href="/map/">校園地圖</a></li>
+        <li><a href="/timetable/">校園節次表</a></li>
+      </ul>
+    </nav>
+
+    <p class="recover">
+      這個連結以前開得起來？<a href="/" id="retry">試著還原它</a>
+    </p>
 
     <script>
       // 未來若新增了路由卻忘了加進 scripts/generate-static-pages.js 的表，該網址
-      // 就沒有實體檔案而落到這裡。點這顆按鈕會把完整網址交給 App.tsx 還原（它必須
+      // 就沒有實體檔案而落到這裡。點這個連結會把完整網址交給 App.tsx 還原（它必須
       // 帶著 search 與 hash：/search 的篩選在 query string，/share 的整包內容在
       // fragment），等於手動版的 SPA 深連結救援。
+      //
+      // 它從並排的次要按鈕降級成一行小字：這是給「路由漏加進 pageMeta」那種情況
+      // 用的補救措施，而絕大多數走到 404 的網址是真的不存在，按了只會再失敗一次。
+      // 「返回首頁並嘗試開啟此連結」對一般使用者也讀不出是什麼意思。
       document.getElementById("retry").addEventListener("click", function () {
         sessionStorage.redirect = window.location.href;
       });
