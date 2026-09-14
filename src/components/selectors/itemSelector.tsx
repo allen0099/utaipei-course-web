@@ -30,7 +30,12 @@ export const ItemSelector = (props: SelectorProps<any>) => {
 
   return (
     <ComboBox
-      isRequired
+      // No isRequired: these are progressive filters, not form fields with a
+      // submit. 課程查詢 works from a keyword alone, so the red asterisk on
+      // 學院 and 系所 was telling the user something untrue -- and 學年度 is
+      // always pre-filled, so marking it required says nothing actionable.
+      // What to pick next is already covered by the labels ("請選擇班級") and
+      // by the empty states.
       // Full width on phones — capping at 320px inside a centred column left
       // long 系所 names truncated with no way to widen. From md up the width
       // goes back to intrinsic (`w-auto`): forcing 100% there makes every
