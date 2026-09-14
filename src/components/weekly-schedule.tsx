@@ -11,7 +11,8 @@ import {
 import clsx from "clsx";
 import {
   Cog6ToothIcon,
-  ArrowDownTrayIcon,
+  CalendarDaysIcon,
+  PhotoIcon,
   ExclamationTriangleIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
@@ -805,18 +806,25 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
               </span>
             </div>
 
+            {/* Tooltips never fire on touch, so on phones these three were
+                unlabelled squares -- and the two exports used the *same*
+                download icon, so they were not even distinguishable from each
+                other. Icons now differ by what they produce (calendar / photo)
+                and carry a visible label on mobile, where there is no hover to
+                fall back on. */}
             <div className="flex items-center space-x-2">
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button
-                    isIconOnly
                     aria-label="下載 ICS 行事曆檔案"
                     className="shadow-lg"
+                    isIconOnly={!isMobileViewport}
                     size="sm"
                     variant="primary"
                     onPress={handleICSDownload}
                   >
-                    <ArrowDownTrayIcon width="20" />
+                    <CalendarDaysIcon width="20" />
+                    {isMobileViewport && <span>行事曆</span>}
                   </Button>
                 </Tooltip.Trigger>
                 <Tooltip.Content>下載 ICS 檔案</Tooltip.Content>
@@ -824,14 +832,15 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button
-                    isIconOnly
                     aria-label="將課表另存為圖片"
                     className="shadow-lg"
+                    isIconOnly={!isMobileViewport}
                     size="sm"
                     variant="secondary"
                     onPress={handleImageDownload}
                   >
-                    <ArrowDownTrayIcon width="20" />
+                    <PhotoIcon width="20" />
+                    {isMobileViewport && <span>圖片</span>}
                   </Button>
                 </Tooltip.Trigger>
                 <Tooltip.Content>另存圖片</Tooltip.Content>
@@ -844,12 +853,13 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      isIconOnly
                       aria-label="課表顯示設定"
+                      isIconOnly={!isMobileViewport}
                       size="sm"
                       variant="secondary"
                     >
                       <Cog6ToothIcon width="20" />
+                      {isMobileViewport && <span>設定</span>}
                     </Button>
                   </Tooltip.Trigger>
                   <Tooltip.Content>設定</Tooltip.Content>
