@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import { Separator, SearchField, Chip, Link } from "@heroui/react";
+import { Separator, SearchField } from "@heroui/react";
 import { Key } from "@react-types/shared";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 import { PageHeader } from "@/components/page-header.tsx";
+import { SelectionBar } from "@/components/selection-bar.tsx";
 import { SelectableCourseTable } from "@/components/selectable-course-table.tsx";
 import {
   buildCourseColumns,
@@ -35,7 +36,6 @@ import {
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { useCourseAddGate } from "@/hooks/useCourseAddGate.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
-import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 
 const MAX_DISPLAYED_COURSES = 200;
 
@@ -90,7 +90,6 @@ export const SearchPage = () => {
   // Skip clearing the restored department filter the first time YmsSelector
   // reports back its (possibly URL-restored) initial value on mount.
   const isInitialYmsChange = useRef(true);
-  const { selectedCourses } = useSelectedCourses();
   const { canAdd, blockedReason: addBlockedReason } = useCourseAddGate(yms);
 
   // 教學綱要連結要帶學年期，所以欄位定義得跟著 yms 走。
@@ -318,18 +317,6 @@ export const SearchPage = () => {
     <DefaultLayout>
       <PageSection>
         <PageHeader
-          actions={
-            selectedCourses.length > 0 && (
-              <>
-                <Chip color="accent" size="sm" variant="tertiary">
-                  已選 {selectedCourses.length} 門課程
-                </Chip>
-                <Link className="text-sm" href="/my-schedule">
-                  前往我的課表 →
-                </Link>
-              </>
-            )
-          }
           className="mb-6 max-w-5xl"
           description="依學年度、系所或關鍵字查詢開課資料。"
           title="課程查詢"
@@ -381,6 +368,7 @@ export const SearchPage = () => {
         )}
         <div className="w-full max-w-5xl">{renderResults()}</div>
       </PageSection>
+      <SelectionBar />
     </DefaultLayout>
   );
 };

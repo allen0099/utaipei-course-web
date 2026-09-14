@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Key } from "@react-types/shared";
 
 import DefaultLayout from "@/layouts/default.tsx";
+import { SelectionBar } from "@/components/selection-bar.tsx";
 import { YmsSelector } from "@/components/selectors/ymsSelector.tsx";
 import {
   FILTER_FIELD_CLASS,
@@ -206,6 +207,7 @@ export const TeacherSchedulePage = () => {
           )}
         </div>
       </PageSection>
+      <SelectionBar />
     </DefaultLayout>
   );
 };

@@ -9,6 +9,7 @@ import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import { sectionTitle } from "@/components/primitives.ts";
 import DefaultLayout from "@/layouts/default.tsx";
+import { SelectionBar } from "@/components/selection-bar.tsx";
 import { siteConfig } from "@/config/site.ts";
 import {
   ClassCollege,
@@ -284,6 +285,7 @@ export const ClassSearchPage = () => {
           )}
         </div>
       </PageSection>
+      <SelectionBar />
     </DefaultLayout>
   );
 };
