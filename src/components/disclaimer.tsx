@@ -28,7 +28,13 @@ export const DisclaimerModal = () => {
         variant="blur"
         onOpenChange={setOpen}
       >
-        <Modal.Container className="max-w-3xl">
+        {/* scroll="inside" keeps the header and the accept button pinned and
+            scrolls only the text. Without it the dialog is one tall block: at
+            375x667 it already stands 598px tall, and on a narrower phone (or
+            with larger text) the button is pushed off a modal that cannot be
+            dismissed any other way -- the user would be stuck on a wall of
+            text with no way through. */}
+        <Modal.Container className="max-w-3xl" scroll="inside">
           <Modal.Dialog>
             <Modal.Header>
               <Modal.Heading className="text-danger">免責聲明</Modal.Heading>
@@ -69,9 +75,21 @@ export const DisclaimerModal = () => {
 
               {/* select-text: the surrounding page previously had
                   user-select disabled while this modal was open, which also
-                  blocked copying the very contact address quoted below. */}
+                  blocked copying the very contact address quoted below.
+
+                  The address used to be spelled "allen0099[at]sudo.host" and
+                  was not a link, so the bullet above telling people to get in
+                  touch asked them to retype it by hand. The [at] spelling
+                  stops neither modern scrapers nor anything else that reads
+                  the rendered DOM, so it only ever cost the reader. */}
               <div className="text-xs text-muted mt-2 select-text">
-                聯絡信箱：allen0099[at]sudo.host
+                聯絡信箱：
+                <a
+                  className="underline underline-offset-2"
+                  href="mailto:allen0099@sudo.host"
+                >
+                  allen0099@sudo.host
+                </a>
                 <br />
                 最後更新：2025-08-24
               </div>
