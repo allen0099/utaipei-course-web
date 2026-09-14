@@ -193,6 +193,7 @@ export const buildCourseColumns = <T extends PartialCourse>(
       label: "學分／時數",
       headerLabel: "學分/時數",
       width: "w-[9%]",
+      isEmpty: (course) => !course.credits && !course.hours,
       cellClassName: "tabular-nums",
       render: (course) => {
         if (!course.credits && !course.hours) return "—";
@@ -281,6 +282,7 @@ export const buildCourseColumns = <T extends PartialCourse>(
       label: "人數上限",
       headerLabel: "上限",
       width: "w-[5%]",
+      isEmpty: (course) => !course.capacity?.max,
       cellClassName: "tabular-nums",
       render: (course) => orDash(course.capacity?.max),
     },
@@ -289,6 +291,7 @@ export const buildCourseColumns = <T extends PartialCourse>(
       label: "教學綱要",
       headerLabel: "綱要",
       width: "w-[6%]",
+      isEmpty: (course) => !yms || !course.syllabusKey,
       render: (course) => {
         if (!yms || !course.syllabusKey) return "—";
 

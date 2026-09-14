@@ -25,6 +25,14 @@ export interface DataTableColumn<T> {
   cellClassName?: string;
   /** Hide this column from the mobile card body (e.g. promoted to the header). */
   hideOnCard?: boolean;
+  /**
+   * Whether this row has no value for this column, so the table can drop the
+   * column when *every* row is empty and each card can drop the field for its
+   * own row. Needed because `render` returns a ReactNode there is no way to
+   * inspect; default is the raw `item[key]`, which is right for any column
+   * that renders straight from its own field.
+   */
+  isEmpty?: (item: T) => boolean;
 }
 
 export interface DataTableProps<T> {
@@ -49,6 +57,14 @@ export interface DataTableProps<T> {
   cardSubtitle?: (item: T) => ReactNode;
   className?: string;
 }
+
+const isCellEmpty = <T,>(column: DataTableColumn<T>, item: T): boolean => {
+  if (column.isEmpty) return column.isEmpty(item);
+
+  const raw = (item as Record<string, unknown>)[column.key];
+
+  return raw === undefined || raw === null || raw === "";
+};
 
 const cellValue = <T,>(column: DataTableColumn<T>, item: T): ReactNode => {
   if (column.render) return column.render(item);
@@ -83,8 +99,15 @@ export const DataTable = <T,>({
   cardSubtitle,
   className,
 }: DataTableProps<T>) => {
-  const cardColumns = columns.filter((column) => !column.hideOnCard);
   const isMobile = useIsMobileViewport();
+
+  // A column every row is blank for carries no information, only width. The
+  // 通識課程 rows have no 學分/必選修/性別/教室/上限/綱要 at all, so a search
+  // that returns only those was 6 of 12 columns wide in em dashes.
+  const populatedColumns = columns.filter((column) =>
+    rows.some((item) => !isCellEmpty(column, item)),
+  );
+  const cardColumns = populatedColumns.filter((column) => !column.hideOnCard);
 
   return (
     <div className={className}>
@@ -94,7 +117,7 @@ export const DataTable = <T,>({
           <table className="w-full table-fixed text-sm">
             <colgroup>
               {leading && <col className={leading.width ?? "w-14"} />}
-              {columns.map((column) => (
+              {populatedColumns.map((column) => (
                 <col key={column.key} className={column.width} />
               ))}
             </colgroup>
@@ -105,7 +128,7 @@ export const DataTable = <T,>({
                     {leading.label}
                   </th>
                 )}
-                {columns.map((column) => (
+                {populatedColumns.map((column) => (
                   <th
                     key={column.key}
                     className="px-3 py-2.5 font-medium"
@@ -127,7 +150,7 @@ export const DataTable = <T,>({
                       {leading.render(item)}
                     </td>
                   )}
-                  {columns.map((column) => (
+                  {populatedColumns.map((column) => (
                     <td
                       key={column.key}
                       className={clsx(
@@ -178,14 +201,19 @@ export const DataTable = <T,>({
                   (leading || cardTitle) && "mt-2",
                 )}
               >
-                {cardColumns.map((column) => (
-                  <div key={column.key} className="contents">
-                    <dt className="whitespace-nowrap opacity-60">
-                      {column.label}
-                    </dt>
-                    <dd className="break-words">{cellValue(column, item)}</dd>
-                  </div>
-                ))}
+                {/* Per row, not per column: a card stacks its fields
+                    vertically, so every blank one costs a whole line. A 通識
+                    course card was 9 rows of which 6 read "—". */}
+                {cardColumns
+                  .filter((column) => !isCellEmpty(column, item))
+                  .map((column) => (
+                    <div key={column.key} className="contents">
+                      <dt className="whitespace-nowrap opacity-60">
+                        {column.label}
+                      </dt>
+                      <dd className="break-words">{cellValue(column, item)}</dd>
+                    </div>
+                  ))}
               </dl>
             </div>
           ))}
