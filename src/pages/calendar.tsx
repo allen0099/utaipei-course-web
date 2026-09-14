@@ -26,13 +26,8 @@ const PDFDocument = lazy(() => import("@/components/pdf.tsx"));
 const TAB_CLASS =
   "whitespace-nowrap data-[selected=true]:bg-white data-[selected=true]:shadow-sm dark:data-[selected=true]:bg-surface-tertiary";
 
-/**
- * calendar.json 的 title 是「本校 114 學年度下學期行事曆」，當選單觸發鈕的文字太長，
- * 22 個學期列出來也不好掃。改用結構化的 year / semester 欄位組出精簡標籤，
- * 不要去解析 title 字串。
- */
-const semesterLabel = (item: CalendarItem) =>
-  `${item.year} 學年度${item.semester === 1 ? "上" : "下"}學期`;
+/** calendar.json 的 year / semester → yms.json 的代碼，如 115 + 1 → "115#1"。 */
+const ymsCodeOf = (item: CalendarItem) => `${item.year}#${item.semester}`;
 
 export const CalendarPage = () => {
   const {
@@ -66,19 +61,29 @@ export const CalendarPage = () => {
   //
   // Falling back to calendarList[0] still matters: yms.json may not have
   // loaded, and the current semester's calendar may not be published yet.
-  const { defaultCode } = useYms();
+  const { defaultCode, displayNameOf } = useYms();
+
+  /**
+   * calendar.json 的 title 是「本校 114 學年度下學期行事曆」，當選單觸發鈕的
+   * 文字太長，22 個學期列出來也不好掃，所以不解析 title 字串。
+   *
+   * 名稱一律取自 yms.json，跟課程查詢等其他頁面同一套講法。這頁本來自己組
+   * 「115 學年度上學期」，而 yms.json 講的是「115 學年度第 1 學期」——同一個
+   * 學期兩種叫法。yms.json 沒有的學期（例如很舊的年份）才退回自組的短標籤。
+   */
+  const semesterLabel = (item: CalendarItem) => {
+    const code = ymsCodeOf(item);
+    const name = displayNameOf(code);
+
+    return name === code
+      ? `${item.year} 學年度${item.semester === 1 ? "上" : "下"}學期`
+      : name;
+  };
 
   const currentCalendar = useMemo(() => {
     if (!defaultCode) return null;
 
-    const [year, semester] = defaultCode.split("#");
-
-    return (
-      calendarList.find(
-        (item) =>
-          String(item.year) === year && String(item.semester) === semester,
-      ) || null
-    );
+    return calendarList.find((item) => ymsCodeOf(item) === defaultCode) || null;
   }, [calendarList, defaultCode]);
 
   const selectedCalendar =
