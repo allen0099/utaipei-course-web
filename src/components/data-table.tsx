@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 
 import clsx from "clsx";
 
+import { useIsMobileViewport } from "@/hooks/useIsMobileViewport.ts";
+
 export interface DataTableColumn<T> {
   key: string;
   label: string;
@@ -63,6 +65,14 @@ const cellValue = <T,>(column: DataTableColumn<T>, item: T): ReactNode => {
  * horizontally: rows here are wide (7 columns of CJK text, several of them
  * `whitespace-nowrap`), so a single row easily exceeds 900px and horizontal
  * scrolling inside a vertically-scrolling page is a poor trade on a phone.
+ *
+ * Only one of the two ever renders. Emitting both and hiding one with CSS
+ * doubled every row: a 56-result search built 112 rows and ~4,900 DOM nodes,
+ * half of them invisible, and at the 200-row cap that is 400 rows. The `md:`
+ * branches deliberately carry no `md:` hiding classes any more: with both the
+ * hook and CSS gating the same choice, any disagreement between them renders
+ * nothing at all. The hook alone decides, so the worst case is a table on a
+ * narrow screen rather than an empty list.
  */
 export const DataTable = <T,>({
   columns,
@@ -74,108 +84,113 @@ export const DataTable = <T,>({
   className,
 }: DataTableProps<T>) => {
   const cardColumns = columns.filter((column) => !column.hideOnCard);
+  const isMobile = useIsMobileViewport();
 
   return (
     <div className={className}>
       {/* Desktop table (md and up) */}
-      <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
-        <table className="w-full table-fixed text-sm">
-          <colgroup>
-            {leading && <col className={leading.width ?? "w-14"} />}
-            {columns.map((column) => (
-              <col key={column.key} className={column.width} />
-            ))}
-          </colgroup>
-          <thead>
-            <tr className="border-b border-border bg-background-secondary text-left text-xs font-medium tracking-wide text-muted">
-              {leading && (
-                <th className="px-3 py-2.5 font-medium" scope="col">
-                  {leading.label}
-                </th>
-              )}
+      {!isMobile && (
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full table-fixed text-sm">
+            <colgroup>
+              {leading && <col className={leading.width ?? "w-14"} />}
               {columns.map((column) => (
-                <th
-                  key={column.key}
-                  className="px-3 py-2.5 font-medium"
-                  scope="col"
-                >
-                  {column.headerLabel ?? column.label}
-                </th>
+                <col key={column.key} className={column.width} />
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((item, index) => (
-              <tr
-                key={rowKey(item, index)}
-                className="border-b border-border/60 transition-colors last:border-b-0 hover:bg-background-secondary"
-              >
+            </colgroup>
+            <thead>
+              <tr className="border-b border-border bg-background-secondary text-left text-xs font-medium tracking-wide text-muted">
                 {leading && (
-                  <td className="px-3 py-2.5 align-top">
-                    {leading.render(item)}
-                  </td>
+                  <th className="px-3 py-2.5 font-medium" scope="col">
+                    {leading.label}
+                  </th>
                 )}
                 {columns.map((column) => (
-                  <td
+                  <th
                     key={column.key}
-                    className={clsx(
-                      "px-3 py-2.5 align-top leading-relaxed break-words",
-                      column.cellClassName,
-                    )}
+                    className="px-3 py-2.5 font-medium"
+                    scope="col"
                   >
-                    {cellValue(column, item)}
-                  </td>
+                    {column.headerLabel ?? column.label}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {rows.map((item, index) => (
+                <tr
+                  key={rowKey(item, index)}
+                  className="border-b border-border/60 transition-colors last:border-b-0 hover:bg-background-secondary"
+                >
+                  {leading && (
+                    <td className="px-3 py-2.5 align-top">
+                      {leading.render(item)}
+                    </td>
+                  )}
+                  {columns.map((column) => (
+                    <td
+                      key={column.key}
+                      className={clsx(
+                        "px-3 py-2.5 align-top leading-relaxed break-words",
+                        column.cellClassName,
+                      )}
+                    >
+                      {cellValue(column, item)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Mobile cards (below md) — no horizontal scroll */}
-      <div className="flex flex-col gap-3 md:hidden">
-        {rows.map((item, index) => (
-          <div
-            key={rowKey(item, index)}
-            className="rounded-lg border border-border p-3"
-          >
-            {(leading || cardTitle) && (
-              <div className="flex items-start gap-2">
-                {leading && (
-                  <div className="pt-0.5">{leading.render(item)}</div>
-                )}
-                {cardTitle && (
-                  <div className="min-w-0">
-                    <div className="font-semibold break-words">
-                      {cardTitle(item)}
-                    </div>
-                    {cardSubtitle && (
-                      <div className="text-xs opacity-70">
-                        {cardSubtitle(item)}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-            <dl
-              className={clsx(
-                "grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm",
-                (leading || cardTitle) && "mt-2",
-              )}
+      {isMobile && (
+        <div className="flex flex-col gap-3">
+          {rows.map((item, index) => (
+            <div
+              key={rowKey(item, index)}
+              className="rounded-lg border border-border p-3"
             >
-              {cardColumns.map((column) => (
-                <div key={column.key} className="contents">
-                  <dt className="whitespace-nowrap opacity-60">
-                    {column.label}
-                  </dt>
-                  <dd className="break-words">{cellValue(column, item)}</dd>
+              {(leading || cardTitle) && (
+                <div className="flex items-start gap-2">
+                  {leading && (
+                    <div className="pt-0.5">{leading.render(item)}</div>
+                  )}
+                  {cardTitle && (
+                    <div className="min-w-0">
+                      <div className="font-semibold break-words">
+                        {cardTitle(item)}
+                      </div>
+                      {cardSubtitle && (
+                        <div className="text-xs opacity-70">
+                          {cardSubtitle(item)}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </dl>
-          </div>
-        ))}
-      </div>
+              )}
+              <dl
+                className={clsx(
+                  "grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm",
+                  (leading || cardTitle) && "mt-2",
+                )}
+              >
+                {cardColumns.map((column) => (
+                  <div key={column.key} className="contents">
+                    <dt className="whitespace-nowrap opacity-60">
+                      {column.label}
+                    </dt>
+                    <dd className="break-words">{cellValue(column, item)}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

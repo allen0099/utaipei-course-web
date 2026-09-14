@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   Switch,
@@ -23,6 +23,7 @@ import {
   WeeklyScheduleCourse,
   CampusTimeMapping,
 } from "@/interfaces/globals";
+import { useIsMobileViewport } from "@/hooks/useIsMobileViewport.ts";
 import { downloadICSFile } from "@/utils/ics-generator";
 import {
   downloadScheduleImage,
@@ -338,24 +339,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   // desktop grid can be taken out of the accessibility tree on phones. The
   // CSS classes stay the source of truth for layout; this only mirrors them
   // for the attributes CSS can't set.
-  const [isMobileViewport, setIsMobileViewport] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(max-width: 767px)").matches,
-  );
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") return;
-
-    const query = window.matchMedia("(max-width: 767px)");
-    const onChange = (event: MediaQueryListEvent) =>
-      setIsMobileViewport(event.matches);
-
-    query.addEventListener("change", onChange);
-
-    return () => query.removeEventListener("change", onChange);
-  }, []);
+  const isMobileViewport = useIsMobileViewport();
 
   // Save settings whenever they change
   const updateSetting = (key: keyof ScheduleSettings, value: boolean) => {
