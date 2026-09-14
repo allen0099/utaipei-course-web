@@ -3,7 +3,6 @@ import {
   Card,
   Switch,
   Separator,
-  Chip,
   Button,
   Tooltip,
   Dropdown,
@@ -764,11 +763,26 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
             className="flex flex-wrap items-center justify-end gap-2 pt-2 md:pt-0"
             id="calendar-toolbox"
           >
-            <div className="flex items-center space-x-2">
-              <Chip color="accent" size="sm" variant="tertiary">
-                {currentMapping.name}
-              </Chip>
+            {/* Both campus names are spelled out either side of the switch.
+                It used to be a Chip naming only the *current* campus next to
+                a bare toggle: nothing said what the other state was, nor that
+                this changes which 節次 time table the grid is read against.
+                The Switch also carried no accessible name at all, so screen
+                readers announced an unlabelled switch. */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted">節次時間</span>
+              <span
+                className={clsx(
+                  "text-sm",
+                  currentCampus === "main"
+                    ? "font-medium text-foreground"
+                    : "text-muted",
+                )}
+              >
+                {campusTimeMappings[0]?.name ?? "博愛校區"}
+              </span>
               <Switch
+                aria-label={`切換節次時間對應的校區，目前為${currentMapping.name}`}
                 isSelected={currentCampus === "secondary"}
                 size="md"
                 onChange={(checked) => handleCampusChange(checked)}
@@ -779,6 +793,16 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                   </Switch.Control>
                 </Switch.Content>
               </Switch>
+              <span
+                className={clsx(
+                  "text-sm",
+                  currentCampus === "secondary"
+                    ? "font-medium text-foreground"
+                    : "text-muted",
+                )}
+              >
+                {campusTimeMappings[1]?.name ?? "天母校區"}
+              </span>
             </div>
 
             <div className="flex items-center space-x-2">
