@@ -461,28 +461,46 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     return "evening";
   };
 
+  // A display setting must never hide one of the user's own courses: a hidden
+  // course reads as a lost course, and nothing in the grid says anything is
+  // missing. So the compact settings below only ever drop *empty* days and
+  // periods -- whatever the user actually enrolled in always stays visible.
+  const occupiedDays = useMemo(
+    () => new Set(courses.map((course) => course.day)),
+    [courses],
+  );
+
+  const lastOccupiedPeriod = useMemo(
+    () =>
+      courses.reduce(
+        (latest, course) =>
+          Math.max(latest, course.period + (course.duration || 1) - 1),
+        0,
+      ),
+    [courses],
+  );
+
   // Filter days based on settings
-  const getVisibleDays = () => {
-    if (settings.hideWeekend) {
-      return DAY_NAMES.slice(0, 5); // Only Monday to Friday
-    }
-
-    return DAY_NAMES;
-  };
-
   const getVisibleDayIndices = () => {
+    const all = [0, 1, 2, 3, 4, 5, 6];
+
     if (settings.hideWeekend) {
-      return [0, 1, 2, 3, 4]; // Only Monday to Friday indices
+      return all.filter((day) => day < 5 || occupiedDays.has(day));
     }
 
-    return [0, 1, 2, 3, 4, 5, 6]; // All days
+    return all;
   };
+
+  const getVisibleDays = () =>
+    getVisibleDayIndices().map((day) => DAY_NAMES[day]);
 
   // Filter periods based on settings
   const getVisiblePeriods = () => {
     if (settings.hideNight) {
       // Hide evening periods (typically 11-14 based on the time mappings)
-      return currentMapping.periods.filter((period) => period.period <= 10);
+      return currentMapping.periods.filter(
+        (period) => period.period <= 10 || period.period <= lastOccupiedPeriod,
+      );
     }
 
     return currentMapping.periods;
