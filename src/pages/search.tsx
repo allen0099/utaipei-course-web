@@ -274,14 +274,16 @@ export const SearchPage = () => {
       );
     }
 
-    if (filteredCourses.length > MAX_DISPLAYED_COURSES) {
-      return (
-        <EmptyState
-          description="請輸入更精確的關鍵字，或加上系所條件以縮小範圍。"
-          title={`符合條件的課程共 ${filteredCourses.length} 筆，超過一次可顯示的上限`}
-        />
-      );
-    }
+    // Over the cap we still show the first ${MAX_DISPLAYED_COURSES}: rendering
+    // nothing made "too many matches" look identical to "no matches", and the
+    // advice it gave ("加上系所條件以縮小範圍") is impossible to follow once a
+    // 系所 is already picked -- that is the narrowest filter this page has.
+    // 音樂學系 (320 courses) and 進修推廣處 (274) are past the cap on their own,
+    // so their students could never browse their own department at all.
+    const isTruncated = filteredCourses.length > MAX_DISPLAYED_COURSES;
+    const displayedCourses = isTruncated
+      ? filteredCourses.slice(0, MAX_DISPLAYED_COURSES)
+      : filteredCourses;
 
     return (
       <>
@@ -290,15 +292,22 @@ export const SearchPage = () => {
             {addBlockedReason}
           </Notice>
         )}
+        {isTruncated && (
+          <Notice className="mt-4" icon={<InformationCircleIcon width={18} />}>
+            共 {filteredCourses.length} 筆符合，先顯示前 {MAX_DISPLAYED_COURSES}{" "}
+            筆。輸入關鍵字可以縮小範圍，找到其餘{" "}
+            {filteredCourses.length - MAX_DISPLAYED_COURSES} 筆課程。
+          </Notice>
+        )}
         <SelectableCourseTable
           canAdd={canAdd}
           className="mt-4"
           columns={columns}
-          courses={filteredCourses}
+          courses={displayedCourses}
           yms={yms}
         />
         <WeeklySchedule
-          courses={convertCourses(filteredCourses)}
+          courses={convertCourses(displayedCourses)}
           scheduleTitle="搜尋結果課表"
         />
       </>
