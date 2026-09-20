@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { CourseItem, WeeklyScheduleCourse } from "@/interfaces/globals.ts";
+import { PartialCourse, WeeklyScheduleCourse } from "@/interfaces/globals.ts";
 import { convertCourses } from "@/utils/convert-course.ts";
 import { findScheduleConflicts } from "@/utils/schedule-conflict.ts";
 
@@ -22,7 +22,7 @@ export interface UseScheduleSlotsResult {
  * copied into both pages.
  */
 export const useScheduleSlots = (
-  courses: CourseItem[],
+  courses: PartialCourse[],
 ): UseScheduleSlotsResult => {
   const scheduleCourses = useMemo(() => convertCourses(courses), [courses]);
 

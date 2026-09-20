@@ -271,6 +271,7 @@ export const ClassSearchPage = () => {
                 <WeeklySchedule
                   courses={convertCourses(classCourses)}
                   scheduleTitle={scheduleTitle}
+                  yms={yms || undefined}
                 />
               </>
             )

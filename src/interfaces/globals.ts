@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export interface AnnounceHrefItem {
   link: string;
   text: string;
@@ -196,6 +198,8 @@ export interface WeeklyScheduleCourse {
   period: number; // 1-14
   duration?: number; // Number of periods this course spans, default 1
   color?: string; // Optional color for the course display
+  // 教室。/share 的連結只帶五個欄位，所以分享來的課表沒有這一欄。
+  classroom?: string;
 }
 
 export interface CampusTimeMapping {
@@ -219,4 +223,16 @@ export interface WeeklyScheduleProps {
   // Course codes that have a time conflict with another selected course.
   // When provided, matching slots are highlighted as conflicts in the grid.
   conflictCourseCodes?: string[];
+  /**
+   * 這張課表所屬的學年期（"115#1"）。有的話，匯出的 ICS 會從行事曆的開學日排到
+   * 期末考那一週並跳過放假日；沒有就退回「下週一起 18 週」。
+   */
+  yms?: string;
+  /**
+   * 有給的話，空堂格子會變成按鈕（我的課表用它跳去課程查詢找那個時段的課）。
+   * day 是 0=週一…6=週日。
+   */
+  onEmptySlotPress?: (day: number, period: number) => void;
+  /** 點開課程詳情時，詳情視窗底部的額外操作（移除、教學綱要…）。 */
+  renderCourseActions?: (courseCode: string, close: () => void) => ReactNode;
 }

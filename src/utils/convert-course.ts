@@ -1,9 +1,9 @@
-import { CourseItem, WeeklyScheduleCourse } from "@/interfaces/globals.ts";
+import { PartialCourse, WeeklyScheduleCourse } from "@/interfaces/globals.ts";
 
 const MIN_PERIOD = 1;
 const MAX_PERIOD = 14;
 
-const convertCourse = (course: CourseItem): WeeklyScheduleCourse[] => {
+const convertCourse = (course: PartialCourse): WeeklyScheduleCourse[] => {
   // Example time format: "(二) 8-9", "(一) 8-10 (二) 8-10 (四) 8-10 (五) 8-10", "(二) 3-4"
   const timePattern = /\((\S)\)\s*(\d+)(-(\d+))?/g;
   const dayMap: { [key: string]: number } = {
@@ -54,6 +54,7 @@ const convertCourse = (course: CourseItem): WeeklyScheduleCourse[] => {
       day,
       period: startPeriod,
       duration,
+      classroom: course.classroom || undefined,
     });
   }
 
@@ -61,7 +62,7 @@ const convertCourse = (course: CourseItem): WeeklyScheduleCourse[] => {
 };
 
 export const convertCourses = (
-  courses: CourseItem[],
+  courses: PartialCourse[],
 ): WeeklyScheduleCourse[] => {
   return courses.flatMap(convertCourse);
 };

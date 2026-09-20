@@ -244,6 +244,7 @@ export const SharedSchedulePage = () => {
           conflictCourseCodes={conflictCourseCodes}
           courses={scheduleCourses}
           scheduleTitle={scheduleTitle}
+          yms={payload.y}
         />
 
         <Card className="w-full">

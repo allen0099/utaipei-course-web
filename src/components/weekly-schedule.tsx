@@ -7,6 +7,7 @@ import {
   Tooltip,
   Dropdown,
   Label,
+  Modal,
 } from "@heroui/react";
 import clsx from "clsx";
 import {
@@ -22,9 +23,11 @@ import {
   WeeklyScheduleProps,
   WeeklyScheduleCourse,
   CampusTimeMapping,
+  CalendarEvent,
 } from "@/interfaces/globals";
+import { siteConfig } from "@/config/site.ts";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport.ts";
-import { downloadICSFile } from "@/utils/ics-generator";
+import { downloadICSFile, resolveTermRange } from "@/utils/ics-generator";
 import {
   downloadScheduleImage,
   generateScheduleImageBlob,
@@ -283,7 +286,7 @@ const TIME_OF_DAY_COLORS = {
 // stone at the same lightness (indistinguishable) and with -50 variants that
 // were near-identical to their -100 siblings, so the colour stopped carrying
 // any grouping information once a schedule had more than a handful of courses.
-const COURSE_COLORS = [
+export const COURSE_COLORS = [
   "bg-red-100 border-red-400 text-red-900 dark:bg-red-900/40 dark:border-red-500 dark:text-red-100",
   "bg-orange-100 border-orange-400 text-orange-900 dark:bg-orange-900/40 dark:border-orange-500 dark:text-orange-100",
   "bg-amber-100 border-amber-400 text-amber-900 dark:bg-amber-900/40 dark:border-amber-500 dark:text-amber-100",
@@ -310,6 +313,9 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   onCampusChange,
   className,
   conflictCourseCodes = [],
+  yms,
+  renderCourseActions,
+  onEmptySlotPress,
 }) => {
   const conflictCourseCodeSet = useMemo(
     () => new Set(conflictCourseCodes),
@@ -321,6 +327,9 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   const [hoveredCourseCode, setHoveredCourseCode] = useState<string | null>(
     null,
   );
+  // 點開哪一門課的詳情。存代碼而不是整筆 slot：一門課一週可能上好幾次，詳情
+  // 要把每個時段都列出來。
+  const [detailCourseCode, setDetailCourseCode] = useState<string | null>(null);
   // Selected day for the mobile single-day/list view. Defaults to today
   // (converted from JS 0=Sun..6=Sat to our 0=Mon..6=Sun indexing).
   const [selectedMobileDay, setSelectedMobileDay] = useState<number>(
@@ -357,8 +366,28 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   }, [campusTimeMappings, currentCampus]);
 
   // Handle ICS file download
-  const handleICSDownload = () => {
-    downloadICSFile(courses, currentMapping, scheduleTitle);
+  const handleICSDownload = async () => {
+    // 學期起訖來自行事曆。抓不到（舊學年期沒有結構化行事曆、離線、尚未公布）
+    // 都不該擋住匯出，generateICSContent 會退回「下週一起 18 週」。
+    let term = null;
+
+    if (yms) {
+      const [year, semester] = yms.split("#");
+
+      try {
+        const res = await fetch(
+          `${siteConfig.links.github.api}/calendar/${year}/${semester}.json`,
+        );
+
+        if (res.ok) {
+          term = resolveTermRange((await res.json()) as CalendarEvent[]);
+        }
+      } catch {
+        // fall through to the 18-week fallback
+      }
+    }
+
+    downloadICSFile(courses, currentMapping, scheduleTitle, term);
   };
 
   // Handle image download with preview
@@ -513,6 +542,16 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
           },
         )}
       >
+        {isEmpty && onEmptySlotPress && (
+          <button
+            aria-label={`${DAY_NAMES[day]}第 ${period} 節是空堂，查詢這個時段的課`}
+            className="absolute inset-0 flex items-center justify-center text-xs text-muted opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100"
+            type="button"
+            onClick={() => onEmptySlotPress(day, period)}
+          >
+            找課
+          </button>
+        )}
         {coursesInSlot.length > 0 && (
           <div className="h-full w-full flex flex-col gap-1">
             {coursesInSlot.map((course, index) => {
@@ -522,10 +561,11 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
               const isConflicting = conflictCourseCodeSet.has(course.code);
 
               return (
-                <div
+                <button
                   key={course.id}
+                  aria-label={`${course.name}，${course.teacher}，查看課程詳情`}
                   className={clsx(
-                    "flex-1 rounded-md p-2 border-2 text-xs transition-all duration-200 cursor-pointer relative",
+                    "flex-1 w-full rounded-md p-2 border-2 text-left text-xs transition-all duration-200 cursor-pointer relative",
                     courseColorMap[course.code] || COURSE_COLORS[0],
                     {
                       "mb-1": index < coursesInSlot.length - 1, // Add margin between multiple courses
@@ -538,6 +578,10 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                         isConflicting,
                     },
                   )}
+                  type="button"
+                  onBlur={handleCourseMouseLeave}
+                  onClick={() => setDetailCourseCode(course.code)}
+                  onFocus={() => handleCourseMouseEnter(course.code)}
                   onMouseEnter={() => handleCourseMouseEnter(course.code)}
                   onMouseLeave={handleCourseMouseLeave}
                 >
@@ -551,8 +595,10 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                     {course.name}
                   </div>
                   <div className="text-xs opacity-80">{course.teacher}</div>
-                  <div className="text-xs opacity-70">{course.class}</div>
-                </div>
+                  <div className="text-xs opacity-70">
+                    {course.classroom ?? course.class}
+                  </div>
+                </button>
               );
             })}
           </div>
@@ -706,16 +752,18 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
               const isConflicting = conflictCourseCodeSet.has(course.code);
 
               return (
-                <div
+                <button
                   key={course.id}
                   className={clsx(
-                    "rounded-lg border-2 p-3",
+                    "w-full rounded-lg border-2 p-3 text-left",
                     courseColorMap[course.code] || COURSE_COLORS[0],
                     {
                       "ring-2 ring-red-500 dark:ring-red-400 border-red-500 dark:border-red-400":
                         isConflicting,
                     },
                   )}
+                  type="button"
+                  onClick={() => setDetailCourseCode(course.code)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="text-sm font-semibold leading-snug">
@@ -734,13 +782,87 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                   <div className="mt-1 flex flex-wrap gap-x-3 text-xs opacity-70">
                     {course.teacher && <span>{course.teacher}</span>}
                     {course.class && <span>{course.class}</span>}
+                    {course.classroom && <span>{course.classroom}</span>}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
         )}
       </div>
+    );
+  };
+
+  const renderCourseDetail = () => {
+    const slots = courses
+      .filter((course) => course.code === detailCourseCode)
+      .sort((a, b) => a.day - b.day || a.period - b.period);
+    const course = slots[0];
+    const close = () => setDetailCourseCode(null);
+
+    return (
+      <Modal>
+        <Modal.Backdrop
+          isOpen={!!course}
+          onOpenChange={(open) => !open && close()}
+        >
+          <Modal.Container>
+            <Modal.Dialog>
+              {course && (
+                <>
+                  <Modal.Header>
+                    <Modal.Heading>{course.name}</Modal.Heading>
+                  </Modal.Header>
+                  <Modal.Body>
+                    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                      <dt className="text-muted">選課代碼</dt>
+                      <dd>{course.code}</dd>
+                      {course.teacher && (
+                        <>
+                          <dt className="text-muted">教師</dt>
+                          <dd>{course.teacher}</dd>
+                        </>
+                      )}
+                      {course.class && (
+                        <>
+                          <dt className="text-muted">班級</dt>
+                          <dd>{course.class}</dd>
+                        </>
+                      )}
+                      {course.classroom && (
+                        <>
+                          <dt className="text-muted">教室</dt>
+                          <dd>{course.classroom}</dd>
+                        </>
+                      )}
+                      <dt className="text-muted">時間</dt>
+                      <dd className="flex flex-col gap-0.5">
+                        {slots.map((slot) => (
+                          <span key={slot.id}>
+                            {DAY_NAMES[slot.day]} {getCourseTimeLabel(slot)}
+                          </span>
+                        ))}
+                      </dd>
+                    </dl>
+                    {conflictCourseCodeSet.has(course.code) && (
+                      <p className="mt-3 flex items-center gap-1 text-sm text-danger">
+                        <ExclamationTriangleIcon width={16} />
+                        這門課與其他已選課程衝堂
+                      </p>
+                    )}
+                  </Modal.Body>
+                  <Modal.Footer>
+                    {renderCourseActions?.(course.code, close)}
+                    <Button variant="tertiary" onPress={close}>
+                      關閉
+                    </Button>
+                  </Modal.Footer>
+                </>
+              )}
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
     );
   };
 
@@ -943,6 +1065,8 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
           </>
         )}
       </Card.Content>
+
+      {renderCourseDetail()}
 
       {/* Image Preview Modal */}
       <ImagePreviewModal

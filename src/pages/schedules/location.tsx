@@ -155,6 +155,7 @@ export const LocationSearchPage = () => {
                 <WeeklySchedule
                   courses={convertCourses(locationCourses)}
                   scheduleTitle={scheduleTitle}
+                  yms={yms || undefined}
                 />
               </>
             )
