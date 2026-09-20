@@ -2,63 +2,160 @@ import clsx from "clsx";
 
 import { BuildingCode } from "@/config/buildings.ts";
 import {
-  BOAI_BUILDINGS,
-  BOAI_FIELD,
-  BOAI_GROUND,
-  BOAI_ROADS,
-  BOAI_VIEWBOX,
   BuildingShape,
-} from "@/components/floorplans/boai-layout.ts";
+  CampusLayout,
+  FeatureShape,
+} from "@/components/floorplans/layout.ts";
 
 export interface CampusMapProps {
+  layout: CampusLayout;
   buildings: BuildingCode[];
   activeBuilding: string | null;
   onActiveChange: (id: string | null) => void;
   className?: string;
 }
 
-const CODE_SIZE = 60;
-const NAME_SIZE = 28;
+const FEATURE_FILL: Record<FeatureShape["tone"], string> = {
+  grass: "fill-emerald-300 dark:fill-emerald-800",
+  court: "fill-sky-200 dark:fill-sky-900",
+  track: "fill-orange-300 dark:fill-orange-900",
+  parking: "fill-blue-700 dark:fill-blue-600",
+};
+
+/** 一個字一個 tspan 往下排。writing-mode 在 SVG <text> 上各家瀏覽器的基線算法
+ * 不一致，直排幾個字不值得賭那個。 */
+const VerticalText = ({
+  text,
+  x,
+  centerY,
+  size,
+  className,
+}: {
+  text: string;
+  x: number;
+  centerY: number;
+  size: number;
+  className?: string;
+}) => {
+  const chars = [...text];
+  const lineHeight = size * 1.2;
+  const top = centerY - ((chars.length - 1) * lineHeight) / 2 + size * 0.35;
+
+  return (
+    <text className={className} fontSize={size} textAnchor="middle">
+      {chars.map((char, index) => (
+        <tspan key={index} x={x} y={top + index * lineHeight}>
+          {char}
+        </tspan>
+      ))}
+    </text>
+  );
+};
+
+const Feature = ({
+  feature,
+  textSize,
+}: {
+  feature: FeatureShape;
+  textSize: number;
+}) => {
+  const { shape, inset = 0 } = feature;
+  const center =
+    shape.type === "ellipse"
+      ? { x: shape.cx, y: shape.cy }
+      : { x: shape.x + shape.width / 2, y: shape.y + shape.height / 2 };
+  const isParking = feature.tone === "parking";
+  const labelClass = isParking
+    ? "fill-yellow-300 font-bold"
+    : "fill-emerald-950 dark:fill-emerald-100";
+
+  return (
+    <g>
+      {shape.type === "ellipse" ? (
+        <>
+          <ellipse
+            className={FEATURE_FILL[feature.tone]}
+            cx={shape.cx}
+            cy={shape.cy}
+            rx={shape.rx}
+            ry={shape.ry}
+          />
+          {inset > 0 && (
+            <ellipse
+              className={FEATURE_FILL.grass}
+              cx={shape.cx}
+              cy={shape.cy}
+              rx={shape.rx - inset}
+              ry={shape.ry - inset}
+            />
+          )}
+        </>
+      ) : (
+        <rect
+          className={FEATURE_FILL[feature.tone]}
+          height={shape.height}
+          rx={isParking ? 3 : 6}
+          width={shape.width}
+          x={shape.x}
+          y={shape.y}
+        />
+      )}
+      {feature.verticalLabel ? (
+        <VerticalText
+          centerY={center.y}
+          className={labelClass}
+          size={textSize}
+          text={feature.label}
+          x={center.x}
+        />
+      ) : (
+        <text
+          className={labelClass}
+          fontSize={isParking ? textSize * 1.3 : textSize}
+          textAnchor="middle"
+          x={center.x}
+          y={center.y + textSize * 0.38}
+        >
+          {feature.label}
+        </text>
+      )}
+    </g>
+  );
+};
 
 const BuildingLabel = ({
   shape,
-  building,
+  codes,
+  name,
+  text,
 }: {
   shape: BuildingShape;
-  building: BuildingCode;
+  codes: string;
+  name: string;
+  text: CampusLayout["text"];
 }) => {
   const cx = shape.x + shape.width / 2;
   const cy = shape.y + shape.height / 2;
 
   if (shape.verticalLabel) {
-    // 一個字一個 tspan 往下排。writing-mode 在 SVG <text> 上各家瀏覽器的基線
-    // 算法不一致，直排三個字不值得賭那個。
-    const chars = [...building.name];
-    const lineHeight = NAME_SIZE + 6;
-    const top = cy - ((chars.length - 1) * lineHeight) / 2 + 30;
-
     return (
       <>
         <text
           className="fill-current font-bold"
-          fontSize={44}
+          fontSize={text.code * 0.75}
           textAnchor="middle"
           x={cx}
-          y={shape.y + 56}
+          y={shape.y + text.code}
         >
-          {building.code}
+          {codes}
         </text>
-        <text
+        <VerticalText
+          centerY={cy + text.code * 0.5}
           className="fill-current opacity-80"
-          fontSize={NAME_SIZE}
-          textAnchor="middle"
-        >
-          {chars.map((char, index) => (
-            <tspan key={index} x={cx} y={top + index * lineHeight}>
-              {char}
-            </tspan>
-          ))}
-        </text>
+          size={text.name}
+          text={name}
+          x={cx}
+        />
       </>
     );
   }
@@ -68,21 +165,21 @@ const BuildingLabel = ({
       {/* 代碼比名稱大：學生是拿著「G313」來找的，要先對到的是那個字母。 */}
       <text
         className="fill-current font-bold"
-        fontSize={CODE_SIZE}
+        fontSize={text.code}
         textAnchor="middle"
         x={cx}
-        y={cy + 6}
+        y={cy + text.code * 0.1}
       >
-        {building.code}
+        {codes}
       </text>
       <text
         className="fill-current opacity-80"
-        fontSize={NAME_SIZE}
+        fontSize={text.name}
         textAnchor="middle"
         x={cx}
-        y={cy + 6 + NAME_SIZE + 10}
+        y={cy + text.code * 0.1 + text.name * 1.4}
       >
-        {building.name}
+        {name}
       </text>
     </>
   );
@@ -99,13 +196,14 @@ const BuildingLabel = ({
  * 這一版的原則：
  * - **SVG 裡只放 SVG 元素。** 互動（hover／focus／click）直接掛在 <g> 上，
  *   提示用原生 <title>，不再把 HTML 元件塞進來。
- * - **幾何是資料**（boai-layout.ts），名稱與代碼來自 config/buildings.ts，
- *   這裡只負責畫。要補天母校區只需要另一份 layout。
+ * - **幾何是資料**（layout.ts 的 CampusLayout），名稱與代碼來自
+ *   config/buildings.ts，這裡只負責畫。一個校區就是一份 layout 檔。
  * - **顏色全部走 Tailwind class**，跟著主題切換；字用頁面的字型，不內嵌。
  * - 選取狀態用填色與外框表示。舊版是把被選到的建築「模糊掉」，那會讓你正要看
  *   的那一棟變得最難看清楚。
  */
 export const CampusMap = ({
+  layout,
   buildings,
   activeBuilding,
   onActiveChange,
@@ -115,79 +213,64 @@ export const CampusMap = ({
 
   return (
     <svg
-      aria-label="博愛校區平面圖，上方為北"
+      aria-label={`${layout.label}，上方為北`}
       className={clsx("h-full w-full select-none", className)}
       preserveAspectRatio="xMidYMid meet"
       role="group"
-      viewBox={`0 0 ${BOAI_VIEWBOX.width} ${BOAI_VIEWBOX.height}`}
+      viewBox={`0 0 ${layout.viewBox.width} ${layout.viewBox.height}`}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* 外圈：馬路 */}
-      <rect
-        className="fill-stone-200 dark:fill-stone-800"
-        height={BOAI_VIEWBOX.height - 16}
-        rx={28}
-        width={BOAI_VIEWBOX.width - 16}
-        x={8}
-        y={8}
-      />
-      {BOAI_ROADS.map((road) => (
+      {/* 馬路：先畫全部的路面，再畫全部的路名，路口才不會有一條路蓋住另一條的字。 */}
+      {layout.roads.map((road) => (
+        <path
+          key={road.name}
+          className="stroke-stone-200 dark:stroke-stone-800"
+          d={road.path}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={road.width}
+        />
+      ))}
+      {layout.roads.map((road) => (
         <text
           key={road.name}
           className="fill-stone-600 dark:fill-stone-400"
-          fontSize={30}
-          letterSpacing={6}
+          fontSize={layout.text.road}
+          letterSpacing={layout.text.road * 0.2}
           textAnchor="middle"
           transform={
-            road.vertical ? `rotate(-90 ${road.x} ${road.y})` : undefined
+            road.label.rotate
+              ? `rotate(${road.label.rotate} ${road.label.x} ${road.label.y})`
+              : undefined
           }
-          x={road.x}
-          y={road.y + 10}
+          x={road.label.x}
+          y={road.label.y + layout.text.road * 0.35}
         >
           {road.name}
         </text>
       ))}
 
       {/* 校地 */}
-      <rect
+      <path
         className="fill-emerald-100 stroke-emerald-300 dark:fill-emerald-950 dark:stroke-emerald-800"
-        height={BOAI_GROUND.height}
-        rx={16}
-        strokeWidth={3}
-        width={BOAI_GROUND.width}
-        x={BOAI_GROUND.x}
-        y={BOAI_GROUND.y}
+        d={layout.ground}
+        strokeLinejoin="round"
+        strokeWidth={layout.text.road * 0.1}
       />
 
-      {/* 操場：外圈跑道、內圈草地 */}
-      <ellipse
-        className="fill-orange-300 dark:fill-orange-900"
-        cx={BOAI_FIELD.cx}
-        cy={BOAI_FIELD.cy}
-        rx={BOAI_FIELD.rx}
-        ry={BOAI_FIELD.ry}
-      />
-      <ellipse
-        className="fill-emerald-300 dark:fill-emerald-800"
-        cx={BOAI_FIELD.cx}
-        cy={BOAI_FIELD.cy}
-        rx={BOAI_FIELD.rx - 34}
-        ry={BOAI_FIELD.ry - 34}
-      />
-      <text
-        className="fill-emerald-900 dark:fill-emerald-200"
-        fontSize={32}
-        textAnchor="middle"
-        x={BOAI_FIELD.cx}
-        y={BOAI_FIELD.cy + 11}
-      >
-        操場
-      </text>
+      {layout.features.map((feature, index) => (
+        <Feature
+          key={`${feature.label}-${index}`}
+          feature={feature}
+          textSize={layout.text.feature}
+        />
+      ))}
 
       {/* 指北 */}
       <g
         className="fill-stone-600 dark:fill-stone-400"
-        transform="translate(1204 70)"
+        transform={`translate(${layout.north.x} ${layout.north.y}) scale(${layout.text.road / 30})`}
       >
         <path d="M0 -34 L14 10 L0 0 L-14 10 Z" />
         <text fontSize={26} fontWeight={700} textAnchor="middle" y={40}>
@@ -195,19 +278,25 @@ export const CampusMap = ({
         </text>
       </g>
 
-      {BOAI_BUILDINGS.map((shape) => {
-        const building = byId.get(shape.id);
+      {layout.buildings.map((shape) => {
+        const ids = [shape.id, ...(shape.aliases ?? [])];
+        const matched = ids
+          .map((id) => byId.get(id))
+          .filter((item): item is BuildingCode => !!item);
 
-        if (!building) return null;
+        if (matched.length === 0) return null;
 
-        const isActive = activeBuilding === shape.id;
+        const codes = matched.map((item) => item.code).join("・");
+        const name = shape.labelOverride ?? matched[0].name;
+        const isActive =
+          activeBuilding !== null && ids.includes(activeBuilding);
         const isDimmed = activeBuilding !== null && !isActive;
 
         return (
           <g
             key={shape.id}
             aria-current={isActive || undefined}
-            aria-label={`${building.name}，代碼 ${building.code}`}
+            aria-label={`${name}，代碼 ${matched.map((item) => item.code).join("、")}`}
             className={clsx(
               "cursor-pointer outline-none transition-opacity",
               isActive ? "text-white" : "text-slate-800 dark:text-slate-100",
@@ -228,7 +317,7 @@ export const CampusMap = ({
               if (event.pointerType === "mouse") onActiveChange(null);
             }}
           >
-            <title>{`${building.name}（${building.code}）`}</title>
+            <title>{`${name}（${codes}）`}</title>
             <rect
               className={clsx(
                 "transition-colors",
@@ -237,13 +326,18 @@ export const CampusMap = ({
                   : "fill-white stroke-slate-400 dark:fill-slate-700 dark:stroke-slate-500",
               )}
               height={shape.height}
-              rx={12}
-              strokeWidth={isActive ? 6 : 3}
+              rx={shape.rx ?? layout.text.code * 0.2}
+              strokeWidth={layout.text.code * (isActive ? 0.1 : 0.05)}
               width={shape.width}
               x={shape.x}
               y={shape.y}
             />
-            <BuildingLabel building={building} shape={shape} />
+            <BuildingLabel
+              codes={codes}
+              name={name}
+              shape={shape}
+              text={layout.text}
+            />
           </g>
         );
       })}

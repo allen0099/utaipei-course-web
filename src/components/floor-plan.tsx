@@ -8,12 +8,15 @@ import { Panel } from "@/components/panel.tsx";
 interface CampusFloorPlanProps {
   title: string;
   children: ReactNode;
+  /** 圖的長寬比（Tailwind class），跟 layout 的 viewBox 一致才不會留白。 */
+  aspect?: string;
   className?: string;
 }
 
 export function CampusFloorPlan({
   title,
   children,
+  aspect = "aspect-[1.22/1]",
   className,
 }: CampusFloorPlanProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,9 +36,7 @@ export function CampusFloorPlan({
           放大檢視
         </Button>
       </div>
-      <div className="relative w-full aspect-[1.22/1] max-h-[80vh]">
-        {children}
-      </div>
+      <div className={`relative w-full max-h-[80vh] ${aspect}`}>{children}</div>
       <Modal>
         <Modal.Backdrop isOpen={isOpen} onOpenChange={setIsOpen}>
           <Modal.Container size="full">
