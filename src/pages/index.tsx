@@ -1,11 +1,13 @@
 import type { JSX } from "react";
 
 import { Fragment } from "react";
-import { Card, Link } from "@heroui/react";
+import { useNavigate } from "react-router";
+import { Card, Link, SearchField } from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default";
 import { AnnounceHrefItem, AnnouncementItem } from "@/interfaces/globals.ts";
 import { CourseFunctions } from "@/components/course-functions.tsx";
+import { HomeDashboard } from "@/components/home-dashboard.tsx";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { siteConfig } from "@/config/site.ts";
 import { sectionTitle, title } from "@/components/primitives.ts";
@@ -118,6 +120,7 @@ const highlightDate = (text: string) => {
 };
 
 export default function IndexPage() {
+  const navigate = useNavigate();
   const {
     data: announcements = [],
     loading,
@@ -141,22 +144,44 @@ export default function IndexPage() {
             <p className="text-muted text-lg max-w-md">
               {siteConfig.description}
             </p>
+            {/* 來首頁的人十之八九是要查課；讓他在這裡直接打字，而不是先點一顆
+                按鈕、換一頁、再找到輸入框。 */}
+            <SearchField
+              aria-label="查詢課程"
+              className="mt-1 w-full max-w-md"
+              onSubmit={(value) => {
+                const keyword = value.trim();
+
+                navigate(
+                  keyword
+                    ? `/search?q=${encodeURIComponent(keyword)}`
+                    : "/search",
+                );
+              }}
+            >
+              <SearchField.Group>
+                <SearchField.SearchIcon />
+                <SearchField.Input placeholder="輸入課名、教師或教室，按 Enter 查詢" />
+                <SearchField.ClearButton />
+              </SearchField.Group>
+            </SearchField>
             <div className="flex gap-3 mt-2">
               <Link
                 className="button button--primary button--md"
                 href="/search"
               >
-                開始查課程
+                進階查詢
               </Link>
               <Link
                 className="button button--secondary button--md"
-                href="/calendar"
+                href="/my-schedule"
               >
-                校園行事曆
+                我的課表
               </Link>
             </div>
           </div>
         </section>
+        <HomeDashboard />
         <CourseFunctions />
         {loading ? (
           <LoadingState className="mt-8" label="校園公告" />
