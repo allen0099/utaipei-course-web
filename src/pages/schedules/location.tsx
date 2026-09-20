@@ -1,8 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Separator } from "@heroui/react";
-import { Key } from "@react-types/shared";
 
-import { DataTable } from "@/components/data-table.tsx";
+import { SelectionBar } from "@/components/selection-bar.tsx";
+import { SelectableCourseTable } from "@/components/selectable-course-table.tsx";
+import { BulkAddCourses } from "@/components/bulk-add-courses.tsx";
+import { useCourseAddGate } from "@/hooks/useCourseAddGate.ts";
+import { useSelectionParams } from "@/hooks/useSelectionParams.ts";
 import {
   buildCourseColumns,
   CourseColumnKey,
@@ -41,9 +44,12 @@ const COLUMN_KEYS: CourseColumnKey[] = [
   "syllabus",
 ];
 
+const PARAM_KEYS = ["location"] as const;
+
 export const LocationSearchPage = () => {
-  const [yms, setYms] = useState<string>("");
-  const [location, setLocation] = useState<string>("");
+  const { yms, initialYms, values, onYmsChange, select } =
+    useSelectionParams(PARAM_KEYS);
+  const { location } = values;
   const [year, semester] = yms.split("#");
 
   const {
@@ -81,14 +87,7 @@ export const LocationSearchPage = () => {
 
   const scheduleTitle = `${year} 學年 (${semester}) ${selectedLocation?.name || ""} 的課表`;
 
-  const onYmsChange = (id: Key | null) => {
-    setYms(id?.toString() || "");
-    setLocation("");
-  };
-
-  const onLocationChange = (id: Key | null) => {
-    setLocation(id?.toString() || "");
-  };
+  const { canAdd, blockedReason } = useCourseAddGate(yms);
 
   return (
     <DefaultLayout>
@@ -101,13 +100,17 @@ export const LocationSearchPage = () => {
         {/* 與標題、分隔線、內容共用同一個量測寬度並靠左；選擇器平分該寬度，
             右側才不會空出一整條。 */}
         <div className="flex w-full max-w-5xl flex-col gap-4 md:flex-row md:items-center">
-          <YmsSelector className={FILTER_FIELD_CLASS} onChange={onYmsChange} />
+          <YmsSelector
+            className={FILTER_FIELD_CLASS}
+            initialKey={initialYms || undefined}
+            onChange={onYmsChange}
+          />
           <ItemSelector
             className={FILTER_FIELD_CLASS}
             items={locations}
             label="選擇地點"
             selectedKey={location || null}
-            onChange={onLocationChange}
+            onChange={(id) => select("location", id)}
           />
         </div>
         {(indexLoading || (!!location && coursesLoading)) && (
@@ -144,13 +147,21 @@ export const LocationSearchPage = () => {
                     有 {missing} 筆課程的資料尚未更新，暫時無法顯示。
                   </Notice>
                 )}
-                <DataTable
-                  cardSubtitle={(item) => item.code}
-                  cardTitle={(item) => item.name}
+                {/* 這一頁原本是唯讀的，教師與班級課表卻都能勾選 —— 在這裡看到
+                    想修的課，還得記下代碼去課程查詢再找一次。 */}
+                <BulkAddCourses
+                  blockedReason={blockedReason}
+                  canAdd={canAdd}
+                  className="mt-4"
+                  courses={locationCourses}
+                  yms={yms}
+                />
+                <SelectableCourseTable
+                  canAdd={canAdd}
                   className="mt-4"
                   columns={columns}
-                  rowKey={(item) => item.code}
-                  rows={locationCourses}
+                  courses={locationCourses}
+                  yms={yms}
                 />
                 <WeeklySchedule
                   courses={convertCourses(locationCourses)}
@@ -167,6 +178,7 @@ export const LocationSearchPage = () => {
           )}
         </div>
       </PageSection>
+      <SelectionBar />
     </DefaultLayout>
   );
 };

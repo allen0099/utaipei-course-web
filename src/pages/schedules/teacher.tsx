@@ -1,6 +1,5 @@
 import { Separator } from "@heroui/react";
-import { useMemo, useState } from "react";
-import { Key } from "@react-types/shared";
+import { useMemo } from "react";
 
 import DefaultLayout from "@/layouts/default.tsx";
 import { SelectionBar } from "@/components/selection-bar.tsx";
@@ -30,6 +29,9 @@ import { PageHeader } from "@/components/page-header.tsx";
 import { sectionTitle } from "@/components/primitives.ts";
 import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
+import { useSelectionParams } from "@/hooks/useSelectionParams.ts";
+
+const PARAM_KEYS = ["unit", "teacher"] as const;
 
 const COLUMN_KEYS: CourseColumnKey[] = [
   "code",
@@ -46,9 +48,11 @@ const COLUMN_KEYS: CourseColumnKey[] = [
 ];
 
 export const TeacherSchedulePage = () => {
-  const [yms, setYms] = useState<string>("");
-  const [unitCode, setUnitCode] = useState<string>("");
-  const [teacherCode, setTeacherCode] = useState<string>("");
+  // Each selector feeds the next, so changing one clears everything
+  // downstream; useSelectionParams does that and mirrors it all to the URL.
+  const { yms, initialYms, values, onYmsChange, select } =
+    useSelectionParams(PARAM_KEYS);
+  const { unit: unitCode, teacher: teacherCode } = values;
 
   const [year, semester] = yms.split("#");
 
@@ -94,18 +98,6 @@ export const TeacherSchedulePage = () => {
 
   const { canAdd, blockedReason } = useCourseAddGate(yms);
 
-  // Each selector feeds the next, so changing one clears everything downstream.
-  const onYmsChange = (id: Key | null) => {
-    setYms(id?.toString() || "");
-    setUnitCode("");
-    setTeacherCode("");
-  };
-
-  const onUnitChange = (id: Key | null) => {
-    setUnitCode(id?.toString() || "");
-    setTeacherCode("");
-  };
-
   const columns = useMemo(
     () => buildCourseColumns<PartialCourse>(COLUMN_KEYS, { yms }),
     [yms],
@@ -129,6 +121,7 @@ export const TeacherSchedulePage = () => {
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <YmsSelector
               className={FILTER_FIELD_CLASS}
+              initialKey={initialYms || undefined}
               onChange={onYmsChange}
             />
             <ItemSelector
@@ -136,14 +129,14 @@ export const TeacherSchedulePage = () => {
               items={units}
               label="請選擇系級"
               selectedKey={unitCode || null}
-              onChange={onUnitChange}
+              onChange={(id) => select("unit", id)}
             />
             <ItemSelector
               className={FILTER_FIELD_CLASS}
               items={teachers}
               label="請選擇教師"
               selectedKey={teacherCode || null}
-              onChange={(id) => setTeacherCode(id?.toString() || "")}
+              onChange={(id) => select("teacher", id)}
             />
           </div>
           {(indexLoading || (!!teacherCode && coursesLoading)) && (

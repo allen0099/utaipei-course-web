@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Separator } from "@heroui/react";
-import { Key } from "@react-types/shared";
 
 import { SelectableCourseTable } from "@/components/selectable-course-table.tsx";
 import { BulkAddCourses } from "@/components/bulk-add-courses.tsx";
@@ -33,12 +32,22 @@ import { useCourseAddGate } from "@/hooks/useCourseAddGate.ts";
 import { isOtherClassCourse } from "@/utils/course-class.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
+import { useSelectionParams } from "@/hooks/useSelectionParams.ts";
+
+const PARAM_KEYS = ["college", "dept", "class"] as const;
 
 export const ClassSearchPage = () => {
-  const [yms, setYms] = useState<string>("");
-  const [collegeCode, setCollegeCode] = useState<string>("");
-  const [departmentCode, setDepartmentCode] = useState<string>("");
-  const [classCode, setClassCode] = useState<string>("");
+  // Each selector feeds the next, so changing one has to clear everything
+  // downstream — otherwise a stale 系所 or 班級 stays selected and the page
+  // shows the previous class's timetable. useSelectionParams does that and
+  // mirrors the whole chain to the URL.
+  const { yms, initialYms, values, onYmsChange, select } =
+    useSelectionParams(PARAM_KEYS);
+  const {
+    college: collegeCode,
+    dept: departmentCode,
+    class: classCode,
+  } = values;
 
   const [year, semester] = yms.split("#");
 
@@ -114,27 +123,6 @@ export const ClassSearchPage = () => {
   );
   const otherClassCount = classCourses.length - ownClassCourses.length;
 
-  // Each selector feeds the next, so changing one has to clear everything
-  // downstream — otherwise a stale 系所 or 班級 stays selected and the page
-  // shows the previous class's timetable.
-  const onYmsChange = (id: Key | null) => {
-    setYms(id?.toString() || "");
-    setCollegeCode("");
-    setDepartmentCode("");
-    setClassCode("");
-  };
-
-  const onCollegeChange = (id: Key | null) => {
-    setCollegeCode(id?.toString() || "");
-    setDepartmentCode("");
-    setClassCode("");
-  };
-
-  const onDepartmentChange = (id: Key | null) => {
-    setDepartmentCode(id?.toString() || "");
-    setClassCode("");
-  };
-
   // viewingClassCode drives the「他班開課」marker, so it has to be rebuilt when
   // the selected class changes.
   const columns = useMemo(
@@ -180,27 +168,31 @@ export const ClassSearchPage = () => {
         />
         {/* 四個選擇器一列會太擠，改為兩欄網格；與標題、分隔線共用同一量測寬度。 */}
         <div className="grid w-full max-w-5xl grid-cols-1 gap-4 md:grid-cols-2">
-          <YmsSelector className={FILTER_FIELD_CLASS} onChange={onYmsChange} />
+          <YmsSelector
+            className={FILTER_FIELD_CLASS}
+            initialKey={initialYms || undefined}
+            onChange={onYmsChange}
+          />
           <ItemSelector
             className={FILTER_FIELD_CLASS}
             items={colleges}
             label="請選擇學院"
             selectedKey={collegeCode || null}
-            onChange={onCollegeChange}
+            onChange={(id) => select("college", id)}
           />
           <ItemSelector
             className={FILTER_FIELD_CLASS}
             items={departments}
             label="請選擇系所"
             selectedKey={departmentCode || null}
-            onChange={onDepartmentChange}
+            onChange={(id) => select("dept", id)}
           />
           <ItemSelector
             className={FILTER_FIELD_CLASS}
             items={classes}
             label="請選擇班級"
             selectedKey={classCode || null}
-            onChange={(id) => setClassCode(id?.toString() || "")}
+            onChange={(id) => select("class", id)}
           />
         </div>
         {indexLoading && <LoadingState className="mt-4" label="班級資料" />}
