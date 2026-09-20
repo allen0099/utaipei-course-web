@@ -6,6 +6,7 @@ import App from "./App.tsx";
 import { Provider } from "./provider.tsx";
 
 import { SelectedCoursesProvider } from "@/contexts/selected-courses-context.tsx";
+import { WishlistProvider } from "@/contexts/wishlist-context.tsx";
 import "@/styles/globals.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -13,7 +14,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <Provider>
         <SelectedCoursesProvider>
-          <App />
+          <WishlistProvider>
+            <App />
+          </WishlistProvider>
         </SelectedCoursesProvider>
       </Provider>
     </BrowserRouter>

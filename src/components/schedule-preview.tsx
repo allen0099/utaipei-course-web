@@ -15,6 +15,8 @@ export const slotKey = (day: number, period: number) => `${day}-${period}`;
 export interface SchedulePreviewProps {
   /** 我的課表目前的時段。 */
   scheduled: WeeklyScheduleCourse[];
+  /** 收藏清單的時段，畫成虛線框：看得到它想佔哪裡，但一眼就知道還沒排進去。 */
+  wished?: WeeklyScheduleCourse[];
   /** 正在預覽（滑鼠停在／鍵盤聚焦在結果列上）的那門課的時段。 */
   preview?: WeeklyScheduleCourse[];
   /** 預覽中的課名，顯示在表格下方。 */
@@ -55,6 +57,7 @@ const occupies = (slot: WeeklyScheduleCourse, day: number, period: number) =>
  */
 export const SchedulePreview = ({
   scheduled,
+  wished = [],
   preview = [],
   previewName,
   selectedSlots,
@@ -138,13 +141,21 @@ export const SchedulePreview = ({
                 isPreview && own.some((slot) => slot.code !== preview[0]?.code);
               const isPicked = selectedSlots.has(key);
               const first = own[0];
+              const wishedHere = wished.filter((slot) =>
+                occupies(slot, day, period),
+              );
               const label = [
                 `週${DAY_LABELS[day]}第 ${period} 節`,
                 own.length > 0
                   ? `已選：${own.map((slot) => slot.name).join("、")}`
                   : "空堂",
+                wishedHere.length > 0
+                  ? `收藏：${wishedHere.map((slot) => slot.name).join("、")}`
+                  : "",
                 isPicked ? "已設為時段篩選" : "點選以篩選這個時段的課",
-              ].join("，");
+              ]
+                .filter(Boolean)
+                .join("，");
 
               const Cell = readOnly ? "div" : "button";
 
@@ -170,6 +181,9 @@ export const SchedulePreview = ({
                       !isPreviewClash &&
                       "!bg-blue-200 dark:!bg-blue-700/60",
                     isPreviewClash && "!bg-red-300 dark:!bg-red-700/70",
+                    wishedHere.length > 0 &&
+                      !isPicked &&
+                      "outline-dashed outline-1 -outline-offset-1 outline-amber-500",
                     isPicked &&
                       "outline outline-2 -outline-offset-2 outline-accent",
                   )}
@@ -178,6 +192,13 @@ export const SchedulePreview = ({
                   {first && first.period === period && (
                     <span className="block truncate">{first.name}</span>
                   )}
+                  {!first &&
+                    wishedHere[0] &&
+                    wishedHere[0].period === period && (
+                      <span className="block truncate text-amber-700 dark:text-amber-400">
+                        {wishedHere[0].name}
+                      </span>
+                    )}
                   {own.length > 1 && (
                     <span className="absolute right-0 top-0 h-1.5 w-1.5 rounded-bl-sm bg-red-500" />
                   )}

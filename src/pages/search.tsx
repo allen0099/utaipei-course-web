@@ -37,6 +37,7 @@ import { SchedulePreview, slotKey } from "@/components/schedule-preview.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
 import { findConflictsAgainstSchedule } from "@/utils/schedule-conflict.ts";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
+import { useWishlist } from "@/contexts/wishlist-context.tsx";
 import { useMediaQuery } from "@/hooks/useMediaQuery.ts";
 import {
   buildCatalog,
@@ -167,6 +168,7 @@ export const SearchPage = () => {
   const deferredKeyword = useDeferredValue(keyword);
   const isSideBySide = useMediaQuery(SIDE_BY_SIDE_QUERY);
   const { selectedCourses, scheduleYms } = useSelectedCourses();
+  const { wishlist, wishlistYms } = useWishlist();
   const [year, semester] = yms.split("#");
 
   // Skip clearing the restored department filter the first time YmsSelector
@@ -331,6 +333,11 @@ export const SearchPage = () => {
   const scheduledSlots = useMemo(
     () => (scheduleApplies ? convertCourses(selectedCourses) : []),
     [scheduleApplies, selectedCourses],
+  );
+
+  const wishedSlots = useMemo(
+    () => (wishlistYms === yms ? convertCourses(wishlist) : []),
+    [wishlist, wishlistYms, yms],
   );
 
   const conflictingCodes = useMemo(() => {
@@ -501,6 +508,7 @@ export const SearchPage = () => {
       previewName={previewCourse?.name}
       scheduled={scheduledSlots}
       selectedSlots={slots}
+      wished={wishedSlots}
       onClearSlots={() => setSlots(new Set())}
       onToggleSlot={toggleSlot}
     />
@@ -608,6 +616,7 @@ export const SearchPage = () => {
                     previewName={course.name}
                     scheduled={scheduledSlots}
                     selectedSlots={NO_SLOTS}
+                    wished={wishedSlots}
                     onClearSlots={noop}
                     onToggleSlot={noop}
                   />

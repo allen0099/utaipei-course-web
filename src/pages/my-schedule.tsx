@@ -22,6 +22,7 @@ import { EmptyState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import { ShareScheduleModal } from "@/components/share-schedule-modal.tsx";
 import { ScheduleSummary } from "@/components/schedule-summary.tsx";
+import { WishlistCard } from "@/components/wishlist-card.tsx";
 
 export const MySchedulePage = () => {
   const { selectedCourses, scheduleYms, removeCourse, clearAll } =
@@ -80,18 +81,22 @@ export const MySchedulePage = () => {
         />
 
         {selectedCourses.length === 0 ? (
-          <EmptyState
-            action={
-              <Link
-                className="mt-3 rounded-full bg-accent px-5 py-2 text-sm font-medium text-white no-underline"
-                href="/search"
-              >
-                前往課程查詢
-              </Link>
-            }
-            description="在課程查詢或班級／教師課表勾選想要的課程，就會集中顯示在這裡。"
-            title="尚未選擇任何課程"
-          />
+          <div className="flex w-full max-w-5xl flex-col gap-6">
+            <EmptyState
+              action={
+                <Link
+                  className="mt-3 rounded-full bg-accent px-5 py-2 text-sm font-medium text-white no-underline"
+                  href="/search"
+                >
+                  前往課程查詢
+                </Link>
+              }
+              description="在課程查詢或班級／教師課表勾選想要的課程，就會集中顯示在這裡。"
+              title="尚未選擇任何課程"
+            />
+            {/* 課表是空的不代表沒有收藏：只收藏、還沒排課是最常見的起點。 */}
+            <WishlistCard className="w-full" />
+          </div>
         ) : (
           <div className="w-full max-w-5xl flex flex-col gap-6">
             {isStaleSemester && (
@@ -173,6 +178,8 @@ export const MySchedulePage = () => {
                 />
               </Card.Content>
             </Card>
+
+            <WishlistCard className="w-full" />
 
             <WeeklySchedule
               customizableColors

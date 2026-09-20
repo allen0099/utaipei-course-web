@@ -1,9 +1,14 @@
 import { useMemo } from "react";
 import { Checkbox, Tooltip } from "@heroui/react";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import {
+  ExclamationTriangleIcon,
+  StarIcon as StarOutlineIcon,
+} from "@heroicons/react/24/outline";
+import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 
 import { DataTable, DataTableColumn } from "@/components/data-table.tsx";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
+import { useWishGate, useWishlist } from "@/contexts/wishlist-context.tsx";
 import { PartialCourse } from "@/interfaces/globals.ts";
 import { convertCourses } from "@/utils/convert-course.ts";
 import { findConflictsAgainstSchedule } from "@/utils/schedule-conflict.ts";
@@ -38,6 +43,8 @@ export const SelectableCourseTable = ({
   className,
 }: SelectableCourseTableProps) => {
   const { isSelected, toggleCourse, selectedCourses } = useSelectedCourses();
+  const { isWished, toggleWish, removeWish } = useWishlist();
+  const canWish = useWishGate(yms);
 
   // 衝堂 used to surface only on 我的課表, i.e. after the user had left this
   // page -- so picking courses meant committing first and finding out later.
@@ -85,6 +92,8 @@ export const SelectableCourseTable = ({
       columns={columns}
       leading={{
         label: "加入",
+        // 勾選框 + 星號 + 衝堂圖示，預設的 w-14 放不下。
+        width: "w-24",
         render: (item) => (
           <div className="flex items-center gap-1">
             <Checkbox
@@ -93,7 +102,13 @@ export const SelectableCourseTable = ({
               // be added to, so switching semesters doesn't reflow the table.
               isDisabled={!canAdd && !isSelected(item)}
               isSelected={isSelected(item)}
-              onChange={() => toggleCourse(item, yms)}
+              onChange={() => {
+                const wasSelected = isSelected(item);
+
+                // 收藏是候選名單；課一旦進了課表就不再是「候選」，留著只會讓
+                // 同一門課在兩個清單各出現一次。
+                if (toggleCourse(item, yms) && !wasSelected) removeWish(item);
+              }}
             >
               <Checkbox.Content>
                 <Checkbox.Control>
@@ -101,6 +116,27 @@ export const SelectableCourseTable = ({
                 </Checkbox.Control>
               </Checkbox.Content>
             </Checkbox>
+            {/* 已經在課表裡的課不需要收藏；位置留著，整欄才不會左右跳。 */}
+            <button
+              aria-label={
+                isWished(item) ? `取消收藏 ${item.name}` : `收藏 ${item.name}`
+              }
+              aria-pressed={isWished(item)}
+              className={
+                isSelected(item)
+                  ? "invisible size-6"
+                  : "grid size-6 place-items-center rounded text-muted hover:text-amber-500 disabled:opacity-30 aria-pressed:text-amber-500"
+              }
+              disabled={isSelected(item) || (!canWish && !isWished(item))}
+              type="button"
+              onClick={() => toggleWish(item, yms)}
+            >
+              {isWished(item) ? (
+                <StarSolidIcon width={18} />
+              ) : (
+                <StarOutlineIcon width={18} />
+              )}
+            </button>
             {renderConflictWarning(item)}
           </div>
         ),
