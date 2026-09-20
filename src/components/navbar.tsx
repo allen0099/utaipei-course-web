@@ -1,12 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router";
 import { Button, Dropdown, Label } from "@heroui/react";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import clsx from "clsx";
 
 import { NavItem, siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { WipBadge } from "@/components/wip-badge.tsx";
+import { OPEN_PALETTE_EVENT } from "@/components/command-palette.tsx";
+
+const SearchButton = ({ showShortcut }: { showShortcut?: boolean }) => (
+  <button
+    aria-label="全站搜尋"
+    className="flex items-center gap-2 rounded-md p-2 text-sm text-muted hover:bg-surface-secondary hover:text-foreground"
+    type="button"
+    onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE_EVENT))}
+  >
+    <MagnifyingGlassIcon className="size-5" />
+    {showShortcut && (
+      <kbd className="rounded border border-border px-1.5 py-0.5 text-xs">
+        Ctrl K
+      </kbd>
+    )}
+  </button>
+);
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   clsx(
@@ -39,8 +59,25 @@ const NavItemLink = ({
 );
 
 export const Navbar = () => {
-  const [menuOpen, setMenuOpen] = useState(false);
   const { pathname } = useLocation();
+  // 記「在哪一頁打開的」而不是一個布林值：換了頁這個值就對不上，選單自然是關
+  // 的。選單裡的連結點了會自己收，但瀏覽器上一頁、Ctrl+K 跳頁不會經過它們 ——
+  // 用推導的就不需要另外寫一個 effect 去同步。
+  const [menuOpenAt, setMenuOpenAt] = useState<string | null>(null);
+  const menuOpen = menuOpenAt === pathname;
+  const setMenuOpen = (open: boolean) => setMenuOpenAt(open ? pathname : null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpenAt(null);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
 
   return (
     <nav className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/70 dark:bg-black/70 border-b border-border">
@@ -110,6 +147,7 @@ export const Navbar = () => {
 
           {/* Desktop right */}
           <div className="hidden lg:flex items-center gap-2">
+            <SearchButton showShortcut />
             <ThemeSwitch />
           </div>
 
@@ -117,13 +155,14 @@ export const Navbar = () => {
               desktop links above, otherwise there is no navigation at all
               between the two. */}
           <div className="flex lg:hidden items-center gap-2">
+            <SearchButton />
             <ThemeSwitch />
             <button
               aria-expanded={menuOpen}
               aria-label={menuOpen ? "關閉選單" : "開啟選單"}
               className="p-2 rounded-md text-foreground hover:bg-surface-secondary"
               type="button"
-              onClick={() => setMenuOpen((prev) => !prev)}
+              onClick={() => setMenuOpen(!menuOpen)}
             >
               <svg
                 aria-hidden="true"
