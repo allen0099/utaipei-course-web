@@ -233,6 +233,11 @@ export interface WeeklyScheduleProps {
    * day 是 0=週一…6=週日。
    */
   onEmptySlotPress?: (day: number, period: number) => void;
+  /**
+   * 讓使用者在課程詳情裡替課程換顏色（存在 localStorage）。只有「我的課表」
+   * 開：教師／地點課表上的課不是使用者的，替它們記顏色沒有意義。
+   */
+  customizableColors?: boolean;
   /** 點開課程詳情時，詳情視窗底部的額外操作（移除、教學綱要…）。 */
   renderCourseActions?: (courseCode: string, close: () => void) => ReactNode;
 }

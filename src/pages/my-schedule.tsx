@@ -175,6 +175,7 @@ export const MySchedulePage = () => {
             </Card>
 
             <WeeklySchedule
+              customizableColors
               conflictCourseCodes={conflictCourseCodes}
               courses={scheduleCourses}
               renderCourseActions={(code, close) => (

@@ -35,6 +35,11 @@ import {
 import ImagePreviewModal from "@/components/image-preview-modal";
 import { sectionTitle } from "@/components/primitives.ts";
 import { downloadBlob } from "@/utils/download.ts";
+import {
+  CourseColorOverrides,
+  loadCourseColors,
+  saveCourseColors,
+} from "@/utils/course-colors.ts";
 
 // Default campus time mappings
 export const DEFAULT_CAMPUS_MAPPINGS: CampusTimeMapping[] = [
@@ -316,7 +321,25 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
   yms,
   renderCourseActions,
   onEmptySlotPress,
+  customizableColors = false,
 }) => {
+  const [colorOverrides, setColorOverrides] = useState<CourseColorOverrides>(
+    () => (customizableColors ? loadCourseColors() : {}),
+  );
+
+  const setCourseColor = (code: string, index: number | null) => {
+    const next = { ...colorOverrides };
+
+    if (index === null) {
+      delete next[code];
+    } else {
+      next[code] = index;
+    }
+
+    setColorOverrides(next);
+    saveCourseColors(next);
+  };
+
   const conflictCourseCodeSet = useMemo(
     () => new Set(conflictCourseCodes),
     [conflictCourseCodes],
@@ -433,11 +456,14 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     const colorMap: Record<string, string> = {};
 
     uniqueCourses.forEach((courseCode, index) => {
-      colorMap[courseCode] = COURSE_COLORS[index % COURSE_COLORS.length];
+      const override = colorOverrides[courseCode];
+
+      colorMap[courseCode] =
+        COURSE_COLORS[(override ?? index) % COURSE_COLORS.length];
     });
 
     return colorMap;
-  }, [courses]);
+  }, [courses, colorOverrides]);
 
   // Get courses for specific day and period (each course appears in every period it spans)
   const getCoursesForSlot = (
@@ -855,6 +881,39 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
                         ))}
                       </dd>
                     </dl>
+                    {customizableColors && (
+                      <div className="mt-4">
+                        <p className="mb-2 text-sm text-muted">顏色</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {COURSE_COLORS.map((color, index) => (
+                            <button
+                              key={index}
+                              aria-label={`顏色 ${index + 1}`}
+                              aria-pressed={
+                                courseColorMap[course.code] === color
+                              }
+                              className={clsx(
+                                "size-7 rounded-md border-2",
+                                color,
+                                courseColorMap[course.code] === color &&
+                                  "outline outline-2 outline-offset-1 outline-foreground",
+                              )}
+                              type="button"
+                              onClick={() => setCourseColor(course.code, index)}
+                            />
+                          ))}
+                          {course.code in colorOverrides && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onPress={() => setCourseColor(course.code, null)}
+                            >
+                              還原預設
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     {conflictCourseCodeSet.has(course.code) && (
                       <p className="mt-3 flex items-center gap-1 text-sm text-danger">
                         <ExclamationTriangleIcon width={16} />
