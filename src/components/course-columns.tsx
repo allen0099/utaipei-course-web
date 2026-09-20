@@ -1,9 +1,11 @@
+import { Link as RouterLink } from "react-router";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { Chip, Tooltip } from "@heroui/react";
 
 import { DataTableColumn } from "@/components/data-table.tsx";
 import { siteConfig } from "@/config/site.ts";
 import { PartialCourse } from "@/interfaces/globals.ts";
+import { mapLinkForClassroom } from "@/utils/classroom-link.ts";
 import { isOtherClassCourse } from "@/utils/course-class.ts";
 
 export type CourseColumnKey =
@@ -275,7 +277,22 @@ export const buildCourseColumns = <T extends PartialCourse>(
       key: "classroom",
       label: "教室",
       width: "w-[11%]",
-      render: (course) => mutedIfUndecided(course.classroom),
+      render: (course) => {
+        const href = mapLinkForClassroom(course.classroom);
+
+        // 「G313 在哪一棟」是看到教室代碼之後最直接的下一個問題。
+        return href ? (
+          <RouterLink
+            className="underline decoration-dotted underline-offset-2 hover:text-accent"
+            title="在校園地圖上標示這棟樓"
+            to={href}
+          >
+            {course.classroom}
+          </RouterLink>
+        ) : (
+          mutedIfUndecided(course.classroom)
+        );
+      },
     },
     capacity: {
       key: "capacity",
