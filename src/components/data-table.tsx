@@ -118,6 +118,23 @@ export const DataTable = <T,>({
   );
   const cardColumns = populatedColumns.filter((column) => !column.hideOnCard);
 
+  // 欄寬是寫死的百分比，加起來剛好 100% —— 但那是在每一欄都在的前提下。上面
+  // 拿掉整欄空白的欄位之後，剩下的可能只加到 54%（通識課程只剩 5 欄），而
+  // table-fixed 會把多出來的寬度全部塞給唯一不是百分比的那一欄，也就是最前面
+  // 的勾選欄：它會從 96px 變成 324px。所以剩下的欄位要按原比例重新攤滿 100%。
+  // 只要有任何一欄不是 w-[N%] 就不動，維持原本的 class。
+  const percents = populatedColumns.map((column) => {
+    const match = column.width?.match(/^w-\[(\d+(?:\.\d+)?)%\]$/);
+
+    return match ? Number(match[1]) : null;
+  });
+  const percentTotal = percents.reduce<number>(
+    (sum, value) => sum + (value ?? 0),
+    0,
+  );
+  const canRescale =
+    percentTotal > 0 && percents.every((value) => value !== null);
+
   return (
     <div className={className}>
       {/* Desktop table (md and up) */}
@@ -126,9 +143,18 @@ export const DataTable = <T,>({
           <table className="w-full table-fixed text-sm">
             <colgroup>
               {leading && <col className={leading.width ?? "w-14"} />}
-              {populatedColumns.map((column) => (
-                <col key={column.key} className={column.width} />
-              ))}
+              {populatedColumns.map((column, index) =>
+                canRescale ? (
+                  <col
+                    key={column.key}
+                    style={{
+                      width: `${((percents[index] ?? 0) / percentTotal) * 100}%`,
+                    }}
+                  />
+                ) : (
+                  <col key={column.key} className={column.width} />
+                ),
+              )}
             </colgroup>
             <thead>
               <tr className="border-b border-border bg-background-secondary text-left text-xs font-medium tracking-wide text-muted">
