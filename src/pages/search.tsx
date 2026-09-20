@@ -49,7 +49,10 @@ import { useCourseAddGate } from "@/hooks/useCourseAddGate.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { DataFreshness } from "@/components/data-freshness.tsx";
 
-const MAX_DISPLAYED_COURSES = 200;
+// 一次畫多少列。原本是「最多 200 筆、超過的看不到」：音樂學系 (320) 與進修推廣處
+// (274) 光是自己的課就超過上限，學生永遠瀏覽不完自己的系。現在改成分批往下載，
+// 沒有上限；而且第一批只有 50 列，第一次繪製也比原本的 200 列快。
+const PAGE_SIZE = 50;
 
 // 系所欄拿掉了：共同課會關聯十幾個系所，那一欄佔掉的寬度遠大於它的價值，而
 // 系所本來就是上方的篩選條件，看結果時不必再重複一次。
@@ -514,6 +517,22 @@ export const SearchPage = () => {
     />
   );
 
+  // 已經展開到第幾筆。跟著「是哪一組篩選條件」一起存：條件一變，存的 key 就
+  // 對不上，自然回到第一批 —— 不需要另外寫一個 effect 去重設。
+  const filterKey = [
+    yms,
+    departmentCode,
+    deferredKeyword,
+    required,
+    campus,
+    [...slots].sort().join("."),
+    strictTime,
+    freeOnly,
+    sortKey,
+  ].join("|");
+  const [paging, setPaging] = useState({ key: filterKey, count: PAGE_SIZE });
+  const visibleCount = paging.key === filterKey ? paging.count : PAGE_SIZE;
+
   const renderResults = () => {
     if (!yms) {
       return <EmptyState title="請先選擇學年期" />;
@@ -557,33 +576,14 @@ export const SearchPage = () => {
       );
     }
 
-    // Over the cap we still show the first ${MAX_DISPLAYED_COURSES}: rendering
-    // nothing made "too many matches" look identical to "no matches", and the
-    // advice it gave ("加上系所條件以縮小範圍") is impossible to follow once a
-    // 系所 is already picked -- that is the narrowest filter this page has.
-    // 音樂學系 (320 courses) and 進修推廣處 (274) are past the cap on their own,
-    // so their students could never browse their own department at all.
-    const isTruncated = filteredCourses.length > MAX_DISPLAYED_COURSES;
-    const displayedCourses = isTruncated
-      ? filteredCourses.slice(0, MAX_DISPLAYED_COURSES)
-      : filteredCourses;
+    const displayedCourses = filteredCourses.slice(0, visibleCount);
+    const remaining = filteredCourses.length - displayedCourses.length;
 
     return (
       <>
         {addBlockedReason && (
           <Notice icon={<InformationCircleIcon width={18} />} tone="info">
             {addBlockedReason}
-          </Notice>
-        )}
-        {isTruncated && (
-          <Notice
-            className="mt-4"
-            icon={<InformationCircleIcon width={18} />}
-            tone="info"
-          >
-            共 {filteredCourses.length} 筆符合，先顯示前 {MAX_DISPLAYED_COURSES}{" "}
-            筆。輸入關鍵字可以縮小範圍，找到其餘{" "}
-            {filteredCourses.length - MAX_DISPLAYED_COURSES} 筆課程。
           </Notice>
         )}
         <SelectableCourseTable
@@ -630,6 +630,21 @@ export const SearchPage = () => {
           yms={yms}
           onRowHover={setPreviewCourse}
         />
+        {remaining > 0 && (
+          <div className="mt-4 flex flex-col items-center gap-1">
+            <Button
+              variant="secondary"
+              onPress={() =>
+                setPaging({ key: filterKey, count: visibleCount + PAGE_SIZE })
+              }
+            >
+              再顯示 {Math.min(PAGE_SIZE, remaining)} 筆
+            </Button>
+            <span aria-live="polite" className="text-xs text-muted">
+              已顯示 {displayedCourses.length}／{filteredCourses.length} 筆
+            </span>
+          </div>
+        )}
       </>
     );
   };
