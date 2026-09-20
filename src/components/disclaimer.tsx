@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal, Button } from "@heroui/react";
 
 function hasDisclaimerCookie() {
@@ -14,6 +14,12 @@ function hasDisclaimerCookie() {
  * 為了一個布林值拉一個 context 不划算。
  */
 export const OPEN_DISCLAIMER_EVENT = "utc:open-disclaimer";
+
+/**
+ * 橫幅目前佔掉畫面底部多少高度。同樣釘在底部的 SelectionBar 靠它往上讓 ——
+ * 不讓的話橫幅會整個蓋住「前往我的課表」，而第一次來的人正是最需要那條列的人。
+ */
+export const DISCLAIMER_OFFSET_VAR = "--disclaimer-offset";
 
 /** 聲明全文。橫幅的「完整聲明」與頁尾的連結開的是同一份。 */
 const DisclaimerBody = () => (
@@ -79,6 +85,31 @@ export const DisclaimerModal = () => {
   const [pending, setPending] = useState(() => !hasDisclaimerCookie());
   const [detailOpen, setDetailOpen] = useState(false);
 
+  const bannerRef = useRef<HTMLDivElement>(null);
+
+  // 高度用量的：文字在手機上會折成三四行，寫死一個數字一定有一邊不對。
+  useEffect(() => {
+    const banner = bannerRef.current;
+    const root = document.documentElement;
+
+    if (!pending || !banner) return;
+
+    const publish = () =>
+      root.style.setProperty(
+        DISCLAIMER_OFFSET_VAR,
+        `${banner.getBoundingClientRect().height}px`,
+      );
+    const observer = new ResizeObserver(publish);
+
+    publish();
+    observer.observe(banner);
+
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty(DISCLAIMER_OFFSET_VAR);
+    };
+  }, [pending]);
+
   useEffect(() => {
     const open = () => setDetailOpen(true);
 
@@ -97,6 +128,7 @@ export const DisclaimerModal = () => {
     <>
       {pending && (
         <div
+          ref={bannerRef}
           aria-label="免責聲明"
           className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surface shadow-lg"
           role="region"
