@@ -10,6 +10,26 @@ import clsx from "clsx";
 import { NavItem, siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { OPEN_PALETTE_EVENT } from "@/components/command-palette.tsx";
+import { useLanguage } from "@/i18n/language.tsx";
+
+/** 按鈕上寫的是「會切過去的那個語言」，而且用那個語言寫：看不懂目前介面的人
+ * 才認得出這顆是給他的。 */
+const LanguageSwitch = () => {
+  const { language, setLanguage } = useLanguage();
+  const next = language === "en" ? "zh" : "en";
+
+  return (
+    <button
+      aria-label={next === "en" ? "Switch to English" : "切換為中文"}
+      className="rounded-md px-2 py-1.5 text-sm font-medium text-muted hover:bg-surface-secondary hover:text-foreground"
+      lang={next === "en" ? "en" : "zh-TW"}
+      type="button"
+      onClick={() => setLanguage(next)}
+    >
+      {next === "en" ? "EN" : "中文"}
+    </button>
+  );
+};
 
 const SearchButton = ({ showShortcut }: { showShortcut?: boolean }) => (
   <button
@@ -145,6 +165,7 @@ export const Navbar = () => {
           {/* Desktop right */}
           <div className="hidden lg:flex items-center gap-2">
             <SearchButton showShortcut />
+            <LanguageSwitch />
             <ThemeSwitch />
           </div>
 
@@ -153,6 +174,7 @@ export const Navbar = () => {
               between the two. */}
           <div className="flex lg:hidden items-center gap-2">
             <SearchButton />
+            <LanguageSwitch />
             <ThemeSwitch />
             <button
               aria-expanded={menuOpen}
