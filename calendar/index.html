@@ -59,6 +59,18 @@
         ) {
           document.documentElement.classList.add("dark");
         }
+
+        // The theme-color metas above follow the OS scheme; a saved choice
+        // that disagrees with it would leave the status bar the wrong colour.
+        if (theme === "dark" || theme === "light") {
+          var color = theme === "dark" ? "#000000" : "#ffffff";
+
+          document
+            .querySelectorAll('meta[name="theme-color"]')
+            .forEach(function (meta) {
+              meta.setAttribute("content", color);
+            });
+        }
       })();
     </script>
 
@@ -69,12 +81,13 @@
       'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','GTM-NZ6SQS67');</script>
     <!-- End Google Tag Manager -->
-    <script type="module" crossorigin src="/assets/index-DFqNjGie.js"></script>
+    <script type="module" crossorigin src="/assets/index-BjjOKEgW.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-CXHxssQy.js">
-    <link rel="modulepreload" crossorigin href="/assets/framework-DngHR-6z.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-BYUUrTaF.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-Cu_iXWv2.css">
-  </head>
+    <link rel="modulepreload" crossorigin href="/assets/framework-Bsihw5Dt.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-BYWkWBd6.js">
+    <link rel="modulepreload" crossorigin href="/assets/panel-B0R58jaW.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-Db7s_e2c.css">
+  <script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
   <body>
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZ6SQS67"
