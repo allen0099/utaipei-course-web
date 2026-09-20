@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { Button, Card, Link, Modal } from "@heroui/react";
 import {
   TrashIcon,
@@ -20,11 +21,13 @@ import { buildCourseColumns } from "@/components/course-columns.tsx";
 import { EmptyState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import { ShareScheduleModal } from "@/components/share-schedule-modal.tsx";
+import { ScheduleSummary } from "@/components/schedule-summary.tsx";
 
 export const MySchedulePage = () => {
   const { selectedCourses, scheduleYms, removeCourse, clearAll } =
     useSelectedCourses();
   const { defaultCode, displayNameOf } = useYms();
+  const navigate = useNavigate();
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -79,8 +82,11 @@ export const MySchedulePage = () => {
         {selectedCourses.length === 0 ? (
           <EmptyState
             action={
-              <Link className="mt-2" href="/search">
-                前往課程查詢 →
+              <Link
+                className="mt-3 rounded-full bg-accent px-5 py-2 text-sm font-medium text-white no-underline"
+                href="/search"
+              >
+                前往課程查詢
               </Link>
             }
             description="在課程查詢或班級／教師課表勾選想要的課程，就會集中顯示在這裡。"
@@ -104,6 +110,11 @@ export const MySchedulePage = () => {
                 已選課程中有時段衝突，請確認課表下方標示的衝堂課程。
               </Notice>
             )}
+
+            <ScheduleSummary
+              courses={selectedCourses}
+              slots={scheduleCourses}
+            />
 
             <Card className="w-full">
               <Card.Header className="flex flex-wrap items-center justify-between gap-2">
@@ -166,7 +177,35 @@ export const MySchedulePage = () => {
             <WeeklySchedule
               conflictCourseCodes={conflictCourseCodes}
               courses={scheduleCourses}
+              renderCourseActions={(code, close) => (
+                <Button
+                  variant="danger"
+                  onPress={() => {
+                    const course = selectedCourses.find(
+                      (item) => item.code === code,
+                    );
+
+                    if (course) removeCourse(course);
+                    close();
+                  }}
+                >
+                  <TrashIcon width={16} />
+                  從課表移除
+                </Button>
+              )}
               scheduleTitle="我的課表"
+              yms={scheduleYms ?? undefined}
+              onEmptySlotPress={(day, period) => {
+                // 帶著學年期、時段與「只顯示不衝堂」過去：從空堂出發找課，要的
+                // 就是排得進去的課。
+                const params = new URLSearchParams({
+                  time: `${day}-${period}`,
+                  free: "1",
+                });
+
+                if (scheduleYms) params.set("yms", scheduleYms);
+                navigate(`/search?${params.toString()}`);
+              }}
             />
 
             {scheduleYms && (
