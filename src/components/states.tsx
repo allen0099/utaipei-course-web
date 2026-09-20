@@ -24,6 +24,52 @@ export const LoadingState = ({ label, className }: LoadingStateProps) => (
   </div>
 );
 
+export interface ListSkeletonProps {
+  /** Announced to screen readers, e.g. "課程資料". */
+  label?: string;
+  rows?: number;
+  className?: string;
+}
+
+/**
+ * Placeholder for a list that is about to appear, shaped like the rows it will
+ * be replaced by.
+ *
+ * A spinner is one line tall; the result table that replaces it is hundreds of
+ * pixels. Everything below jumped when the data landed, and on a slow
+ * connection the page looked empty rather than busy. `motion-safe:` keeps the
+ * pulse off for people who asked for reduced motion.
+ */
+export const ListSkeleton = ({
+  label,
+  rows = 6,
+  className,
+}: ListSkeletonProps) => (
+  <div
+    aria-live="polite"
+    className={clsx(
+      "overflow-hidden rounded-lg border border-border",
+      className,
+    )}
+    role="status"
+  >
+    <span className="sr-only">{label ? `載入${label}中⋯` : "載入中⋯"}</span>
+    <div className="h-10 bg-background-secondary" />
+    {Array.from({ length: rows }, (_, index) => (
+      <div
+        key={index}
+        className="flex items-center gap-4 border-t border-border/60 px-3 py-4"
+      >
+        <div className="size-4 shrink-0 rounded bg-surface-secondary motion-safe:animate-pulse" />
+        <div className="h-3 w-12 shrink-0 rounded bg-surface-secondary motion-safe:animate-pulse" />
+        <div className="h-3 flex-1 rounded bg-surface-secondary motion-safe:animate-pulse" />
+        <div className="hidden h-3 w-24 rounded bg-surface-secondary motion-safe:animate-pulse sm:block" />
+        <div className="hidden h-3 w-16 rounded bg-surface-secondary motion-safe:animate-pulse md:block" />
+      </div>
+    ))}
+  </div>
+);
+
 export interface NoticeProps {
   /**
    * danger for "something is wrong now", warning for "heads up", info for

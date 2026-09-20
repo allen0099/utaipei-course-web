@@ -15,6 +15,8 @@ export interface SelectableCourseTableProps {
   yms: string;
   /** 這個學年期能不能加課，見 useCourseAddGate。 */
   canAdd: boolean;
+  /** 見 DataTable.cardFooter。 */
+  cardFooter?: (course: PartialCourse) => React.ReactNode;
   /** 見 DataTable.onRowHover。 */
   onRowHover?: (course: PartialCourse | null) => void;
   className?: string;
@@ -31,6 +33,7 @@ export const SelectableCourseTable = ({
   columns,
   yms,
   canAdd,
+  cardFooter,
   onRowHover,
   className,
 }: SelectableCourseTableProps) => {
@@ -75,6 +78,7 @@ export const SelectableCourseTable = ({
 
   return (
     <DataTable
+      cardFooter={cardFooter}
       cardSubtitle={(item) => item.code}
       cardTitle={(item) => item.name}
       className={className}

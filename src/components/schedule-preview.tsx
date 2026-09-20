@@ -4,6 +4,7 @@ import clsx from "clsx";
 
 import { WeeklyScheduleCourse } from "@/interfaces/globals.ts";
 import { COURSE_COLORS } from "@/components/weekly-schedule.tsx";
+import { loadCourseColors } from "@/utils/course-colors.ts";
 
 const DAY_LABELS = ["一", "二", "三", "四", "五", "六", "日"];
 const PERIODS = Array.from({ length: 14 }, (_, index) => index + 1);
@@ -27,6 +28,12 @@ export interface SchedulePreviewProps {
    * 「滑過結果預覽」這回事，要換一句。
    */
   idleHint?: ReactNode;
+  /**
+   * 只看不點：格子不是按鈕，下方的說明與操作也不顯示。手機結果卡片裡展開的
+   * 那一張用這個 —— 在一張只是要「看一眼排不排得進去」的小圖上誤觸到時段
+   * 篩選，結果列表會整個換掉。
+   */
+  readOnly?: boolean;
   className?: string;
 }
 
@@ -54,6 +61,7 @@ export const SchedulePreview = ({
   onToggleSlot,
   onClearSlots,
   idleHint,
+  readOnly = false,
   className,
 }: SchedulePreviewProps) => {
   const [showWeekendPicked, setShowWeekend] = useState(false);
@@ -68,10 +76,17 @@ export const SchedulePreview = ({
 
   const colorByCode = useMemo(() => {
     const map = new Map<string, string>();
+    // 跟我的課表用同一份自訂顏色，兩邊看到的同一門課才會是同一個顏色。
+    const overrides = loadCourseColors();
 
     scheduled.forEach((slot) => {
       if (!map.has(slot.code)) {
-        map.set(slot.code, COURSE_COLORS[map.size % COURSE_COLORS.length]);
+        map.set(
+          slot.code,
+          COURSE_COLORS[
+            (overrides[slot.code] ?? map.size) % COURSE_COLORS.length
+          ],
+        );
       }
     });
 
@@ -131,11 +146,20 @@ export const SchedulePreview = ({
                 isPicked ? "已設為時段篩選" : "點選以篩選這個時段的課",
               ].join("，");
 
+              const Cell = readOnly ? "div" : "button";
+
               return (
-                <button
+                <Cell
                   key={key}
-                  aria-label={label}
-                  aria-pressed={isPicked}
+                  {...(readOnly
+                    ? { "aria-hidden": true }
+                    : {
+                        "aria-label": label,
+                        "aria-pressed": isPicked,
+                        title: label,
+                        type: "button" as const,
+                        onClick: () => onToggleSlot(key),
+                      })}
                   className={clsx(
                     "relative h-6 overflow-hidden px-0.5 text-left text-[10px] leading-6 transition-colors",
                     first
@@ -149,9 +173,6 @@ export const SchedulePreview = ({
                     isPicked &&
                       "outline outline-2 -outline-offset-2 outline-accent",
                   )}
-                  title={label}
-                  type="button"
-                  onClick={() => onToggleSlot(key)}
                 >
                   {/* 只在這門課的第一節寫名字，連堂的後幾節留白就看得出是同一塊。 */}
                   {first && first.period === period && (
@@ -160,7 +181,7 @@ export const SchedulePreview = ({
                   {own.length > 1 && (
                     <span className="absolute right-0 top-0 h-1.5 w-1.5 rounded-bl-sm bg-red-500" />
                   )}
-                </button>
+                </Cell>
               );
             })}
           </div>
@@ -195,7 +216,11 @@ export const SchedulePreview = ({
         )}
       </p>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div
+        className={clsx("flex flex-wrap items-center gap-2", {
+          hidden: readOnly,
+        })}
+      >
         {selectedSlots.size > 0 && (
           <Button size="sm" variant="tertiary" onPress={onClearSlots}>
             清除時段（{selectedSlots.size}）

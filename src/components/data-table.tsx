@@ -55,6 +55,8 @@ export interface DataTableProps<T> {
    */
   cardTitle?: (item: T) => ReactNode;
   cardSubtitle?: (item: T) => ReactNode;
+  /** Extra content under a mobile card's field list (never shown in the table). */
+  cardFooter?: (item: T) => ReactNode;
   /**
    * 滑鼠停在某一列、或鍵盤焦點進到那一列裡的控制項時回報那一列；離開時回報
    * null。課程查詢用它在迷你課表上預覽時段。
@@ -102,6 +104,7 @@ export const DataTable = <T,>({
   leading,
   cardTitle,
   cardSubtitle,
+  cardFooter,
   onRowHover,
   className,
 }: DataTableProps<T>) => {
@@ -225,6 +228,7 @@ export const DataTable = <T,>({
                     </div>
                   ))}
               </dl>
+              {cardFooter?.(item)}
             </div>
           ))}
         </div>

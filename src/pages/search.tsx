@@ -18,7 +18,7 @@ import {
   buildCourseColumns,
   CourseColumnKey,
 } from "@/components/course-columns.tsx";
-import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
+import { EmptyState, ListSkeleton, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import DefaultLayout from "@/layouts/default";
 import { siteConfig } from "@/config/site.ts";
@@ -102,6 +102,9 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 // 它做了什麼，也能自己改。
 const QUICK_KEYWORDS = ["通識課程", "體育課程"];
 
+const NO_SLOTS = new Set<string>();
+const noop = () => {};
+
 // 與 Tailwind 的 xl 同寬：夠放下「結果表格 + 迷你課表」兩欄的最小寬度。
 const SIDE_BY_SIDE_QUERY = "(min-width: 1280px)";
 
@@ -157,6 +160,9 @@ export const SearchPage = () => {
   const [previewCourse, setPreviewCourse] = useState<PartialCourse | null>(
     null,
   );
+  // 手機上展開了哪一張結果卡片的時段預覽。觸控沒有 hover，所以桌機「滑過就
+  // 預覽」在手機上改成卡片裡的一顆按鈕；一次只開一張，列表才不會被撐得很長。
+  const [expandedCode, setExpandedCode] = useState<string | null>(null);
   // 逐鍵輸入時輸入框要立刻跟上，但對三千門課重新篩選＋重繪兩百列可以慢半拍。
   const deferredKeyword = useDeferredValue(keyword);
   const isSideBySide = useMediaQuery(SIDE_BY_SIDE_QUERY);
@@ -510,7 +516,7 @@ export const SearchPage = () => {
     }
 
     if (loading) {
-      return <LoadingState label="課程資料" />;
+      return <ListSkeleton className="mt-4" label="課程資料" />;
     }
 
     if (!hasFilter) {
@@ -574,6 +580,41 @@ export const SearchPage = () => {
         )}
         <SelectableCourseTable
           canAdd={canAdd}
+          cardFooter={(course) => {
+            const courseSlots = slotsByCode.get(course.code) ?? [];
+
+            // 沒有排定時間的課沒有東西可以畫。
+            if (courseSlots.length === 0) return null;
+
+            const isExpanded = expandedCode === course.code;
+
+            return (
+              <div className="mt-3">
+                <Button
+                  aria-expanded={isExpanded}
+                  size="sm"
+                  variant="tertiary"
+                  onPress={() =>
+                    setExpandedCode(isExpanded ? null : course.code)
+                  }
+                >
+                  {isExpanded ? "收起時段" : "在課表上看時段"}
+                </Button>
+                {isExpanded && (
+                  <SchedulePreview
+                    readOnly
+                    className="mt-2"
+                    preview={courseSlots}
+                    previewName={course.name}
+                    scheduled={scheduledSlots}
+                    selectedSlots={NO_SLOTS}
+                    onClearSlots={noop}
+                    onToggleSlot={noop}
+                  />
+                )}
+              </div>
+            );
+          }}
           className="mt-4"
           columns={columns}
           courses={displayedCourses}
