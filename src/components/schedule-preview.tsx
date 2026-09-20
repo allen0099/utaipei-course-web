@@ -1,0 +1,210 @@
+import { useMemo, useState } from "react";
+import { Button } from "@heroui/react";
+import clsx from "clsx";
+
+import { WeeklyScheduleCourse } from "@/interfaces/globals.ts";
+import { COURSE_COLORS } from "@/components/weekly-schedule.tsx";
+
+const DAY_LABELS = ["一", "二", "三", "四", "五", "六", "日"];
+const PERIODS = Array.from({ length: 14 }, (_, index) => index + 1);
+
+/** 時段篩選的鍵："<day>-<period>"，day 是 0=週一…6=週日。 */
+export const slotKey = (day: number, period: number) => `${day}-${period}`;
+
+export interface SchedulePreviewProps {
+  /** 我的課表目前的時段。 */
+  scheduled: WeeklyScheduleCourse[];
+  /** 正在預覽（滑鼠停在／鍵盤聚焦在結果列上）的那門課的時段。 */
+  preview?: WeeklyScheduleCourse[];
+  /** 預覽中的課名，顯示在表格下方。 */
+  previewName?: string;
+  /** 時段篩選目前選了哪些格子。 */
+  selectedSlots: Set<string>;
+  onToggleSlot: (key: string) => void;
+  onClearSlots: () => void;
+  className?: string;
+}
+
+const occupies = (slot: WeeklyScheduleCourse, day: number, period: number) =>
+  slot.day === day &&
+  period >= slot.period &&
+  period <= slot.period + (slot.duration || 1) - 1;
+
+/**
+ * 課程查詢旁邊那張迷你課表，一張格子做三件事：
+ *
+ * 1. 顯示我的課表目前佔了哪些時段；
+ * 2. 滑過某一筆搜尋結果時，把那門課會落在哪裡疊上去（衝堂的格子轉紅）——
+ *    不必先勾選、跳去我的課表才知道排不排得進去；
+ * 3. 每一格都是按鈕，點下去就是「找這個時段的課」的篩選條件。
+ *
+ * 三件事共用一張格子而不是各做一個元件，因為它們回答的是同一個問題：「這個
+ * 時段我有沒有空、有什麼課可以放」。
+ */
+export const SchedulePreview = ({
+  scheduled,
+  preview = [],
+  previewName,
+  selectedSlots,
+  onToggleSlot,
+  onClearSlots,
+  className,
+}: SchedulePreviewProps) => {
+  const [showWeekendPicked, setShowWeekend] = useState(false);
+
+  // 週末平常收起來，但只要有任何東西落在週末（已選的課、預覽、篩選）就一定
+  // 展開 —— 收著會讓那門課看起來像不見了。
+  const weekendInUse =
+    [...scheduled, ...preview].some((slot) => slot.day >= 5) ||
+    [...selectedSlots].some((key) => Number(key.split("-")[0]) >= 5);
+  const showWeekend = showWeekendPicked || weekendInUse;
+  const days = showWeekend ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4];
+
+  const colorByCode = useMemo(() => {
+    const map = new Map<string, string>();
+
+    scheduled.forEach((slot) => {
+      if (!map.has(slot.code)) {
+        map.set(slot.code, COURSE_COLORS[map.size % COURSE_COLORS.length]);
+      }
+    });
+
+    return map;
+  }, [scheduled]);
+
+  const previewConflicts = preview.some((candidate) =>
+    scheduled.some(
+      (slot) =>
+        slot.code !== candidate.code &&
+        slot.day === candidate.day &&
+        slot.period <= candidate.period + (candidate.duration || 1) - 1 &&
+        candidate.period <= slot.period + (slot.duration || 1) - 1,
+    ),
+  );
+
+  return (
+    <div className={clsx("flex flex-col gap-2", className)}>
+      <div
+        className="grid gap-px overflow-hidden rounded-lg border border-border bg-border text-xs"
+        style={{
+          gridTemplateColumns: `1.75rem repeat(${days.length}, minmax(0, 1fr))`,
+        }}
+      >
+        <div className="bg-surface-secondary" />
+        {days.map((day) => (
+          <div
+            key={day}
+            className="bg-surface-secondary py-1 text-center font-medium"
+          >
+            {DAY_LABELS[day]}
+          </div>
+        ))}
+
+        {PERIODS.map((period) => (
+          <div key={period} className="contents">
+            <div className="flex items-center justify-center bg-surface-secondary text-muted tabular-nums">
+              {period}
+            </div>
+            {days.map((day) => {
+              const key = slotKey(day, period);
+              const own = scheduled.filter((slot) =>
+                occupies(slot, day, period),
+              );
+              const isPreview = preview.some((slot) =>
+                occupies(slot, day, period),
+              );
+              const isPreviewClash =
+                isPreview && own.some((slot) => slot.code !== preview[0]?.code);
+              const isPicked = selectedSlots.has(key);
+              const first = own[0];
+              const label = [
+                `週${DAY_LABELS[day]}第 ${period} 節`,
+                own.length > 0
+                  ? `已選：${own.map((slot) => slot.name).join("、")}`
+                  : "空堂",
+                isPicked ? "已設為時段篩選" : "點選以篩選這個時段的課",
+              ].join("，");
+
+              return (
+                <button
+                  key={key}
+                  aria-label={label}
+                  aria-pressed={isPicked}
+                  className={clsx(
+                    "relative h-6 overflow-hidden px-0.5 text-left text-[10px] leading-6 transition-colors",
+                    first
+                      ? colorByCode.get(first.code)
+                      : "bg-background hover:bg-surface-secondary",
+                    // 已選的課原本的色塊 class 帶 border-*，這裡沒有邊框所以無害。
+                    isPreview &&
+                      !isPreviewClash &&
+                      "!bg-blue-200 dark:!bg-blue-700/60",
+                    isPreviewClash && "!bg-red-300 dark:!bg-red-700/70",
+                    isPicked &&
+                      "outline outline-2 -outline-offset-2 outline-accent",
+                  )}
+                  title={label}
+                  type="button"
+                  onClick={() => onToggleSlot(key)}
+                >
+                  {/* 只在這門課的第一節寫名字，連堂的後幾節留白就看得出是同一塊。 */}
+                  {first && first.period === period && (
+                    <span className="block truncate">{first.name}</span>
+                  )}
+                  {own.length > 1 && (
+                    <span className="absolute right-0 top-0 h-1.5 w-1.5 rounded-bl-sm bg-red-500" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* 固定高度，預覽出現／消失時下面的內容才不會跟著跳。 */}
+      <p aria-live="polite" className="min-h-5 text-xs">
+        {preview.length > 0 ? (
+          <span
+            className={
+              previewConflicts
+                ? "text-danger"
+                : "text-blue-700 dark:text-blue-300"
+            }
+          >
+            {previewConflicts ? "衝堂：" : "預覽："}
+            {previewName}
+          </span>
+        ) : previewName ? (
+          <span className="text-muted">{previewName} 沒有排定上課時間</span>
+        ) : (
+          <span className="text-muted">
+            {/* 觸控裝置沒有 hover，別提一個做不到的操作。 */}
+            <span className="[@media(hover:none)]:hidden">
+              滑過結果可預覽時段，
+            </span>
+            點格子可篩選該時段的課。
+          </span>
+        )}
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {selectedSlots.size > 0 && (
+          <Button size="sm" variant="tertiary" onPress={onClearSlots}>
+            清除時段（{selectedSlots.size}）
+          </Button>
+        )}
+        {!weekendInUse && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onPress={() => setShowWeekend((value) => !value)}
+          >
+            {showWeekendPicked ? "隱藏週末" : "顯示週末"}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SchedulePreview;

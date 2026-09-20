@@ -55,6 +55,11 @@ export interface DataTableProps<T> {
    */
   cardTitle?: (item: T) => ReactNode;
   cardSubtitle?: (item: T) => ReactNode;
+  /**
+   * 滑鼠停在某一列、或鍵盤焦點進到那一列裡的控制項時回報那一列；離開時回報
+   * null。課程查詢用它在迷你課表上預覽時段。
+   */
+  onRowHover?: (item: T | null) => void;
   className?: string;
 }
 
@@ -97,6 +102,7 @@ export const DataTable = <T,>({
   leading,
   cardTitle,
   cardSubtitle,
+  onRowHover,
   className,
 }: DataTableProps<T>) => {
   const isMobile = useIsMobileViewport();
@@ -144,6 +150,10 @@ export const DataTable = <T,>({
                 <tr
                   key={rowKey(item, index)}
                   className="border-b border-border/60 transition-colors last:border-b-0 hover:bg-background-secondary"
+                  onBlur={onRowHover && (() => onRowHover(null))}
+                  onFocus={onRowHover && (() => onRowHover(item))}
+                  onMouseEnter={onRowHover && (() => onRowHover(item))}
+                  onMouseLeave={onRowHover && (() => onRowHover(null))}
                 >
                   {leading && (
                     <td className="px-3 py-2.5 align-top">

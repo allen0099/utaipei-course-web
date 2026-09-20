@@ -15,6 +15,8 @@ export interface SelectableCourseTableProps {
   yms: string;
   /** 這個學年期能不能加課，見 useCourseAddGate。 */
   canAdd: boolean;
+  /** 見 DataTable.onRowHover。 */
+  onRowHover?: (course: PartialCourse | null) => void;
   className?: string;
 }
 
@@ -29,6 +31,7 @@ export const SelectableCourseTable = ({
   columns,
   yms,
   canAdd,
+  onRowHover,
   className,
 }: SelectableCourseTableProps) => {
   const { isSelected, toggleCourse, selectedCourses } = useSelectedCourses();
@@ -100,6 +103,7 @@ export const SelectableCourseTable = ({
       }}
       rowKey={(item, index) => `${item.code}-${item.class}-${index}`}
       rows={courses}
+      onRowHover={onRowHover}
     />
   );
 };
