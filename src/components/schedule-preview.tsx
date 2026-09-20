@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { Button } from "@heroui/react";
 import clsx from "clsx";
 
@@ -22,6 +22,11 @@ export interface SchedulePreviewProps {
   selectedSlots: Set<string>;
   onToggleSlot: (key: string) => void;
   onClearSlots: () => void;
+  /**
+   * 沒有預覽時顯示在格子下方的說明。預設是課程查詢的用法；尋找空教室沒有
+   * 「滑過結果預覽」這回事，要換一句。
+   */
+  idleHint?: ReactNode;
   className?: string;
 }
 
@@ -48,6 +53,7 @@ export const SchedulePreview = ({
   selectedSlots,
   onToggleSlot,
   onClearSlots,
+  idleHint,
   className,
 }: SchedulePreviewProps) => {
   const [showWeekendPicked, setShowWeekend] = useState(false);
@@ -176,6 +182,8 @@ export const SchedulePreview = ({
           </span>
         ) : previewName ? (
           <span className="text-muted">{previewName} 沒有排定上課時間</span>
+        ) : idleHint ? (
+          <span className="text-muted">{idleHint}</span>
         ) : (
           <span className="text-muted">
             {/* 觸控裝置沒有 hover，別提一個做不到的操作。 */}

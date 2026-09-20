@@ -138,6 +138,12 @@ export const pageMeta = {
       "查詢教室、球場、田徑場等場地整學期的使用狀況，確認哪些時段已被排課。",
     ogImage: "/og/schedules-location.png",
   }),
+  "/schedules/free-rooms": page({
+    name: "尋找空教室",
+    description:
+      "選擇星期與節次，列出該時段沒有排課的教室與場地，並顯示之後還能空到第幾節。",
+    ogImage: "/og/schedules-free-rooms.png",
+  }),
   "/map": page({
     name: "校園地圖",
     description:

@@ -61,6 +61,12 @@ const functions: Array<Functions> = [
     description: "查詢指定教室或場地的使用情況",
   },
   {
+    title: "尋找空教室",
+    href: "/schedules/free-rooms",
+    icon: <ClassroomIcon className="text-4xl" size={48} />,
+    description: "找出某個時段沒有排課的教室",
+  },
+  {
     title: "班級課表",
     href: "/schedules/class",
     icon: <GraduationIcon className="text-4xl" size={48} />,

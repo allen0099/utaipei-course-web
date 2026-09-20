@@ -26,6 +26,7 @@ const navGroups: NavGroup[] = [
       { label: "我的課表", href: "/my-schedule" },
       { label: "教師課表", href: "/schedules/teacher" },
       { label: "地點課表", href: "/schedules/location" },
+      { label: "尋找空教室", href: "/schedules/free-rooms" },
       { label: "班級課表", href: "/schedules/class" },
     ],
   },
