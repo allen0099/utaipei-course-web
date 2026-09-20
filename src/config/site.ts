@@ -4,11 +4,14 @@ export type SiteConfig = typeof siteConfig;
 
 export interface NavItem {
   label: string;
+  /** 英文介面用的標籤。 */
+  labelEn: string;
   href: string;
 }
 
 export interface NavGroup {
   label: string;
+  labelEn: string;
   items: NavItem[];
 }
 
@@ -19,21 +22,39 @@ export interface NavGroup {
 const navGroups: NavGroup[] = [
   {
     label: "課表查詢",
+    labelEn: "Schedules",
     items: [
-      { label: "課程查詢", href: "/search" },
-      { label: "我的課表", href: "/my-schedule" },
-      { label: "教師課表", href: "/schedules/teacher" },
-      { label: "地點課表", href: "/schedules/location" },
-      { label: "尋找空教室", href: "/schedules/free-rooms" },
-      { label: "班級課表", href: "/schedules/class" },
+      { label: "課程查詢", labelEn: "Course Search", href: "/search" },
+      { label: "我的課表", labelEn: "My Schedule", href: "/my-schedule" },
+      {
+        label: "教師課表",
+        labelEn: "Teacher Schedules",
+        href: "/schedules/teacher",
+      },
+      {
+        label: "地點課表",
+        labelEn: "Room Schedules",
+        href: "/schedules/location",
+      },
+      {
+        label: "尋找空教室",
+        labelEn: "Find Free Rooms",
+        href: "/schedules/free-rooms",
+      },
+      {
+        label: "班級課表",
+        labelEn: "Class Schedules",
+        href: "/schedules/class",
+      },
     ],
   },
   {
     label: "校園資訊",
+    labelEn: "Campus",
     items: [
-      { label: "校園行事曆", href: "/calendar" },
-      { label: "校園地圖", href: "/map" },
-      { label: "校園節次表", href: "/timetable" },
+      { label: "校園行事曆", labelEn: "Academic Calendar", href: "/calendar" },
+      { label: "校園地圖", labelEn: "Campus Map", href: "/map" },
+      { label: "校園節次表", labelEn: "Class Periods", href: "/timetable" },
     ],
   },
 ];
@@ -45,10 +66,10 @@ export const siteConfig = {
   description: defaultMeta.description,
   navGroups,
   /** 首頁連結單獨放，兩種導覽都排在最前面且不屬於任何分組。 */
-  homeItem: { label: "首頁", href: "/" } as NavItem,
+  homeItem: { label: "首頁", labelEn: "Home", href: "/" } as NavItem,
   /** 攤平後的完整清單，供 sitemap／搜尋等不需要分組的地方使用。 */
   navMenuItems: [
-    { label: "首頁", href: "/" },
+    { label: "首頁", labelEn: "Home", href: "/" },
     ...navGroups.flatMap((group) => group.items),
   ] as NavItem[],
   links: {

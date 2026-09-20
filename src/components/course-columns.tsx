@@ -6,6 +6,7 @@ import { DataTableColumn } from "@/components/data-table.tsx";
 import { siteConfig } from "@/config/site.ts";
 import { PartialCourse } from "@/interfaces/globals.ts";
 import { mapLinkForClassroom } from "@/utils/classroom-link.ts";
+import { Translate } from "@/i18n/language.tsx";
 import { isOtherClassCourse } from "@/utils/course-class.ts";
 
 export type CourseColumnKey =
@@ -34,6 +35,11 @@ export interface CourseColumnOptions {
   viewingClassCode?: string;
   /** 學年期，如 "114#1"。教學綱要連結需要它才組得出來。 */
   yms?: string;
+  /**
+   * 目前語言的翻譯函式（useT()）。這是個純函式、不能自己呼叫 hook，所以由呼叫端
+   * 傳進來，並放進 useMemo 的相依陣列；沒給就是中文。
+   */
+  t?: Translate;
 }
 
 /** 缺值一律顯示「—」，不要用空字串假裝這門課沒有這個屬性。 */
