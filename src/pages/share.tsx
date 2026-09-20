@@ -23,6 +23,8 @@ import { CourseItem, PartialCourse } from "@/interfaces/globals.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 import { useScheduleSlots } from "@/hooks/useScheduleSlots.ts";
+import { ScheduleCompare } from "@/components/schedule-compare.tsx";
+import { convertCourses } from "@/utils/convert-course.ts";
 import { useYms } from "@/hooks/useYms.ts";
 import {
   decodeSchedule,
@@ -46,7 +48,7 @@ export const SharedSchedulePage = () => {
   const [state, setState] = useState<DecodeState>({ status: "loading" });
   const [importedCount, setImportedCount] = useState<number | null>(null);
 
-  const { scheduleYms, importCourses } = useSelectedCourses();
+  const { scheduleYms, importCourses, selectedCourses } = useSelectedCourses();
   const { defaultCode, displayNameOf, loading: ymsLoading } = useYms();
 
   useEffect(() => {
@@ -100,6 +102,15 @@ export const SharedSchedulePage = () => {
     conflictCourseCodes,
     hasConflicts,
   } = useScheduleSlots(courses);
+
+  // 只有同一個學年期的兩份課表才比得起來。
+  const mySlots = useMemo(
+    () =>
+      payload && scheduleYms === payload.y
+        ? convertCourses(selectedCourses)
+        : [],
+    [payload, scheduleYms, selectedCourses],
+  );
 
   const columns = useMemo(
     () =>
@@ -246,6 +257,17 @@ export const SharedSchedulePage = () => {
           scheduleTitle={scheduleTitle}
           yms={payload.y}
         />
+
+        {mySlots.length > 0 && (
+          <Card className="w-full">
+            <Card.Header>
+              <h3 className={cardTitle()}>和我的課表比較</h3>
+            </Card.Header>
+            <Card.Content>
+              <ScheduleCompare mine={mySlots} theirs={scheduleCourses} />
+            </Card.Content>
+          </Card>
+        )}
 
         <Card className="w-full">
           <Card.Content className="flex flex-col gap-3">
