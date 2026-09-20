@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useResizeObserver } from "@wojtekmaj/react-hooks";
 import { Modal, Button, ButtonGroup } from "@heroui/react";
 import clsx from "clsx";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 import { FetchError } from "@/components/fetch-error.tsx";
 import { LoadingState } from "@/components/states.tsx";
@@ -10,7 +11,12 @@ import { LoadingState } from "@/components/states.tsx";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// 由 Vite 打包成自家網域下的檔案。原本從 unpkg 載入：多一個第三方相依、沒有
+// SRI，而且離線時一定掛 —— service worker 只預先快取自己 build 出來的東西。
+//
+// pdfjs-dist 因此是直接相依，而且版本必須跟 react-pdf 內部用的那份完全一致
+// （API 與 worker 版本不同 pdf.js 會直接拒絕載入）；升級 react-pdf 時要一起動。
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 export const ResponsivePage = (props: PageProps) => {
   const [containerRef, setContainerRef] = useState<HTMLElement | null>(null);
