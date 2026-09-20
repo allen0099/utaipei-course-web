@@ -1,5 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Modal, Button } from "@heroui/react";
+import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
 
 import { sectionTitle } from "@/components/primitives.ts";
 import { Panel } from "@/components/panel.tsx";
@@ -24,19 +25,17 @@ export function CampusFloorPlan({
       >
         {title}
       </h2>
-      <p className="text-center text-muted mb-4">點擊圖片可放大查看</p>
-      {/* A real <button> rather than role="button" + a hand-written keydown
-          handler, so Enter/Space, focus ring and AT semantics come for free.
-          The Modal is a sibling — rendering it inside the trigger would put
-          the whole dialog inside a button's accessible subtree. */}
-      <button
-        aria-label={`放大檢視${title}`}
-        className="relative block w-full aspect-[1.22/1] max-h-[80vh] cursor-pointer rounded-md"
-        type="button"
-        onClick={() => setIsOpen(true)}
-      >
+      {/* 平面圖本身不再包在一顆 <button> 裡：圖上每棟建築都可以聚焦，而可聚焦
+          的東西不能放在按鈕裡面。放大改成旁邊一顆獨立的按鈕。 */}
+      <div className="mb-3 flex justify-center">
+        <Button size="sm" variant="secondary" onPress={() => setIsOpen(true)}>
+          <ArrowsPointingOutIcon className="size-4" />
+          放大檢視
+        </Button>
+      </div>
+      <div className="relative w-full aspect-[1.22/1] max-h-[80vh]">
         {children}
-      </button>
+      </div>
       <Modal>
         <Modal.Backdrop isOpen={isOpen} onOpenChange={setIsOpen}>
           <Modal.Container size="full">

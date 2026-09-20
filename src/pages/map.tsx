@@ -11,7 +11,7 @@ import {
   tianmuBuildings,
 } from "@/config/buildings.ts";
 import { CampusFloorPlan } from "@/components/floor-plan.tsx";
-import { BoAiFloorPlan } from "@/components/floorplans/boai.tsx";
+import { CampusMap } from "@/components/floorplans/campus-map.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
 import { sectionTitle } from "@/components/primitives.ts";
 
@@ -38,7 +38,8 @@ const BuildingCard = ({
     </div>
     {interactive && (
       <p className="text-muted text-sm mb-2">
-        點選（或用鍵盤聚焦）大樓名稱即可在右側平面圖上標示位置。
+        點選大樓名稱或平面圖上的建築，兩邊會互相標示。教室代碼的第一個字母就是大樓代碼，例如
+        G313 在公誠樓（G）3 樓。
       </p>
     )}
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
@@ -125,8 +126,16 @@ export const MapPage = () => {
                   title="博愛校區"
                   onBuildingChange={setHoveredBuilding}
                 />
-                <CampusFloorPlan className="col-span-2" title="博愛校區平面圖">
-                  <BoAiFloorPlan hoveredBuilding={hoveredBuilding} />
+                <CampusFloorPlan
+                  // 手機上地圖排在清單前面：清單有九項，地圖排後面要捲三個螢幕才看得到。
+                  className="order-first col-span-2 md:order-none"
+                  title="博愛校區平面圖"
+                >
+                  <CampusMap
+                    activeBuilding={hoveredBuilding}
+                    buildings={boaiBuildings}
+                    onActiveChange={setHoveredBuilding}
+                  />
                 </CampusFloorPlan>
               </div>
             </div>
