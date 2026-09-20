@@ -1,44 +1,71 @@
-import { FC, useState } from "react";
-import { VisuallyHidden } from "@react-aria/visually-hidden";
+import { FC, useEffect, useState } from "react";
+import { ComputerDesktopIcon } from "@heroicons/react/24/solid";
 
 import { SunFilledIcon, MoonFilledIcon } from "@/components/icons";
+import {
+  applyTheme,
+  onSystemThemeChange,
+  readThemePreference,
+  saveThemePreference,
+  ThemePreference,
+} from "@/utils/theme.ts";
 
 export interface ThemeSwitchProps {
   className?: string;
 }
 
+const NEXT: Record<ThemePreference, ThemePreference> = {
+  system: "light",
+  light: "dark",
+  dark: "system",
+};
+
+const LABEL: Record<ThemePreference, string> = {
+  system: "跟隨系統",
+  light: "淺色模式",
+  dark: "深色模式",
+};
+
+/**
+ * 三態切換：跟隨系統 → 淺色 → 深色。
+ *
+ * 原本只有淺／深兩態，而且一按就把選擇寫死進 localStorage —— 從此系統在傍晚
+ * 自動切深色時，這個站是唯一不跟的。現在「跟隨系統」是一個可以回得去的選項。
+ */
 export const ThemeSwitch: FC<ThemeSwitchProps> = ({ className }) => {
-  // This is a client-only SPA (no SSR), so the DOM is always available and
-  // the initial theme can be read synchronously instead of via a mount
-  // effect, avoiding an extra render just to reveal the toggle.
-  const [isDark, setIsDark] = useState(() =>
-    document.documentElement.classList.contains("dark"),
-  );
+  const [preference, setPreference] =
+    useState<ThemePreference>(readThemePreference);
 
-  const toggle = () => {
-    const newDark = !isDark;
+  // 跟隨系統時，系統一變就重新套用。index.html 的開機腳本只管第一次繪製。
+  useEffect(() => {
+    if (preference !== "system") return;
 
-    setIsDark(newDark);
-    if (newDark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
+    return onSystemThemeChange(() => applyTheme("system"));
+  }, [preference]);
+
+  const cycle = () => {
+    const next = NEXT[preference];
+
+    setPreference(next);
+    saveThemePreference(next);
+    applyTheme(next);
   };
 
   return (
     <button
-      aria-label={isDark ? "切換至淺色模式" : "切換至深色模式"}
+      aria-label={`主題：${LABEL[preference]}，按一下切換為${LABEL[NEXT[preference]]}`}
       className={`grid size-11 place-items-center transition-opacity hover:opacity-80 cursor-pointer text-muted ${className ?? ""}`}
+      title={`主題：${LABEL[preference]}`}
       type="button"
-      onClick={toggle}
+      onClick={cycle}
     >
-      <VisuallyHidden>
-        <input readOnly checked={isDark} type="checkbox" />
-      </VisuallyHidden>
-      {isDark ? <MoonFilledIcon size={22} /> : <SunFilledIcon size={22} />}
+      {preference === "system" ? (
+        <ComputerDesktopIcon className="size-[22px]" />
+      ) : preference === "dark" ? (
+        <MoonFilledIcon size={22} />
+      ) : (
+        <SunFilledIcon size={22} />
+      )}
     </button>
   );
 };

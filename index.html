@@ -56,6 +56,18 @@
         ) {
           document.documentElement.classList.add("dark");
         }
+
+        // The theme-color metas above follow the OS scheme; a saved choice
+        // that disagrees with it would leave the status bar the wrong colour.
+        if (theme === "dark" || theme === "light") {
+          var color = theme === "dark" ? "#000000" : "#ffffff";
+
+          document
+            .querySelectorAll('meta[name="theme-color"]')
+            .forEach(function (meta) {
+              meta.setAttribute("content", color);
+            });
+        }
       })();
     </script>
 
