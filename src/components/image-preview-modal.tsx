@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Modal, Button } from "@heroui/react";
 
+import { useT } from "@/i18n/language.tsx";
+
 interface ImagePreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -16,6 +18,7 @@ export const ImagePreviewModal = ({
   title,
   onConfirmDownload,
 }: ImagePreviewModalProps) => {
+  const t = useT();
   const [imageUrl, setImageUrl] = useState<string>("");
 
   // Object URLs are a browser resource with an explicit alloc/free
@@ -62,37 +65,42 @@ export const ImagePreviewModal = ({
           <Modal.Dialog className="rounded-lg">
             <Modal.CloseTrigger />
             <Modal.Header>
-              <Modal.Heading>預覽課表圖片</Modal.Heading>
+              <Modal.Heading>
+                {t("預覽課表圖片", "Preview schedule image")}
+              </Modal.Heading>
             </Modal.Header>
             <Modal.Body>
               <div className="flex flex-col items-center space-y-4">
                 <p className="text-foreground text-center">
-                  確認下載以下圖片？
+                  {t("確認下載以下圖片？", "Download this image?")}
                 </p>
                 {imageUrl ? (
                   <div className="max-w-full max-h-[60vh] overflow-auto border rounded-lg">
                     <img
-                      alt={`${title} 預覽圖`}
+                      alt={t(`${title} 預覽圖`, `Preview of ${title}`)}
                       className="max-w-full h-auto"
                       src={imageUrl}
                     />
                   </div>
                 ) : (
                   <div className="flex items-center justify-center w-full h-48 border-2 border-dashed border-border rounded-lg">
-                    <p className="text-muted">載入預覽圖片中...</p>
+                    <p className="text-muted">
+                      {t("載入預覽圖片中...", "Loading preview…")}
+                    </p>
                   </div>
                 )}
                 <p className="text-sm text-muted text-center">
-                  文件名稱：{title}.png
+                  {t("文件名稱：", "File name: ")}
+                  {title}.png
                 </p>
               </div>
             </Modal.Body>
             <Modal.Footer>
               <Button variant="tertiary" onPress={handleClose}>
-                取消
+                {t("取消", "Cancel")}
               </Button>
               <Button className="" onPress={handleDownload}>
-                確認下載
+                {t("確認下載", "Download")}
               </Button>
             </Modal.Footer>
           </Modal.Dialog>

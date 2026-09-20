@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 
 import { CalendarEvent } from "@/interfaces/globals";
 import { cardTitle, sectionTitle } from "@/components/primitives.ts";
+import { Language, useLanguage } from "@/i18n/language.tsx";
 
 export interface AcademicCalendarProps {
   events: CalendarEvent[];
@@ -24,9 +25,42 @@ const UNIT_NAMES: Record<string, string> = {
   市政: "市政管理學院",
 };
 
-const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+/** 縮寫本身是學校的資料、照原樣保留；展開成全名是本站加的，所以全名有英文版。 */
+const UNIT_NAMES_EN: Record<string, string> = {
+  教: "Academic Affairs",
+  學: "Student Affairs",
+  秘: "Secretariat",
+  體: "Physical Education",
+  研: "Research & Development",
+  研發: "Research & Development",
+  通: "General Education Center",
+  教育: "College of Education",
+  人文: "College of Humanities & Arts",
+  理: "College of Science",
+  市政: "College of City Management",
+};
 
-const unitLabel = (unit: string) => UNIT_NAMES[unit] ?? unit;
+const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+/** 月曆格一欄只有 1/7 張卡片寬，英文用兩個字母才放得下。 */
+const WEEKDAYS_EN_NARROW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const MONTHS_EN = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const unitLabel = (unit: string, language: Language) =>
+  (language === "en" ? UNIT_NAMES_EN[unit] : UNIT_NAMES[unit]) ?? unit;
 
 /** "YYYY-MM-DD" → 當地時區的 Date。用 new Date(iso) 會被當成 UTC 而在台灣時區差一天。 */
 const parseISODate = (iso: string): Date => {
@@ -58,7 +92,9 @@ const datesCovered = (event: CalendarEvent): string[] => {
 
 interface MonthGrid {
   key: string;
-  label: string;
+  year: number;
+  /** 0 = 一月。 */
+  month: number;
   /** 開頭補空格，讓當月 1 號落在正確的星期欄位。 */
   cells: (string | null)[];
 }
@@ -89,8 +125,8 @@ const buildMonths = (events: CalendarEvent[]): MonthGrid[] => {
 
     months.push({
       key: `${year}-${month}`,
-      // 民國年更貼近校內慣用說法，西元年另外附註
-      label: `民國 ${year - 1911} 年 ${month + 1} 月（${year}）`,
+      year,
+      month,
       cells,
     });
     cursor.setMonth(month + 1);
@@ -99,15 +135,22 @@ const buildMonths = (events: CalendarEvent[]): MonthGrid[] => {
   return months;
 };
 
-const formatDateLabel = (event: CalendarEvent): string => {
-  const start = parseISODate(event.date);
-  const startLabel = `${start.getMonth() + 1}/${start.getDate()}（${WEEKDAYS[start.getDay()]}）`;
+const monthLabel = ({ year, month }: MonthGrid, language: Language): string =>
+  language === "en"
+    ? `${MONTHS_EN[month]} ${year}`
+    : // 民國年更貼近校內慣用說法，西元年另外附註
+      `民國 ${year - 1911} 年 ${month + 1} 月（${year}）`;
+
+const formatDateLabel = (event: CalendarEvent, language: Language): string => {
+  const day = (date: Date) =>
+    language === "en"
+      ? `${date.getMonth() + 1}/${date.getDate()} (${WEEKDAYS_EN[date.getDay()]})`
+      : `${date.getMonth() + 1}/${date.getDate()}（${WEEKDAYS[date.getDay()]}）`;
+  const startLabel = day(parseISODate(event.date));
 
   if (!event.endDate) return startLabel;
 
-  const end = parseISODate(event.endDate);
-
-  return `${startLabel} – ${end.getMonth() + 1}/${end.getDate()}（${WEEKDAYS[end.getDay()]}）`;
+  return `${startLabel} – ${day(parseISODate(event.endDate))}`;
 };
 
 interface MonthCarouselProps {
@@ -131,6 +174,8 @@ const MonthCarousel = ({
   onSelectDate,
 }: MonthCarouselProps) => {
   const [activeMonth, setActiveMonth] = useState(0);
+  const { language, t } = useLanguage();
+  const weekdays = language === "en" ? WEEKDAYS_EN_NARROW : WEEKDAYS;
   const carouselRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -161,7 +206,7 @@ const MonthCarousel = ({
       {/* 手機：一次一個月的 scroll-snap 輪播。sm 以上回到並排格狀並關掉水平捲動。 */}
       <div
         ref={carouselRef}
-        aria-label="每月行事曆"
+        aria-label={t("每月行事曆", "Monthly calendar")}
         className="flex snap-x snap-mandatory overflow-x-auto sm:grid sm:snap-none sm:grid-cols-2 sm:gap-4 sm:overflow-x-visible xl:grid-cols-3"
         role="group"
         onScroll={handleScroll}
@@ -174,10 +219,10 @@ const MonthCarousel = ({
             <h3
               className={cardTitle({ size: "sm", class: "mb-2 text-center" })}
             >
-              {month.label}
+              {monthLabel(month, language)}
             </h3>
             <div className="grid grid-cols-7 gap-px text-center text-xs">
-              {WEEKDAYS.map((weekday, index) => (
+              {weekdays.map((weekday, index) => (
                 <div
                   key={weekday}
                   className={clsx(
@@ -198,7 +243,14 @@ const MonthCarousel = ({
                 return (
                   <button
                     key={date}
-                    aria-label={`${date}${dayEvents.length > 0 ? `，${dayEvents.length} 個事件` : ""}`}
+                    aria-label={
+                      dayEvents.length > 0
+                        ? t(
+                            `${date}，${dayEvents.length} 個事件`,
+                            `${date}, ${dayEvents.length} ${dayEvents.length === 1 ? "event" : "events"}`,
+                          )
+                        : date
+                    }
                     aria-pressed={selected}
                     className={clsx(
                       "aspect-square rounded-sm p-1 leading-tight transition-colors",
@@ -230,7 +282,10 @@ const MonthCarousel = ({
             <button
               key={month.key}
               aria-current={index === activeMonth}
-              aria-label={`跳至 ${month.label}`}
+              aria-label={t(
+                `跳至 ${monthLabel(month, "zh")}`,
+                `Go to ${monthLabel(month, "en")}`,
+              )}
               className={clsx(
                 "size-2 rounded-full transition-colors",
                 index === activeMonth
@@ -256,6 +311,7 @@ const MonthCarousel = ({
 export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
   const [activeUnits, setActiveUnits] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const { language, t } = useLanguage();
 
   const units = useMemo(() => {
     const seen = new Map<string, number>();
@@ -319,7 +375,9 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
     <div className="flex w-full flex-col gap-6">
       {units.length > 0 && (
         <div className="order-2 flex flex-wrap items-center gap-2 sm:order-1">
-          <span className="text-sm text-muted">篩選單位：</span>
+          <span className="text-sm text-muted">
+            {t("篩選單位：", "Filter by office:")}
+          </span>
           {units.map((unit) => (
             <ToggleButton
               key={unit}
@@ -327,12 +385,12 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
               size="sm"
               onChange={() => toggleUnit(unit)}
             >
-              {unitLabel(unit)}
+              {unitLabel(unit, language)}
             </ToggleButton>
           ))}
           {activeUnits.length > 0 && (
             <Button size="sm" variant="ghost" onPress={clearUnits}>
-              清除篩選
+              {t("清除篩選", "Clear filter")}
             </Button>
           )}
         </div>
@@ -352,10 +410,15 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
       <div className="order-3 flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className={sectionTitle({ size: "sm" })}>
-            {selectedDate ? `${selectedDate} 的事件` : "本學期事件"}
+            {selectedDate
+              ? t(`${selectedDate} 的事件`, `Events on ${selectedDate}`)
+              : t("本學期事件", "Events this semester")}
           </h2>
           <span className="text-sm text-muted">
-            共 {listedEvents.length} 筆
+            {t(
+              `共 ${listedEvents.length} 筆`,
+              `${listedEvents.length} ${listedEvents.length === 1 ? "event" : "events"}`,
+            )}
           </span>
           {selectedDate && (
             <Button
@@ -363,13 +426,15 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
               variant="ghost"
               onPress={() => setSelectedDate(null)}
             >
-              顯示全部
+              {t("顯示全部", "Show all")}
             </Button>
           )}
         </div>
 
         {listedEvents.length === 0 ? (
-          <p className="py-6 text-center text-muted">沒有符合條件的事件。</p>
+          <p className="py-6 text-center text-muted">
+            {t("沒有符合條件的事件。", "No events match.")}
+          </p>
         ) : (
           <ul className="flex flex-col gap-1">
             {listedEvents.map((event, index) => (
@@ -383,11 +448,11 @@ export const AcademicCalendar = ({ events }: AcademicCalendarProps) => {
                 )}
               >
                 <span className="shrink-0 font-mono text-sm text-muted sm:w-48">
-                  {formatDateLabel(event)}
+                  {formatDateLabel(event, language)}
                 </span>
                 {event.unit && (
                   <Chip className="shrink-0" size="sm" variant="soft">
-                    {unitLabel(event.unit)}
+                    {unitLabel(event.unit, language)}
                   </Chip>
                 )}
                 <span className="grow">{event.title}</span>

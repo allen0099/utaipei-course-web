@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { siteConfig } from "@/config/site.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
+import { useT } from "@/i18n/language.tsx";
 
 interface CoursesMeta {
   coursesUpdatedAt?: string;
@@ -25,6 +26,7 @@ export const DataFreshness = ({
   yms: string;
   className?: string;
 }) => {
+  const t = useT();
   const [year, semester] = yms.split("#");
   // 掛載當下的時間，取一次就好：render 必須是純的，而「幾天前」不需要每次重繪
   // 都重算。
@@ -41,15 +43,18 @@ export const DataFreshness = ({
   if (!updatedAt || Number.isNaN(updatedAt.getTime())) return null;
 
   const days = Math.floor((now - updatedAt.getTime()) / MS_PER_DAY);
-  const relative = days <= 0 ? "今天" : `${days} 天前`;
+  const relative =
+    days <= 0
+      ? t("今天", "today")
+      : t(`${days} 天前`, days === 1 ? "1 day ago" : `${days} days ago`);
 
   return (
     <p className={className}>
-      課程資料更新於{" "}
+      {t("課程資料更新於", "Course data updated")}{" "}
       <time dateTime={updatedAt.toISOString()}>
         {updatedAt.getMonth() + 1}/{updatedAt.getDate()}
       </time>
-      （{relative}）
+      {t(`（${relative}）`, ` (${relative})`)}
     </p>
   );
 };

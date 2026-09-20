@@ -31,6 +31,8 @@ import {
   payloadToCourses,
   SharedSchedulePayload,
 } from "@/utils/share-schedule.ts";
+import { useT } from "@/i18n/language.tsx";
+import { semesterName as toSemesterName } from "@/i18n/terms.ts";
 
 type DecodeState =
   | { status: "loading" }
@@ -40,6 +42,7 @@ type DecodeState =
 const EMPTY_COURSES: CourseItem[] = [];
 
 export const SharedSchedulePage = () => {
+  const t = useT();
   const location = useLocation();
   // The payload rides in the fragment so it never reaches a server; react-router
   // hands it back with the leading "#" still attached.
@@ -127,14 +130,19 @@ export const SharedSchedulePage = () => {
           "syllabus",
           "conflict",
         ],
-        { conflictNamesByCourseCode, yms: payload?.y },
+        { conflictNamesByCourseCode, yms: payload?.y, t },
       ),
-    [conflictNamesByCourseCode, payload],
+    [conflictNamesByCourseCode, payload, t],
   );
 
-  const semesterName = payload ? displayNameOf(payload.y) : "";
+  const semesterName = payload
+    ? toSemesterName(displayNameOf(payload.y), t)
+    : "";
   const scheduleTitle =
-    payload?.t || (semesterName ? `${semesterName}課表` : "分享的課表");
+    payload?.t ||
+    (semesterName
+      ? t(`${semesterName}課表`, `${semesterName} schedule`)
+      : t("分享的課表", "Shared schedule"));
 
   // Importing writes into the viewer's own schedule, which holds exactly one
   // 學年期 — so a link from another semester stays viewable but not importable.
@@ -142,15 +150,24 @@ export const SharedSchedulePage = () => {
     if (!payload || ymsLoading) return null;
 
     if (defaultCode === null) {
-      return "目前無法確認學校的當前學期，暫時無法匯入這份課表。";
+      return t(
+        "目前無法確認學校的當前學期，暫時無法匯入這份課表。",
+        "The current semester can't be confirmed right now, so this schedule can't be imported.",
+      );
     }
 
     if (payload.y !== defaultCode) {
-      return `這份課表是 ${displayNameOf(payload.y)}的課程，並非目前學期（${displayNameOf(defaultCode)}），僅供檢視。`;
+      return t(
+        `這份課表是 ${displayNameOf(payload.y)}的課程，並非目前學期（${displayNameOf(defaultCode)}），僅供檢視。`,
+        `This schedule is for ${toSemesterName(displayNameOf(payload.y), t)}, not the current semester (${toSemesterName(displayNameOf(defaultCode), t)}), so it is view-only.`,
+      );
     }
 
     if (scheduleYms !== null && scheduleYms !== payload.y) {
-      return `你的課表屬於 ${displayNameOf(scheduleYms)}，請先到「我的課表」清空後再匯入。`;
+      return t(
+        `你的課表屬於 ${displayNameOf(scheduleYms)}，請先到「我的課表」清空後再匯入。`,
+        `Your schedule belongs to ${toSemesterName(displayNameOf(scheduleYms), t)}. Clear it in My Schedule before importing.`,
+      );
     }
 
     return null;
@@ -170,7 +187,7 @@ export const SharedSchedulePage = () => {
 
   const renderContent = () => {
     if (state.status === "loading") {
-      return <LoadingState label="分享的課表" />;
+      return <LoadingState label={t("分享的課表", "shared schedule")} />;
     }
 
     if (state.status === "invalid" || !payload) {
@@ -178,24 +195,33 @@ export const SharedSchedulePage = () => {
         <EmptyState
           action={
             <Link className="mt-2" href="/search">
-              前往課程查詢 →
+              {t("前往課程查詢 →", "Go to Course Search →")}
             </Link>
           }
-          description="連結可能被截斷或修改過，請向分享者索取完整的連結。"
-          title="分享連結無效或已損毀"
+          description={t(
+            "連結可能被截斷或修改過，請向分享者索取完整的連結。",
+            "The link may have been cut off or altered. Ask the sender for the full link.",
+          )}
+          title={t(
+            "分享連結無效或已損毀",
+            "This share link is invalid or damaged",
+          )}
         />
       );
     }
 
     // Only v2 links get here without their courses already in hand.
     if (needsCatalog && catalogLoading) {
-      return <LoadingState label="課程資料" />;
+      return <LoadingState label={t("課程資料", "course data")} />;
     }
 
     if (needsCatalog && catalogError) {
       return (
         <FetchError
-          message="無法載入這份課表的課程資料，請稍後再試。"
+          message={t(
+            "無法載入這份課表的課程資料，請稍後再試。",
+            "Couldn't load the course data for this schedule. Please try again later.",
+          )}
           onRetry={refetchCatalog}
         />
       );
@@ -206,11 +232,17 @@ export const SharedSchedulePage = () => {
         <EmptyState
           action={
             <Link className="mt-2" href="/search">
-              前往課程查詢 →
+              {t("前往課程查詢 →", "Go to Course Search →")}
             </Link>
           }
-          description="這份課表的課程可能已從該學年期下架，或該學年期尚未收錄。"
-          title="這份課表沒有可顯示的課程"
+          description={t(
+            "這份課表的課程可能已從該學年期下架，或該學年期尚未收錄。",
+            "Its courses may have been withdrawn, or that semester isn't available here yet.",
+          )}
+          title={t(
+            "這份課表沒有可顯示的課程",
+            "Nothing to show for this schedule",
+          )}
         />
       );
     }
@@ -221,13 +253,19 @@ export const SharedSchedulePage = () => {
             下架，或資料還沒更新 —— 不論哪種，少掉的課要講出來。 */}
         {missing > 0 && (
           <Notice icon={<InformationCircleIcon width={18} />}>
-            這份課表有 {missing} 門課查不到最新資料，未顯示在下方。
+            {t(
+              `這份課表有 ${missing} 門課查不到最新資料，未顯示在下方。`,
+              `${missing} course(s) in this schedule have no current data and are not shown below.`,
+            )}
           </Notice>
         )}
 
         {hasConflicts && (
           <Notice icon={<ExclamationTriangleIcon width={20} />} tone="danger">
-            這份課表中有時段衝突，請確認課表下方標示的衝堂課程。
+            {t(
+              "這份課表中有時段衝突，請確認課表下方標示的衝堂課程。",
+              "This schedule has time conflicts — see the courses marked below.",
+            )}
           </Notice>
         )}
 
@@ -261,7 +299,9 @@ export const SharedSchedulePage = () => {
         {mySlots.length > 0 && (
           <Card className="w-full">
             <Card.Header>
-              <h3 className={cardTitle()}>和我的課表比較</h3>
+              <h3 className={cardTitle()}>
+                {t("和我的課表比較", "Compare with My Schedule")}
+              </h3>
             </Card.Header>
             <Card.Content>
               <ScheduleCompare mine={mySlots} theirs={scheduleCourses} />
@@ -287,25 +327,34 @@ export const SharedSchedulePage = () => {
                     variant="primary"
                     onPress={handleImport}
                   >
-                    加入我的課表
+                    {t("加入我的課表", "Add to My Schedule")}
                   </Button>
                   <Link className="text-sm" href="/search">
-                    自己做一份 →
+                    {t("自己做一份 →", "Build your own →")}
                   </Link>
                 </div>
                 <p className="text-sm text-muted">
-                  匯入會把這些課程合併進你原本的課表，不會蓋掉既有的課程。
+                  {t(
+                    "匯入會把這些課程合併進你原本的課表，不會蓋掉既有的課程。",
+                    "Importing merges these courses into your schedule; nothing you already have is replaced.",
+                  )}
                 </p>
               </>
             ) : (
               <>
                 <p className="text-sm text-foreground">
                   {importedCount > 0
-                    ? `已加入 ${importedCount} 門課程到你的課表。`
-                    : "這些課程你的課表裡都已經有了。"}
+                    ? t(
+                        `已加入 ${importedCount} 門課程到你的課表。`,
+                        `Added ${importedCount} course(s) to your schedule.`,
+                      )
+                    : t(
+                        "這些課程你的課表裡都已經有了。",
+                        "All of these are already in your schedule.",
+                      )}
                 </p>
                 <Link className="text-sm" href="/my-schedule">
-                  前往我的課表 →
+                  {t("前往我的課表 →", "Go to My Schedule →")}
                 </Link>
               </>
             )}
@@ -322,10 +371,16 @@ export const SharedSchedulePage = () => {
           className="mb-6 max-w-5xl"
           description={
             payload
-              ? `別人分享的課表，唯讀檢視。${semesterName ? `學年期：${semesterName}。` : ""}`
-              : "別人分享的課表，唯讀檢視。"
+              ? t(
+                  `別人分享的課表，唯讀檢視。${semesterName ? `學年期：${semesterName}。` : ""}`,
+                  `A schedule someone shared with you (read-only).${semesterName ? ` Semester: ${semesterName}.` : ""}`,
+                )
+              : t(
+                  "別人分享的課表，唯讀檢視。",
+                  "A schedule someone shared with you (read-only).",
+                )
           }
-          title={payload?.t || "分享的課表"}
+          title={payload?.t || t("分享的課表", "Shared schedule")}
         />
         {renderContent()}
       </PageSection>

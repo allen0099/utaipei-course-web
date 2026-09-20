@@ -6,6 +6,13 @@ import {
   CampusLayout,
   FeatureShape,
 } from "@/components/floorplans/layout.ts";
+import { useLanguage } from "@/i18n/language.tsx";
+
+/** 拉丁字母的平均字寬約是字級的 0.55 倍；只用來判斷「放不放得下」。 */
+const LATIN_CHAR_WIDTH = 0.55;
+
+const latinWidth = (text: string, size: number) =>
+  text.length * size * LATIN_CHAR_WIDTH;
 
 export interface CampusMapProps {
   layout: CampusLayout;
@@ -59,6 +66,9 @@ const Feature = ({
   feature: FeatureShape;
   textSize: number;
 }) => {
+  const { language } = useLanguage();
+  const isEnglish = language === "en";
+  const label = (isEnglish && feature.labelEn) || feature.label;
   const { shape, inset = 0 } = feature;
   const center =
     shape.type === "ellipse"
@@ -100,12 +110,12 @@ const Feature = ({
           y={shape.y}
         />
       )}
-      {feature.verticalLabel ? (
+      {feature.verticalLabel && !isEnglish ? (
         <VerticalText
           centerY={center.y}
           className={labelClass}
           size={textSize}
-          text={feature.label}
+          text={label}
           x={center.x}
         />
       ) : (
@@ -113,10 +123,19 @@ const Feature = ({
           className={labelClass}
           fontSize={isParking ? textSize * 1.3 : textSize}
           textAnchor="middle"
+          // 一字一行的直排對英文沒有意義：窄長的場地橫排放得下就橫排，放不下
+          // 就整行轉 90 度。
+          transform={
+            feature.verticalLabel &&
+            shape.type === "rect" &&
+            latinWidth(label, textSize) > shape.width - 4
+              ? `rotate(-90 ${center.x} ${center.y})`
+              : undefined
+          }
           x={center.x}
           y={center.y + textSize * 0.38}
         >
-          {feature.label}
+          {label}
         </text>
       )}
     </g>
@@ -131,11 +150,28 @@ const BuildingLabel = ({
 }: {
   shape: BuildingShape;
   codes: string;
-  name: string;
+  /** null 表示不畫名稱那一行（英文名稱放不下時），只留代碼。 */
+  name: string | null;
   text: CampusLayout["text"];
 }) => {
   const cx = shape.x + shape.width / 2;
   const cy = shape.y + shape.height / 2;
+
+  if (name === null) {
+    const size = shape.verticalLabel ? text.code * 0.75 : text.code;
+
+    return (
+      <text
+        className="fill-current font-bold"
+        fontSize={size}
+        textAnchor="middle"
+        x={cx}
+        y={cy + size * 0.35}
+      >
+        {codes}
+      </text>
+    );
+  }
 
   if (shape.verticalLabel) {
     return (
@@ -209,11 +245,16 @@ export const CampusMap = ({
   onActiveChange,
   className,
 }: CampusMapProps) => {
+  const { language, t } = useLanguage();
+  const isEnglish = language === "en";
   const byId = new Map(buildings.map((building) => [building.id, building]));
 
   return (
     <svg
-      aria-label={`${layout.label}，上方為北`}
+      aria-label={t(
+        `${layout.label}，上方為北`,
+        `${layout.labelEn ?? layout.label}, north is up`,
+      )}
       className={clsx("h-full w-full select-none", className)}
       preserveAspectRatio="xMidYMid meet"
       role="group"
@@ -237,7 +278,8 @@ export const CampusMap = ({
           key={road.name}
           className="fill-stone-600 dark:fill-stone-400"
           fontSize={layout.text.road}
-          letterSpacing={layout.text.road * 0.2}
+          // 拉開字距是給中文路名的；英文照樣拉會散成一個個字母。
+          letterSpacing={isEnglish ? undefined : layout.text.road * 0.2}
           textAnchor="middle"
           transform={
             road.label.rotate
@@ -247,7 +289,7 @@ export const CampusMap = ({
           x={road.label.x}
           y={road.label.y + layout.text.road * 0.35}
         >
-          {road.name}
+          {(isEnglish && road.nameEn) || road.name}
         </text>
       ))}
 
@@ -286,8 +328,20 @@ export const CampusMap = ({
 
         if (matched.length === 0) return null;
 
-        const codes = matched.map((item) => item.code).join("・");
-        const name = shape.labelOverride ?? matched[0].name;
+        const codes = matched
+          .map((item) => item.code)
+          .join(isEnglish ? "/" : "・");
+        const name = isEnglish
+          ? (shape.labelOverrideEn ?? matched[0].nameEn)
+          : (shape.labelOverride ?? matched[0].name);
+        // 英文名稱比中文長得多：直排的建築不畫、橫排的也只在放得下時才畫。
+        // 完整名稱永遠在 <title> 與 aria-label 裡，旁邊的清單也有。
+        const visibleName =
+          isEnglish &&
+          (shape.verticalLabel ||
+            latinWidth(name, layout.text.name) > shape.width - 8)
+            ? null
+            : name;
         const isActive =
           activeBuilding !== null && ids.includes(activeBuilding);
         const isDimmed = activeBuilding !== null && !isActive;
@@ -296,7 +350,10 @@ export const CampusMap = ({
           <g
             key={shape.id}
             aria-current={isActive || undefined}
-            aria-label={`${name}，代碼 ${matched.map((item) => item.code).join("、")}`}
+            aria-label={t(
+              `${name}，代碼 ${matched.map((item) => item.code).join("、")}`,
+              `${name}, code ${matched.map((item) => item.code).join(", ")}`,
+            )}
             className={clsx(
               "cursor-pointer outline-none transition-opacity",
               isActive ? "text-white" : "text-slate-800 dark:text-slate-100",
@@ -317,7 +374,7 @@ export const CampusMap = ({
               if (event.pointerType === "mouse") onActiveChange(null);
             }}
           >
-            <title>{`${name}（${codes}）`}</title>
+            <title>{t(`${name}（${codes}）`, `${name} (${codes})`)}</title>
             <rect
               className={clsx(
                 "transition-colors",
@@ -334,7 +391,7 @@ export const CampusMap = ({
             />
             <BuildingLabel
               codes={codes}
-              name={name}
+              name={visibleName}
               shape={shape}
               text={layout.text}
             />

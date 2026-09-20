@@ -7,6 +7,7 @@ import MySchedulePage from "@/pages/my-schedule.tsx";
 import NotFoundPage from "@/pages/not-found";
 import ErrorBoundary from "@/components/error-boundary.tsx";
 import { LoadingState } from "@/components/states.tsx";
+import { useT } from "@/i18n/language.tsx";
 
 // 首頁、課程查詢、我的課表是絕大多數造訪的落點，留在主 bundle 裡，第一個畫面
 // 不必多等一個 chunk。其餘各頁用到才載 —— 校園地圖的樓層 SVG 與行事曆月曆不該
@@ -22,6 +23,7 @@ const LocationSearchPage = lazy(() => import("@/pages/schedules/location.tsx"));
 const FreeRoomsPage = lazy(() => import("@/pages/schedules/free-rooms.tsx"));
 
 function App() {
+  const t = useT();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,7 +50,9 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <Suspense fallback={<LoadingState className="py-24" label="頁面" />}>
+      <Suspense
+        fallback={<LoadingState className="py-24" label={t("頁面", "page")} />}
+      >
         <Routes>
           <Route element={<IndexPage />} path="/" />
           <Route element={<CalendarPage />} path="/calendar" />

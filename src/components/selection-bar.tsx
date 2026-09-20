@@ -3,6 +3,7 @@ import { Link } from "@heroui/react";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 import { useWishlist } from "@/contexts/wishlist-context.tsx";
 import { DISCLAIMER_OFFSET_VAR } from "@/components/disclaimer.tsx";
+import { useT } from "@/i18n/language.tsx";
 
 /**
  * 「已選 N 門課程」的常駐列。
@@ -16,6 +17,7 @@ import { DISCLAIMER_OFFSET_VAR } from "@/components/disclaimer.tsx";
 export const SelectionBar = () => {
   const { selectedCourses } = useSelectedCourses();
   const { wishlist } = useWishlist();
+  const t = useT();
 
   if (selectedCourses.length === 0 && wishlist.length === 0) return null;
 
@@ -39,11 +41,15 @@ export const SelectionBar = () => {
       >
         <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-border bg-surface px-5 py-2.5 shadow-lg">
           <span className="text-sm font-medium">
-            已選 {selectedCourses.length} 門課程
-            {wishlist.length > 0 && `・收藏 ${wishlist.length} 門`}
+            {t(
+              `已選 ${selectedCourses.length} 門課程`,
+              `${selectedCourses.length} selected`,
+            )}
+            {wishlist.length > 0 &&
+              t(`・收藏 ${wishlist.length} 門`, ` · ${wishlist.length} saved`)}
           </span>
           <Link className="text-sm whitespace-nowrap" href="/my-schedule">
-            前往我的課表 →
+            {t("前往我的課表 →", "Go to My Schedule →")}
           </Link>
         </div>
       </div>

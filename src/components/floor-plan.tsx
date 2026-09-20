@@ -4,6 +4,7 @@ import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
 
 import { sectionTitle } from "@/components/primitives.ts";
 import { Panel } from "@/components/panel.tsx";
+import { useT } from "@/i18n/language.tsx";
 
 interface CampusFloorPlanProps {
   title: string;
@@ -20,6 +21,7 @@ export function CampusFloorPlan({
   className,
 }: CampusFloorPlanProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const t = useT();
 
   return (
     <Panel className={className}>
@@ -33,7 +35,7 @@ export function CampusFloorPlan({
       <div className="mb-3 flex justify-center">
         <Button size="sm" variant="secondary" onPress={() => setIsOpen(true)}>
           <ArrowsPointingOutIcon className="size-4" />
-          放大檢視
+          {t("放大檢視", "Enlarge")}
         </Button>
       </div>
       <div className={`relative w-full max-h-[80vh] ${aspect}`}>{children}</div>
@@ -50,7 +52,7 @@ export function CampusFloorPlan({
               </Modal.Body>
               <Modal.Footer>
                 <Button variant="primary" onPress={() => setIsOpen(false)}>
-                  關閉
+                  {t("關閉", "Close")}
                 </Button>
               </Modal.Footer>
             </Modal.Dialog>

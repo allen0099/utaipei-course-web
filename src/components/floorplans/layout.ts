@@ -22,11 +22,15 @@ export interface BuildingShape {
   verticalLabel?: boolean;
   /** 取代代碼表名稱的顯示文字（例如合併後的「行政科資大樓」）。 */
   labelOverride?: string;
+  /** labelOverride 的英文版；英文介面沒有它就退回代碼表的 nameEn。 */
+  labelOverrideEn?: string;
 }
 
 /** 不可選取的場地：球場、草坪、停車場。只是幫人對位置用的地標。 */
 export interface FeatureShape {
   label: string;
+  /** 英文介面用的標籤；沒給就沿用 label（例如停車場的「P」）。 */
+  labelEn?: string;
   tone: "grass" | "court" | "track" | "parking";
   shape:
     | { type: "rect"; x: number; y: number; width: number; height: number }
@@ -38,6 +42,8 @@ export interface FeatureShape {
 
 export interface RoadShape {
   name: string;
+  /** 英文介面用的路名。 */
+  nameEn?: string;
   /** 路的中心線，畫成一條粗線。 */
   path: string;
   width: number;
@@ -48,6 +54,7 @@ export interface RoadShape {
 export interface CampusLayout {
   /** 給螢幕閱讀器的名稱，例如「博愛校區平面圖」。 */
   label: string;
+  labelEn?: string;
   viewBox: { width: number; height: number };
   /** 校地輪廓（path 的 d）。 */
   ground: string;

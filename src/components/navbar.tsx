@@ -10,7 +10,7 @@ import clsx from "clsx";
 import { NavItem, siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { OPEN_PALETTE_EVENT } from "@/components/command-palette.tsx";
-import { useLanguage } from "@/i18n/language.tsx";
+import { useLanguage, useT } from "@/i18n/language.tsx";
 
 /** 按鈕上寫的是「會切過去的那個語言」，而且用那個語言寫：看不懂目前介面的人
  * 才認得出這顆是給他的。 */
@@ -31,21 +31,25 @@ const LanguageSwitch = () => {
   );
 };
 
-const SearchButton = ({ showShortcut }: { showShortcut?: boolean }) => (
-  <button
-    aria-label="全站搜尋"
-    className="flex items-center gap-2 rounded-md p-2 text-sm text-muted hover:bg-surface-secondary hover:text-foreground"
-    type="button"
-    onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE_EVENT))}
-  >
-    <MagnifyingGlassIcon className="size-5" />
-    {showShortcut && (
-      <kbd className="rounded border border-border px-1.5 py-0.5 text-xs">
-        Ctrl K
-      </kbd>
-    )}
-  </button>
-);
+const SearchButton = ({ showShortcut }: { showShortcut?: boolean }) => {
+  const t = useT();
+
+  return (
+    <button
+      aria-label={t("全站搜尋", "Search the site")}
+      className="flex items-center gap-2 rounded-md p-2 text-sm text-muted hover:bg-surface-secondary hover:text-foreground"
+      type="button"
+      onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE_EVENT))}
+    >
+      <MagnifyingGlassIcon className="size-5" />
+      {showShortcut && (
+        <kbd className="rounded border border-border px-1.5 py-0.5 text-xs">
+          Ctrl K
+        </kbd>
+      )}
+    </button>
+  );
+};
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   clsx(
@@ -63,21 +67,26 @@ const NavItemLink = ({
   item: NavItem;
   className?: string;
   onNavigate?: () => void;
-}) => (
-  <NavLink
-    // `end` matters for "/" — without it NavLink treats the root as a prefix
-    // match and 首頁 stays highlighted on every route.
-    className={(state) => clsx(linkClass(state), className)}
-    end={item.href === "/"}
-    to={item.href}
-    onClick={onNavigate}
-  >
-    {item.label}
-  </NavLink>
-);
+}) => {
+  const t = useT();
+
+  return (
+    <NavLink
+      // `end` matters for "/" — without it NavLink treats the root as a prefix
+      // match and 首頁 stays highlighted on every route.
+      className={(state) => clsx(linkClass(state), className)}
+      end={item.href === "/"}
+      to={item.href}
+      onClick={onNavigate}
+    >
+      {t(item.label, item.labelEn)}
+    </NavLink>
+  );
+};
 
 export const Navbar = () => {
   const { pathname } = useLocation();
+  const t = useT();
   // 記「在哪一頁打開的」而不是一個布林值：換了頁這個值就對不上，選單自然是關
   // 的。選單裡的連結點了會自己收，但瀏覽器上一頁、Ctrl+K 跳頁不會經過它們 ——
   // 用推導的就不需要另外寫一個 effect 去同步。
@@ -112,7 +121,7 @@ export const Navbar = () => {
                 className="w-8 h-8 object-contain"
                 src="/CatMeow.png"
               />
-              <span>{siteConfig.name}</span>
+              <span>{t(siteConfig.name, "UTaipei Course Helper")}</span>
             </NavLink>
             {/* Desktop nav: 首頁 plus one dropdown per group, so every route is
                 reachable without the bar overflowing. */}
@@ -136,22 +145,22 @@ export const Navbar = () => {
                       )}
                       variant="ghost"
                     >
-                      {group.label}
+                      {t(group.label, group.labelEn)}
                       <ChevronDownIcon
                         aria-hidden="true"
                         className="size-3.5"
                       />
                     </Button>
                     <Dropdown.Popover>
-                      <Dropdown.Menu aria-label={group.label}>
+                      <Dropdown.Menu aria-label={t(group.label, group.labelEn)}>
                         {group.items.map((item) => (
                           <Dropdown.Item
                             key={item.href}
                             href={item.href}
                             id={item.href}
-                            textValue={item.label}
+                            textValue={t(item.label, item.labelEn)}
                           >
-                            <Label>{item.label}</Label>
+                            <Label>{t(item.label, item.labelEn)}</Label>
                           </Dropdown.Item>
                         ))}
                       </Dropdown.Menu>
@@ -178,7 +187,11 @@ export const Navbar = () => {
             <ThemeSwitch />
             <button
               aria-expanded={menuOpen}
-              aria-label={menuOpen ? "關閉選單" : "開啟選單"}
+              aria-label={
+                menuOpen
+                  ? t("關閉選單", "Close menu")
+                  : t("開啟選單", "Open menu")
+              }
               className="p-2 rounded-md text-foreground hover:bg-surface-secondary"
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -221,7 +234,7 @@ export const Navbar = () => {
           {siteConfig.navGroups.map((group) => (
             <div key={group.label} className="flex flex-col gap-2">
               <p className="text-xs font-medium tracking-wide text-muted">
-                {group.label}
+                {t(group.label, group.labelEn)}
               </p>
               {group.items.map((item) => (
                 <NavItemLink

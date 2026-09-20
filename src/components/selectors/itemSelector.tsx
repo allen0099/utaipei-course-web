@@ -1,6 +1,8 @@
 import { Key } from "@react-types/shared";
 import { ComboBox, Input, Label, ListBox } from "@heroui/react";
 
+import { useT } from "@/i18n/language.tsx";
+
 type ItemElement = {
   code: string;
   name: string;
@@ -25,6 +27,7 @@ type SelectorProps<T extends ItemElement> = {
 
 export const ItemSelector = (props: SelectorProps<any>) => {
   const { items, label, placeholder, selectedKey, onChange, className } = props;
+  const t = useT();
   // Derived directly from props; no need to mirror it into state.
   const disabled = items.length === 0;
 
@@ -47,7 +50,7 @@ export const ItemSelector = (props: SelectorProps<any>) => {
     >
       <Label>{label}</Label>
       <ComboBox.InputGroup>
-        <Input placeholder={placeholder || "請選擇..."} />
+        <Input placeholder={placeholder || t("請選擇...", "Select…")} />
         <ComboBox.Trigger />
       </ComboBox.InputGroup>
       <ComboBox.Popover>

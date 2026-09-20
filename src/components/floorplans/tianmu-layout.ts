@@ -15,30 +15,35 @@ import { CampusLayout } from "@/components/floorplans/layout.ts";
  */
 export const TIANMU_LAYOUT: CampusLayout = {
   label: "天母校區平面圖",
+  labelEn: "Tianmu Campus map",
   viewBox: { width: 1000, height: 760 },
   ground:
     "M478 182 L772 208 L748 582 L600 605 L160 652 C175 560 230 410 300 330 C360 260 420 215 478 182 Z",
   roads: [
     {
       name: "忠誠路二段",
+      nameEn: "Zhongcheng Rd. Sec. 2",
       path: "M118 700 C135 570 195 400 268 312 C335 236 410 186 500 120",
       width: 46,
       label: { x: 232, y: 372, rotate: -58 },
     },
     {
       name: "忠誠路二段 207 巷",
+      nameEn: "Ln. 207, Zhongcheng Rd. Sec. 2",
       path: "M452 156 L830 190",
       width: 34,
       label: { x: 640, y: 173, rotate: 5 },
     },
     {
       name: "東山路",
+      nameEn: "Dongshan Rd.",
       path: "M838 120 L806 640",
       width: 44,
       label: { x: 822, y: 400, rotate: 93 },
     },
     {
       name: "士東路",
+      nameEn: "Shidong Rd.",
       path: "M60 690 L600 636 L900 590",
       width: 46,
       label: { x: 420, y: 654, rotate: -6 },
@@ -47,23 +52,27 @@ export const TIANMU_LAYOUT: CampusLayout = {
   features: [
     {
       label: "多功能草坪",
+      labelEn: "Lawn",
       tone: "grass",
       verticalLabel: true,
       shape: { type: "rect", x: 438, y: 312, width: 88, height: 146 },
     },
     {
       label: "棒球場",
+      labelEn: "Baseball field",
       tone: "grass",
       shape: { type: "ellipse", cx: 318, cy: 548, rx: 88, ry: 80 },
     },
     {
       label: "籃球場",
+      labelEn: "Basketball",
       tone: "court",
       verticalLabel: true,
       shape: { type: "rect", x: 426, y: 496, width: 60, height: 76 },
     },
     {
       label: "網球場",
+      labelEn: "Tennis",
       tone: "court",
       shape: { type: "rect", x: 498, y: 530, width: 130, height: 54 },
     },
@@ -85,6 +94,7 @@ export const TIANMU_LAYOUT: CampusLayout = {
       id: "Tianmu-Administration-Building",
       aliases: ["Science-Info-Building"],
       labelOverride: "行政科資大樓",
+      labelOverrideEn: "Administration / Science & Information Building",
       x: 714,
       y: 212,
       width: 46,

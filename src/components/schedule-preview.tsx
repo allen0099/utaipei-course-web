@@ -5,6 +5,8 @@ import clsx from "clsx";
 import { WeeklyScheduleCourse } from "@/interfaces/globals.ts";
 import { COURSE_COLORS } from "@/components/weekly-schedule.tsx";
 import { loadCourseColors } from "@/utils/course-colors.ts";
+import { useT } from "@/i18n/language.tsx";
+import { dayName } from "@/i18n/terms.ts";
 
 const DAY_LABELS = ["一", "二", "三", "四", "五", "六", "日"];
 const PERIODS = Array.from({ length: 14 }, (_, index) => index + 1);
@@ -67,6 +69,7 @@ export const SchedulePreview = ({
   readOnly = false,
   className,
 }: SchedulePreviewProps) => {
+  const t = useT();
   const [showWeekendPicked, setShowWeekend] = useState(false);
 
   // 週末平常收起來，但只要有任何東西落在週末（已選的課、預覽、篩選）就一定
@@ -120,7 +123,7 @@ export const SchedulePreview = ({
             key={day}
             className="bg-surface-secondary py-1 text-center font-medium"
           >
-            {DAY_LABELS[day]}
+            {t(DAY_LABELS[day], dayName(day, t))}
           </div>
         ))}
 
@@ -145,17 +148,31 @@ export const SchedulePreview = ({
                 occupies(slot, day, period),
               );
               const label = [
-                `週${DAY_LABELS[day]}第 ${period} 節`,
+                t(
+                  `週${DAY_LABELS[day]}第 ${period} 節`,
+                  `${dayName(day, t)}, period ${period}`,
+                ),
                 own.length > 0
-                  ? `已選：${own.map((slot) => slot.name).join("、")}`
-                  : "空堂",
+                  ? t(
+                      `已選：${own.map((slot) => slot.name).join("、")}`,
+                      `Scheduled: ${own.map((slot) => slot.name).join(", ")}`,
+                    )
+                  : t("空堂", "free"),
                 wishedHere.length > 0
-                  ? `收藏：${wishedHere.map((slot) => slot.name).join("、")}`
+                  ? t(
+                      `收藏：${wishedHere.map((slot) => slot.name).join("、")}`,
+                      `Saved: ${wishedHere.map((slot) => slot.name).join(", ")}`,
+                    )
                   : "",
-                isPicked ? "已設為時段篩選" : "點選以篩選這個時段的課",
+                isPicked
+                  ? t("已設為時段篩選", "used as a time filter")
+                  : t(
+                      "點選以篩選這個時段的課",
+                      "click to filter courses in this slot",
+                    ),
               ]
                 .filter(Boolean)
-                .join("，");
+                .join(t("，", "; "));
 
               const Cell = readOnly ? "div" : "button";
 
@@ -219,20 +236,33 @@ export const SchedulePreview = ({
                 : "text-blue-700 dark:text-blue-300"
             }
           >
-            {previewConflicts ? "衝堂：" : "預覽："}
+            {previewConflicts
+              ? t("衝堂：", "Time conflict: ")
+              : t("預覽：", "Preview: ")}
             {previewName}
           </span>
         ) : previewName ? (
-          <span className="text-muted">{previewName} 沒有排定上課時間</span>
+          <span className="text-muted">
+            {t(
+              `${previewName} 沒有排定上課時間`,
+              `${previewName} has no scheduled time`,
+            )}
+          </span>
         ) : idleHint ? (
           <span className="text-muted">{idleHint}</span>
         ) : (
           <span className="text-muted">
             {/* 觸控裝置沒有 hover，別提一個做不到的操作。 */}
             <span className="[@media(hover:none)]:hidden">
-              滑過結果可預覽時段，
+              {t(
+                "滑過結果可預覽時段，",
+                "Hover a result to preview its time. ",
+              )}
             </span>
-            點格子可篩選該時段的課。
+            {t(
+              "點格子可篩選該時段的課。",
+              "Click a cell to filter courses in that slot.",
+            )}
           </span>
         )}
       </p>
@@ -244,7 +274,10 @@ export const SchedulePreview = ({
       >
         {selectedSlots.size > 0 && (
           <Button size="sm" variant="tertiary" onPress={onClearSlots}>
-            清除時段（{selectedSlots.size}）
+            {t(
+              `清除時段（${selectedSlots.size}）`,
+              `Clear slots (${selectedSlots.size})`,
+            )}
           </Button>
         )}
         {!weekendInUse && (
@@ -253,7 +286,9 @@ export const SchedulePreview = ({
             variant="ghost"
             onPress={() => setShowWeekend((value) => !value)}
           >
-            {showWeekendPicked ? "隱藏週末" : "顯示週末"}
+            {showWeekendPicked
+              ? t("隱藏週末", "Hide weekend")
+              : t("顯示週末", "Show weekend")}
           </Button>
         )}
       </div>

@@ -33,6 +33,8 @@ import { Notice } from "@/components/states.tsx";
 import ImagePreviewModal from "@/components/image-preview-modal";
 import { sectionTitle } from "@/components/primitives.ts";
 import { downloadBlob } from "@/utils/download.ts";
+import { useT } from "@/i18n/language.tsx";
+import { dayName, periodLabel } from "@/i18n/terms.ts";
 import {
   CourseColorOverrides,
   loadCourseColors,
@@ -223,7 +225,11 @@ export const DEFAULT_CAMPUS_MAPPINGS: CampusTimeMapping[] = [
   },
 ];
 
-const DAY_NAMES = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
+// 校區名稱是與 ICS 匯出共用的資料，維持中文；顯示時才翻。
+const CAMPUS_NAMES_EN: Record<string, string> = {
+  博愛校區: "Bo'ai Campus",
+  天母校區: "Tianmu Campus",
+};
 
 // Schedule settings interface
 interface ScheduleSettings {
@@ -309,7 +315,7 @@ export const COURSE_COLORS = [
 ];
 
 export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
-  scheduleTitle = "週課表",
+  scheduleTitle: scheduleTitleProp,
   courses = [],
   campusTimeMappings = DEFAULT_CAMPUS_MAPPINGS,
   selectedCampus = "main",
@@ -321,6 +327,10 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
   onEmptySlotPress,
   customizableColors = false,
 }) => {
+  const t = useT();
+  const scheduleTitle = scheduleTitleProp ?? t("週課表", "Weekly Schedule");
+  const campusName = (name: string) => t(name, CAMPUS_NAMES_EN[name] ?? name);
+
   const [colorOverrides, setColorOverrides] = useState<CourseColorOverrides>(
     () => (customizableColors ? loadCourseColors() : {}),
   );
@@ -537,7 +547,7 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
   };
 
   const getVisibleDays = () =>
-    getVisibleDayIndices().map((day) => DAY_NAMES[day]);
+    getVisibleDayIndices().map((day) => dayName(day, t));
 
   // Filter periods based on settings
   const getVisiblePeriods = () => {
@@ -577,12 +587,15 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
       >
         {isEmpty && onEmptySlotPress && (
           <button
-            aria-label={`${DAY_NAMES[day]}第 ${period} 節是空堂，查詢這個時段的課`}
+            aria-label={t(
+              `${dayName(day, t)}第 ${period} 節是空堂，查詢這個時段的課`,
+              `${dayName(day, t)} period ${period} is free. Find courses in this slot`,
+            )}
             className="absolute inset-0 flex items-center justify-center text-xs text-muted opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100"
             type="button"
             onClick={() => onEmptySlotPress(day, period)}
           >
-            找課
+            {t("找課", "Find")}
           </button>
         )}
         {coursesInSlot.length > 0 && (
@@ -596,7 +609,10 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
               return (
                 <button
                   key={course.id}
-                  aria-label={`${course.name}，${course.teacher}，查看課程詳情`}
+                  aria-label={t(
+                    `${course.name}，${course.teacher}，查看課程詳情`,
+                    `${course.name}, ${course.teacher}. View course details`,
+                  )}
                   className={clsx(
                     "flex-1 w-full rounded-md p-2 border-2 text-left text-xs transition-all duration-200 cursor-pointer relative",
                     courseColorMap[course.code] || COURSE_COLORS[0],
@@ -665,15 +681,19 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
             className="bg-surface-secondary p-2 border-r border-border"
             role="columnheader"
           >
-            <div className="text-xs font-semibold text-center">時間</div>
+            <div className="text-xs font-semibold text-center">
+              {t("時間", "Time")}
+            </div>
           </div>
-          {visibleDays.map((dayName, visibleIndex) => (
+          {visibleDays.map((dayLabel, visibleIndex) => (
             <div
               key={visibleIndex}
               className="bg-surface-secondary p-2 border-r border-border last:border-r-0"
               role="columnheader"
             >
-              <div className="text-xs font-semibold text-center">{dayName}</div>
+              <div className="text-xs font-semibold text-center">
+                {dayLabel}
+              </div>
             </div>
           ))}
         </div>
@@ -690,7 +710,9 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
               role="rowheader"
             >
               <div className="text-xs text-center">
-                <div className="font-medium">{timeInfo.label}</div>
+                <div className="font-medium">
+                  {periodLabel(timeInfo.label, t)}
+                </div>
                 {!settings.hideTimeLabel && (
                   <>
                     <div className="text-xs opacity-70">
@@ -734,11 +756,13 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
     );
     const endInfo = currentMapping.periods.find((p) => p.period === endPeriod);
 
-    const startLabel = startInfo?.label ?? `第 ${course.period} 節`;
+    const startLabel = periodLabel(
+      startInfo?.label ?? `第 ${course.period} 節`,
+      t,
+    );
+    const endLabel = periodLabel(endInfo?.label ?? `第 ${endPeriod} 節`, t);
     const periodText =
-      duration > 1
-        ? `${startLabel} ～ ${endInfo?.label ?? `第 ${endPeriod} 節`}`
-        : startLabel;
+      duration > 1 ? `${startLabel} ${t("～", "–")} ${endLabel}` : startLabel;
 
     if (settings.hideTimeLabel || !startInfo || !endInfo) {
       return periodText;
@@ -787,7 +811,9 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
         {/* Course list for the selected day */}
         {dayCourses.length === 0 ? (
           <div className="text-center py-10 text-muted">
-            <p className="text-sm">這天沒有課程</p>
+            <p className="text-sm">
+              {t("這天沒有課程", "No classes on this day")}
+            </p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -858,43 +884,52 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
                   </Modal.Header>
                   <Modal.Body>
                     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-                      <dt className="text-muted">選課代碼</dt>
+                      <dt className="text-muted">
+                        {t("選課代碼", "Course code")}
+                      </dt>
                       <dd>{course.code}</dd>
                       {course.teacher && (
                         <>
-                          <dt className="text-muted">教師</dt>
+                          <dt className="text-muted">
+                            {t("教師", "Instructor")}
+                          </dt>
                           <dd>{course.teacher}</dd>
                         </>
                       )}
                       {course.class && (
                         <>
-                          <dt className="text-muted">班級</dt>
+                          <dt className="text-muted">{t("班級", "Class")}</dt>
                           <dd>{course.class}</dd>
                         </>
                       )}
                       {course.classroom && (
                         <>
-                          <dt className="text-muted">教室</dt>
+                          <dt className="text-muted">{t("教室", "Room")}</dt>
                           <dd>{course.classroom}</dd>
                         </>
                       )}
-                      <dt className="text-muted">時間</dt>
+                      <dt className="text-muted">{t("時間", "Time")}</dt>
                       <dd className="flex flex-col gap-0.5">
                         {slots.map((slot) => (
                           <span key={slot.id}>
-                            {DAY_NAMES[slot.day]} {getCourseTimeLabel(slot)}
+                            {dayName(slot.day, t)} {getCourseTimeLabel(slot)}
                           </span>
                         ))}
                       </dd>
                     </dl>
                     {customizableColors && (
                       <div className="mt-4">
-                        <p className="mb-2 text-sm text-muted">顏色</p>
+                        <p className="mb-2 text-sm text-muted">
+                          {t("顏色", "Colour")}
+                        </p>
                         <div className="flex flex-wrap gap-1.5">
                           {COURSE_COLORS.map((color, index) => (
                             <button
                               key={index}
-                              aria-label={`顏色 ${index + 1}`}
+                              aria-label={t(
+                                `顏色 ${index + 1}`,
+                                `Colour ${index + 1}`,
+                              )}
                               aria-pressed={
                                 courseColorMap[course.code] === color
                               }
@@ -914,7 +949,7 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
                               variant="ghost"
                               onPress={() => setCourseColor(course.code, null)}
                             >
-                              還原預設
+                              {t("還原預設", "Reset to default")}
                             </Button>
                           )}
                         </div>
@@ -923,14 +958,17 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
                     {conflictCourseCodeSet.has(course.code) && (
                       <p className="mt-3 flex items-center gap-1 text-sm text-danger">
                         <ExclamationTriangleIcon width={16} />
-                        這門課與其他已選課程衝堂
+                        {t(
+                          "這門課與其他已選課程衝堂",
+                          "This course has a time conflict with another selected course",
+                        )}
                       </p>
                     )}
                   </Modal.Body>
                   <Modal.Footer>
                     {renderCourseActions?.(course.code, close)}
                     <Button variant="tertiary" onPress={close}>
-                      關閉
+                      {t("關閉", "Close")}
                     </Button>
                   </Modal.Footer>
                 </>
@@ -969,7 +1007,9 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
                 The Switch also carried no accessible name at all, so screen
                 readers announced an unlabelled switch. */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted">節次時間</span>
+              <span className="text-xs text-muted">
+                {t("節次時間", "Period times")}
+              </span>
               <span
                 className={clsx(
                   "text-sm",
@@ -978,10 +1018,13 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
                     : "text-muted",
                 )}
               >
-                {campusTimeMappings[0]?.name ?? "博愛校區"}
+                {campusName(campusTimeMappings[0]?.name ?? "博愛校區")}
               </span>
               <Switch
-                aria-label={`切換節次時間對應的校區，目前為${currentMapping.name}`}
+                aria-label={t(
+                  `切換節次時間對應的校區，目前為${currentMapping.name}`,
+                  `Switch which campus the period times follow. Currently ${campusName(currentMapping.name)}`,
+                )}
                 isSelected={currentCampus === "secondary"}
                 size="md"
                 onChange={(checked) => handleCampusChange(checked)}
@@ -1000,7 +1043,7 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
                     : "text-muted",
                 )}
               >
-                {campusTimeMappings[1]?.name ?? "天母校區"}
+                {campusName(campusTimeMappings[1]?.name ?? "天母校區")}
               </span>
             </div>
 
@@ -1014,7 +1057,10 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button
-                    aria-label="下載 ICS 行事曆檔案"
+                    aria-label={t(
+                      "下載 ICS 行事曆檔案",
+                      "Download .ics calendar file",
+                    )}
                     className="shadow-lg"
                     isIconOnly={!isMobileViewport}
                     size="sm"
@@ -1022,15 +1068,17 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
                     onPress={handleICSDownload}
                   >
                     <CalendarDaysIcon width="20" />
-                    {isMobileViewport && <span>行事曆</span>}
+                    {isMobileViewport && <span>{t("行事曆", "Calendar")}</span>}
                   </Button>
                 </Tooltip.Trigger>
-                <Tooltip.Content>下載 ICS 檔案</Tooltip.Content>
+                <Tooltip.Content>
+                  {t("下載 ICS 檔案", "Download .ics")}
+                </Tooltip.Content>
               </Tooltip>
               <Tooltip>
                 <Tooltip.Trigger>
                   <Button
-                    aria-label="將課表另存為圖片"
+                    aria-label={t("將課表另存為圖片", "Save schedule as image")}
                     className="shadow-lg"
                     isIconOnly={!isMobileViewport}
                     size="sm"
@@ -1038,10 +1086,12 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
                     onPress={handleImageDownload}
                   >
                     <PhotoIcon width="20" />
-                    {isMobileViewport && <span>圖片</span>}
+                    {isMobileViewport && <span>{t("圖片", "Image")}</span>}
                   </Button>
                 </Tooltip.Trigger>
-                <Tooltip.Content>另存圖片</Tooltip.Content>
+                <Tooltip.Content>
+                  {t("另存圖片", "Save as image")}
+                </Tooltip.Content>
               </Tooltip>
 
               <Dropdown>
@@ -1051,16 +1101,19 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
                 <Tooltip>
                   <Tooltip.Trigger>
                     <Button
-                      aria-label="課表顯示設定"
+                      aria-label={t(
+                        "課表顯示設定",
+                        "Schedule display settings",
+                      )}
                       isIconOnly={!isMobileViewport}
                       size="sm"
                       variant="secondary"
                     >
                       <Cog6ToothIcon width="20" />
-                      {isMobileViewport && <span>設定</span>}
+                      {isMobileViewport && <span>{t("設定", "Settings")}</span>}
                     </Button>
                   </Tooltip.Trigger>
-                  <Tooltip.Content>設定</Tooltip.Content>
+                  <Tooltip.Content>{t("設定", "Settings")}</Tooltip.Content>
                 </Tooltip>
                 <Dropdown.Popover>
                   <Dropdown.Menu
@@ -1076,29 +1129,38 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
                       }
                     }}
                   >
-                    <Dropdown.Item id="hide-weekend" textValue="隱藏周末">
+                    <Dropdown.Item
+                      id="hide-weekend"
+                      textValue={t("隱藏周末", "Hide weekend")}
+                    >
                       {settings.hideWeekend ? (
                         <CheckCircleIcon width="20" />
                       ) : (
                         <XCircleIcon width="20" />
                       )}
-                      <Label>隱藏周末</Label>
+                      <Label>{t("隱藏周末", "Hide weekend")}</Label>
                     </Dropdown.Item>
-                    <Dropdown.Item id="hide-night" textValue="隱藏晚上">
+                    <Dropdown.Item
+                      id="hide-night"
+                      textValue={t("隱藏晚上", "Hide evening")}
+                    >
                       {settings.hideNight ? (
                         <CheckCircleIcon width="20" />
                       ) : (
                         <XCircleIcon width="20" />
                       )}
-                      <Label>隱藏晚上</Label>
+                      <Label>{t("隱藏晚上", "Hide evening")}</Label>
                     </Dropdown.Item>
-                    <Dropdown.Item id="hide-time-label" textValue="隱藏時間">
+                    <Dropdown.Item
+                      id="hide-time-label"
+                      textValue={t("隱藏時間", "Hide times")}
+                    >
                       {settings.hideTimeLabel ? (
                         <CheckCircleIcon width="20" />
                       ) : (
                         <XCircleIcon width="20" />
                       )}
-                      <Label>隱藏時間</Label>
+                      <Label>{t("隱藏時間", "Hide times")}</Label>
                     </Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown.Popover>
@@ -1113,13 +1175,16 @@ export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
       <Card.Content>
         {imageError && (
           <Notice className="mb-4" tone="danger">
-            課表圖片產生失敗。可以再試一次，或改用瀏覽器的截圖功能。
+            {t(
+              "課表圖片產生失敗。可以再試一次，或改用瀏覽器的截圖功能。",
+              "Couldn't generate the schedule image. Try again, or take a screenshot with your browser instead.",
+            )}
           </Notice>
         )}
         {courses.length === 0 ? (
           <div className="text-center py-8 text-muted">
-            <p>沒有課程資料</p>
-            <p className="text-sm">請重新查詢</p>
+            <p>{t("沒有課程資料", "No course data")}</p>
+            <p className="text-sm">{t("請重新查詢", "Please search again")}</p>
           </div>
         ) : (
           <>

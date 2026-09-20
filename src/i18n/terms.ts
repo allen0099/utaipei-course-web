@@ -25,3 +25,14 @@ export const semesterName = (displayName: string, t: Translate): string =>
       "AY $1, Semester $2",
     ),
   );
+
+const CAMPUS_EN: Record<string, string> = {
+  博愛校區: "Bo'ai Campus",
+  天母校區: "Tianmu Campus",
+  博愛: "Bo'ai",
+  天母: "Tianmu",
+};
+
+/** 校區名稱是資料（節次對照表、教室前綴都用它），顯示時才轉。 */
+export const campusName = (name: string, t: Translate): string =>
+  t(name, CAMPUS_EN[name] ?? name);

@@ -7,6 +7,8 @@ import { siteConfig } from "@/config/site.ts";
 import { LoadingState } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import { DEFAULT_CAMPUS_MAPPINGS } from "@/components/weekly-schedule.tsx";
+import { useT } from "@/i18n/language.tsx";
+import { campusName, periodLabel } from "@/i18n/terms.ts";
 
 const PDFDocument = lazy(() => import("@/components/pdf.tsx"));
 
@@ -27,6 +29,7 @@ const toMinutes = (time: string): number => {
  * PDF 還留著，收在下面：它是學校的原件，而表格是我們轉寫的。
  */
 export const TimetablePage = () => {
+  const t = useT();
   // 掛載當下的時間，取一次就好：render 必須是純的，而這一頁不會開著放一整天。
   const [nowMinutes] = useState(() => {
     const now = new Date();
@@ -44,13 +47,21 @@ export const TimetablePage = () => {
       <PageSection className="gap-6">
         <PageHeader
           className="max-w-5xl"
-          description="各節次的上下課時間對照。"
-          title="校園節次表"
+          description={t(
+            "各節次的上下課時間對照。",
+            "Start and end times of every class period.",
+          )}
+          title={t("校園節次表", "Class Periods")}
         />
 
         <div className="w-full max-w-5xl overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
-            <caption className="sr-only">各校區每一節的上下課時間</caption>
+            <caption className="sr-only">
+              {t(
+                "各校區每一節的上下課時間",
+                "Start and end time of each period, by campus",
+              )}
+            </caption>
             <thead>
               <tr className="border-b border-border bg-background-secondary text-left text-xs font-medium tracking-wide text-muted">
                 {DEFAULT_CAMPUS_MAPPINGS.map((mapping) => (
@@ -60,7 +71,7 @@ export const TimetablePage = () => {
                     colSpan={2}
                     scope="colgroup"
                   >
-                    {mapping.name}
+                    {campusName(mapping.name, t)}
                   </th>
                 ))}
               </tr>
@@ -86,10 +97,10 @@ export const TimetablePage = () => {
                         )}
                         scope="row"
                       >
-                        {period.label}
+                        {periodLabel(period.label, t)}
                         {isNow && (
                           <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs font-normal text-white">
-                            現在
+                            {t("現在", "Now")}
                           </span>
                         )}
                       </th>,
@@ -118,7 +129,7 @@ export const TimetablePage = () => {
           }}
         >
           <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium">
-            查看學校的 PDF 原件
+            {t("查看學校的 PDF 原件", "View the university's original PDF")}
           </summary>
           <div className="px-4 pb-4">
             {showPdf && (

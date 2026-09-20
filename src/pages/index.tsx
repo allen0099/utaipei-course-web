@@ -15,6 +15,7 @@ import { sectionTitle, title } from "@/components/primitives.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { ExternalLinkIcon } from "@/components/icons.tsx";
 import { EmptyState, LoadingState } from "@/components/states.tsx";
+import { useLanguage } from "@/i18n/language.tsx";
 
 const COLLAPSE_AFTER = 8;
 
@@ -125,6 +126,7 @@ const highlightDate = (text: string) => {
 export default function IndexPage() {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
+  const { language, t } = useLanguage();
   const {
     data: announcements = [],
     loading,
@@ -147,14 +149,19 @@ export default function IndexPage() {
             src="/CatMeow.png"
           />
           <div className="flex flex-col items-center md:items-start gap-3 text-center md:text-left">
-            <h1 className={title()}>{siteConfig.name}</h1>
+            <h1 className={title()}>
+              {t(siteConfig.name, "UTaipei Course Helper")}
+            </h1>
             <p className="text-muted text-lg max-w-md">
-              {siteConfig.description}
+              {t(
+                siteConfig.description,
+                "Course search and timetable tool for the University of Taipei: look up offerings, build a schedule, catch time conflicts, plus the academic calendar, campus map and class periods.",
+              )}
             </p>
             {/* 來首頁的人十之八九是要查課；讓他在這裡直接打字，而不是先點一顆
                 按鈕、換一頁、再找到輸入框。 */}
             <SearchField
-              aria-label="查詢課程"
+              aria-label={t("查詢課程", "Search courses")}
               className="mt-1 w-full max-w-md"
               onSubmit={(value) => {
                 const keyword = value.trim();
@@ -168,7 +175,12 @@ export default function IndexPage() {
             >
               <SearchField.Group>
                 <SearchField.SearchIcon />
-                <SearchField.Input placeholder="輸入課名、教師或教室，按 Enter 查詢" />
+                <SearchField.Input
+                  placeholder={t(
+                    "輸入課名、教師或教室，按 Enter 查詢",
+                    "Course, instructor or room, then press Enter",
+                  )}
+                />
                 <SearchField.ClearButton />
               </SearchField.Group>
             </SearchField>
@@ -177,13 +189,13 @@ export default function IndexPage() {
                 className="button button--primary button--md"
                 href="/search"
               >
-                進階查詢
+                {t("進階查詢", "Advanced search")}
               </Link>
               <Link
                 className="button button--secondary button--md"
                 href="/my-schedule"
               >
-                我的課表
+                {t("我的課表", "My Schedule")}
               </Link>
             </div>
           </div>
@@ -196,29 +208,46 @@ export default function IndexPage() {
             滿版區塊之間，看起來像是從別的頁面貼過來的。 */}
         <section className="w-full max-w-4xl rounded-xl border border-border bg-surface p-5">
           <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h2 className={sectionTitle({ size: "md" })}>校園公告</h2>
+            <h2 className={sectionTitle({ size: "md" })}>
+              {t("校園公告", "Announcements")}
+            </h2>
             <a
               className="inline-flex shrink-0 items-center gap-1 text-sm text-accent hover:text-accent-hover"
               href={siteConfig.links.utaipei.sky}
               rel="noopener noreferrer"
               target="_blank"
             >
-              校務資訊系統
+              {t("校務資訊系統", "Student information system")}
               <ExternalLinkIcon />
             </a>
           </div>
+          {/* 公告內文是學校的資料，只有中文；先講清楚，免得英文讀者以為是漏翻。 */}
+          {language === "en" && (
+            <p className="mb-3 text-xs text-muted">
+              Announcements are published by the university in Chinese only.
+            </p>
+          )}
           {loading ? (
-            <LoadingState className="py-6" label="校園公告" />
+            <LoadingState
+              className="py-6"
+              label={t("校園公告", "announcements")}
+            />
           ) : error ? (
             <FetchError
-              message="校園公告載入失敗，請稍後再試。"
+              message={t(
+                "校園公告載入失敗，請稍後再試。",
+                "Failed to load announcements. Please try again later.",
+              )}
               onRetry={refetch}
             />
           ) : announcements.length === 0 ? (
             <EmptyState
               className="py-4"
-              description="校務資訊系統目前沒有張貼中的公告。"
-              title="目前沒有校園公告"
+              description={t(
+                "校務資訊系統目前沒有張貼中的公告。",
+                "The student information system has no announcements posted right now.",
+              )}
+              title={t("目前沒有校園公告", "No announcements")}
             />
           ) : (
             <>
@@ -253,7 +282,9 @@ export default function IndexPage() {
                   variant="tertiary"
                   onPress={() => setIsExpanded((value) => !value)}
                 >
-                  {isExpanded ? "收合公告" : "展開全部公告"}
+                  {isExpanded
+                    ? t("收合公告", "Collapse announcements")
+                    : t("展開全部公告", "Show all announcements")}
                 </Button>
               )}
             </>

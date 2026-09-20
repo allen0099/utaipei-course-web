@@ -3,6 +3,7 @@ import { Footbar } from "@/components/footbar.tsx";
 import DisclaimerModal from "@/components/disclaimer.tsx";
 import SEO from "@/components/seo-native.tsx";
 import CommandPalette from "@/components/command-palette.tsx";
+import { useT } from "@/i18n/language.tsx";
 
 export default function DefaultLayout({
   children,
@@ -15,6 +16,8 @@ export default function DefaultLayout({
   /** 課程查詢右側多一欄迷你課表，需要比一般頁面寬的版心。 */
   wide?: boolean;
 }) {
+  const t = useT();
+
   return (
     <div className="relative flex flex-col min-h-screen">
       {/* 鍵盤使用者每換一頁都得先 Tab 過整條導覽列才到得了內容。平常看不到，
@@ -23,7 +26,7 @@ export default function DefaultLayout({
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:shadow-lg"
         href="#main-content"
       >
-        跳到主要內容
+        {t("跳到主要內容", "Skip to main content")}
       </a>
       <SEO noIndex={noIndex} />
       <CommandPalette />

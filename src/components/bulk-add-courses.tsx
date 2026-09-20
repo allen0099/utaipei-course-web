@@ -6,6 +6,7 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { Notice } from "@/components/states.tsx";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 import { PartialCourse } from "@/interfaces/globals.ts";
+import { useT } from "@/i18n/language.tsx";
 
 export interface BulkAddCoursesProps {
   /** 表格裡全部的課程；「移除本頁課程」與已加入計數看這一份。 */
@@ -42,6 +43,7 @@ export const BulkAddCourses = ({
 }: BulkAddCoursesProps) => {
   const { selectedCourses, isSelected, importCourses, removeCourse } =
     useSelectedCourses();
+  const t = useT();
 
   const addable = bulkCourses ?? courses;
   const pending = addable.filter((course) => !isSelected(course));
@@ -61,7 +63,10 @@ export const BulkAddCourses = ({
           variant="primary"
           onPress={() => importCourses(addable, yms)}
         >
-          加入我的課表（{pending.length}）
+          {t(
+            `加入我的課表（${pending.length}）`,
+            `Add to My Schedule (${pending.length})`,
+          )}
         </Button>
         {/* 整批加入沒有對應的整批復原會是死路：使用者只剩一列一列取消，或跑去
             我的課表整個清空。 */}
@@ -71,16 +76,22 @@ export const BulkAddCourses = ({
             variant="tertiary"
             onPress={() => addedHere.forEach((course) => removeCourse(course))}
           >
-            移除本頁課程（{addedHere.length}）
+            {t(
+              `移除本頁課程（${addedHere.length}）`,
+              `Remove this page's courses (${addedHere.length})`,
+            )}
           </Button>
         )}
         {selectedCourses.length > 0 && (
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Chip color="accent" size="sm" variant="tertiary">
-              已選 {selectedCourses.length} 門課程
+              {t(
+                `已選 ${selectedCourses.length} 門課程`,
+                `${selectedCourses.length} selected`,
+              )}
             </Chip>
             <Link className="text-sm" href="/my-schedule">
-              前往我的課表 →
+              {t("前往我的課表 →", "Go to My Schedule →")}
             </Link>
           </div>
         )}

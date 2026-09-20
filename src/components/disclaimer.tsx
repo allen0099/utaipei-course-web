@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Modal, Button } from "@heroui/react";
 
+import { useLanguage } from "@/i18n/language.tsx";
+
 function hasDisclaimerCookie() {
   const cookies = document.cookie.split(";");
 
@@ -21,8 +23,72 @@ export const OPEN_DISCLAIMER_EVENT = "utc:open-disclaimer";
  */
 export const DISCLAIMER_OFFSET_VAR = "--disclaimer-offset";
 
+const CONTACT_EMAIL = "allen0099@sudo.host";
+const LAST_UPDATED = "2025-08-24";
+
+/** 英文版不逐字對譯：語序不同，強調的 <span> 落點也跟著不同。 */
+const DisclaimerBodyEn = () => (
+  <>
+    <p className="mb-4 text-foreground">
+      This website is an <span className="text-danger">unofficial</span> course
+      lookup tool. All data comes from the university&apos;s public course
+      selection system and is provided for personal reference only.
+      <br />
+      Data may be delayed or incorrect because of system updates or network
+      conditions.{" "}
+      <span className="text-danger">
+        Always defer to the university&apos;s official announcements.
+      </span>
+      <br />
+      By using this website you confirm that you have read and agree to the
+      following:
+    </p>
+
+    <ul className="mb-4 text-foreground list-disc list-inside space-y-1">
+      <li>
+        This website is not affiliated with or authorized by the university and
+        does not represent its position.
+      </li>
+      <li>
+        Course information is for reference only, with{" "}
+        <span className="text-danger">
+          no guarantee of timeliness, completeness or accuracy
+        </span>
+        .
+      </li>
+      <li>
+        For questions or rights-related concerns, please contact us; we will
+        respond as soon as the issue is confirmed.
+      </li>
+      <li>
+        This website does not collect, process or disclose any student&apos;s
+        personal data.
+      </li>
+    </ul>
+
+    <p className="mb-4 text-foreground">
+      To improve your experience, this website may store cookies on your device.
+      If you prefer not to accept them, you can block cookies in your
+      browser&apos;s privacy settings, but some features may stop working
+      properly.
+    </p>
+
+    <div className="text-xs text-muted mt-2 select-text">
+      Contact:{" "}
+      <a
+        className="underline underline-offset-2"
+        href={`mailto:${CONTACT_EMAIL}`}
+      >
+        {CONTACT_EMAIL}
+      </a>
+      <br />
+      Last updated: {LAST_UPDATED}
+    </div>
+  </>
+);
+
 /** 聲明全文。橫幅的「完整聲明」與頁尾的連結開的是同一份。 */
-const DisclaimerBody = () => (
+const DisclaimerBodyZh = () => (
   <>
     <p className="mb-4 text-foreground">
       本網站為
@@ -60,15 +126,21 @@ const DisclaimerBody = () => (
       聯絡信箱：
       <a
         className="underline underline-offset-2"
-        href="mailto:allen0099@sudo.host"
+        href={`mailto:${CONTACT_EMAIL}`}
       >
-        allen0099@sudo.host
+        {CONTACT_EMAIL}
       </a>
       <br />
-      最後更新：2025-08-24
+      最後更新：{LAST_UPDATED}
     </div>
   </>
 );
+
+const DisclaimerBody = () => {
+  const { language } = useLanguage();
+
+  return language === "en" ? <DisclaimerBodyEn /> : <DisclaimerBodyZh />;
+};
 
 /**
  * 免責聲明：首次造訪時的底部橫幅，全文收在可關閉的視窗裡。
@@ -84,6 +156,7 @@ export const DisclaimerModal = () => {
   // just to flip this to true/false on first render.
   const [pending, setPending] = useState(() => !hasDisclaimerCookie());
   const [detailOpen, setDetailOpen] = useState(false);
+  const { language, t } = useLanguage();
 
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -129,29 +202,41 @@ export const DisclaimerModal = () => {
       {pending && (
         <div
           ref={bannerRef}
-          aria-label="免責聲明"
+          aria-label={t("免責聲明", "Disclaimer")}
           className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surface shadow-lg"
           role="region"
           // 避開 iPhone 底部的 home indicator。
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           <div className="container mx-auto flex max-w-7xl flex-col gap-3 px-6 py-3 md:flex-row md:items-center md:justify-between">
-            <p className="text-sm">
-              本站為<span className="font-semibold text-danger">非官方</span>
-              課程查詢工具，資料可能延遲或有誤，
-              <span className="font-semibold">請以學校官方公告為準</span>
-              。繼續使用即表示您已了解。
-            </p>
+            {language === "en" ? (
+              <p className="text-sm">
+                This is an{" "}
+                <span className="font-semibold text-danger">unofficial</span>{" "}
+                course lookup tool. Data may be delayed or wrong —{" "}
+                <span className="font-semibold">
+                  always defer to the university&apos;s official announcements
+                </span>
+                . By continuing you acknowledge this.
+              </p>
+            ) : (
+              <p className="text-sm">
+                本站為<span className="font-semibold text-danger">非官方</span>
+                課程查詢工具，資料可能延遲或有誤，
+                <span className="font-semibold">請以學校官方公告為準</span>
+                。繼續使用即表示您已了解。
+              </p>
+            )}
             <div className="flex shrink-0 items-center gap-2">
               <Button
                 size="sm"
                 variant="tertiary"
                 onPress={() => setDetailOpen(true)}
               >
-                完整聲明
+                {t("完整聲明", "Full disclaimer")}
               </Button>
               <Button size="sm" variant="primary" onPress={handleAccept}>
-                我已了解
+                {t("我已了解", "Got it")}
               </Button>
             </div>
           </div>
@@ -165,18 +250,20 @@ export const DisclaimerModal = () => {
           <Modal.Container className="max-w-3xl" scroll="inside">
             <Modal.Dialog>
               <Modal.Header>
-                <Modal.Heading className="text-danger">免責聲明</Modal.Heading>
+                <Modal.Heading className="text-danger">
+                  {t("免責聲明", "Disclaimer")}
+                </Modal.Heading>
               </Modal.Header>
               <Modal.Body>
                 <DisclaimerBody />
               </Modal.Body>
               <Modal.Footer>
                 <Button variant="tertiary" onPress={() => setDetailOpen(false)}>
-                  關閉
+                  {t("關閉", "Close")}
                 </Button>
                 {pending && (
                   <Button variant="primary" onPress={handleAccept}>
-                    我已了解
+                    {t("我已了解", "Got it")}
                   </Button>
                 )}
               </Modal.Footer>

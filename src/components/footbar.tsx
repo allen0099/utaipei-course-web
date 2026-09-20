@@ -5,6 +5,7 @@ import { GithubIcon, HeartFilledIcon } from "@/components/icons.tsx";
 import { siteConfig } from "@/config/site.ts";
 import { cardTitle } from "@/components/primitives.ts";
 import { OPEN_DISCLAIMER_EVENT } from "@/components/disclaimer.tsx";
+import { useLanguage } from "@/i18n/language.tsx";
 
 const FooterLink = ({
   link,
@@ -28,6 +29,8 @@ const FooterLink = ({
 };
 
 export const Footbar = () => {
+  const { language, t } = useLanguage();
+
   return (
     <>
       <footer className="w-full flex items-center justify-center bg-background-secondary">
@@ -36,12 +39,14 @@ export const Footbar = () => {
         <div className="container mx-auto max-w-7xl px-6 py-10 sm:px-12 sm:pt-12">
           <div className="sm:flex gap-8">
             <div className="space-y-4 flex-1 text-left sm:text-right">
-              <h3 className={cardTitle()}>校方連結</h3>
+              <h3 className={cardTitle()}>
+                {t("校方連結", "University links")}
+              </h3>
               <FooterLink link={siteConfig.links.utaipei.official}>
-                校園官網
+                {t("校園官網", "University website")}
               </FooterLink>
               <FooterLink link={siteConfig.links.utaipei.sky}>
-                校務資訊系統
+                {t("校務資訊系統", "Student information system")}
               </FooterLink>
             </div>
             <Separator
@@ -50,23 +55,35 @@ export const Footbar = () => {
             />
             <Separator className="w-auto sm:hidden my-3" />
             <div className="space-y-4 flex-1">
-              <h3 className={cardTitle()}>關於專案</h3>
+              <h3 className={cardTitle()}>
+                {t("關於專案", "About this project")}
+              </h3>
               <FooterLink link={siteConfig.links.github.web}>
                 <GithubIcon className="mr-2" />
-                網頁原始碼
+                {t("網頁原始碼", "Website source code")}
               </FooterLink>
               <FooterLink link={siteConfig.links.github.crawler}>
                 <GithubIcon className="mr-2" />
-                資料原始碼
+                {t("資料原始碼", "Crawler source code")}
               </FooterLink>
             </div>
           </div>
           <div className="border-t border-border mt-8 pt-8 text-center">
             <p className="text-sm text-muted">
-              北市大選課小幫手
-              <br />用
-              <HeartFilledIcon className="text-danger inline-block align-middle mx-1" />
-              發電
+              {t("北市大選課小幫手", "UTaipei Course Helper")}
+              <br />
+              {language === "en" ? (
+                <>
+                  Made with
+                  <HeartFilledIcon className="text-danger inline-block align-middle mx-1" />
+                </>
+              ) : (
+                <>
+                  用
+                  <HeartFilledIcon className="text-danger inline-block align-middle mx-1" />
+                  發電
+                </>
+              )}
               <br />
             </p>
             {/* 按過「我已了解」之後橫幅就不再出現，這裡是重讀全文的唯一入口。 */}
@@ -77,7 +94,7 @@ export const Footbar = () => {
                 window.dispatchEvent(new Event(OPEN_DISCLAIMER_EVENT))
               }
             >
-              免責聲明
+              {t("免責聲明", "Disclaimer")}
             </button>
             <div className="w-full flex items-center justify-center py-3">
               <a

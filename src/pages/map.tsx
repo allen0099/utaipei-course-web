@@ -18,6 +18,8 @@ import { BOAI_LAYOUT } from "@/components/floorplans/boai-layout.ts";
 import { TIANMU_LAYOUT } from "@/components/floorplans/tianmu-layout.ts";
 import { PageHeader } from "@/components/page-header.tsx";
 import { sectionTitle } from "@/components/primitives.ts";
+import { useT } from "@/i18n/language.tsx";
+import { campusName } from "@/i18n/terms.ts";
 
 const BuildingCard = ({
   buildings,
@@ -37,73 +39,81 @@ const BuildingCard = ({
    */
   layout: CampusLayout;
   className?: string;
-}) => (
-  <Panel className={className}>
-    <div className="flex items-center gap-2 mb-4">
-      <MapPinIcon className="h-5 w-5 text-accent" />
-      <h2 className={sectionTitle({ size: "md" })}>{title}</h2>
-    </div>
-    {
-      <p className="text-muted text-sm mb-2">
-        點選大樓名稱或平面圖上的建築，兩邊會互相標示。教室代碼的第一個字母就是大樓代碼，例如
-        G313 在公誠樓（G）3 樓。
-      </p>
-    }
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
-      {buildings.map((building) => {
-        const content = (
-          <>
-            <div className="font-medium">{building.name}</div>
-            <div className="text-sm text-muted">
-              代碼: {building.code}
-              {building.number && ` (${building.number})`}
-            </div>
-          </>
-        );
+}) => {
+  const t = useT();
 
-        const isOnMap = layout.buildings.some(
-          (shape) =>
-            shape.id === building.id || shape.aliases?.includes(building.id),
-        );
+  return (
+    <Panel className={className}>
+      <div className="flex items-center gap-2 mb-4">
+        <MapPinIcon className="h-5 w-5 text-accent" />
+        <h2 className={sectionTitle({ size: "md" })}>{title}</h2>
+      </div>
+      {
+        <p className="text-muted text-sm mb-2">
+          {t(
+            "點選大樓名稱或平面圖上的建築，兩邊會互相標示。教室代碼的第一個字母就是大樓代碼，例如 G313 在公誠樓（G）3 樓。",
+            "Pick a building here or on the plan and the other side highlights it. The first letter of a room code is the building code — G313 is on the 3rd floor of the Gongcheng Building (G).",
+          )}
+        </p>
+      }
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4">
+        {buildings.map((building) => {
+          const content = (
+            <>
+              <div className="font-medium">
+                {t(building.name, building.nameEn)}
+              </div>
+              <div className="text-sm text-muted">
+                {t("代碼", "Code")}: {building.code}
+                {building.number && ` (${building.number})`}
+              </div>
+            </>
+          );
 
-        if (!isOnMap) {
+          const isOnMap = layout.buildings.some(
+            (shape) =>
+              shape.id === building.id || shape.aliases?.includes(building.id),
+          );
+
+          if (!isOnMap) {
+            return (
+              <div
+                key={building.code + building.name}
+                className="rounded-md bg-background-secondary p-4"
+              >
+                {content}
+              </div>
+            );
+          }
+
+          const isActive = activeBuilding === building.id;
+
           return (
-            <div
+            // A real button: hover alone made the map unusable by keyboard and
+            // on touch, where the hint text was even hidden to admit as much.
+            <button
               key={building.code + building.name}
-              className="rounded-md bg-background-secondary p-4"
+              aria-pressed={isActive}
+              className={clsx(
+                "rounded-md p-4 text-left transition-colors",
+                isActive
+                  ? "bg-accent/15 ring-2 ring-accent"
+                  : "bg-background-secondary hover:bg-surface-secondary",
+              )}
+              type="button"
+              onClick={() => onBuildingChange?.(isActive ? null : building.id)}
+              onFocus={() => onBuildingChange?.(building.id)}
+              onMouseEnter={() => onBuildingChange?.(building.id)}
+              onMouseLeave={() => onBuildingChange?.(null)}
             >
               {content}
-            </div>
+            </button>
           );
-        }
-
-        const isActive = activeBuilding === building.id;
-
-        return (
-          // A real button: hover alone made the map unusable by keyboard and
-          // on touch, where the hint text was even hidden to admit as much.
-          <button
-            key={building.code + building.name}
-            aria-pressed={isActive}
-            className={clsx(
-              "rounded-md p-4 text-left transition-colors",
-              isActive
-                ? "bg-accent/15 ring-2 ring-accent"
-                : "bg-background-secondary hover:bg-surface-secondary",
-            )}
-            type="button"
-            onClick={() => onBuildingChange?.(isActive ? null : building.id)}
-            onFocus={() => onBuildingChange?.(building.id)}
-            onMouseEnter={() => onBuildingChange?.(building.id)}
-            onMouseLeave={() => onBuildingChange?.(null)}
-          >
-            {content}
-          </button>
-        );
-      })}
-    </div>
-  </Panel>
-);
+        })}
+      </div>
+    </Panel>
+  );
+};
 
 const CAMPUSES = [
   {
@@ -123,6 +133,7 @@ const CAMPUSES = [
 ] as const;
 
 export const MapPage = () => {
+  const t = useT();
   const [searchParams] = useSearchParams();
 
   // 課程列表的教室欄會連到 /map?campus=bo-ai&b=G：進來就停在那個校區、那棟樓
@@ -149,8 +160,11 @@ export const MapPage = () => {
     <DefaultLayout>
       <PageSection align="stretch" className="gap-6">
         <PageHeader
-          description="各校區大樓代碼對照與互動平面圖"
-          title="校園地圖"
+          description={t(
+            "各校區大樓代碼對照與互動平面圖",
+            "Building codes for each campus, with an interactive plan",
+          )}
+          title={t("校園地圖", "Campus Map")}
         />
         <Tabs
           defaultSelectedKey={initial.campusKey}
@@ -158,10 +172,10 @@ export const MapPage = () => {
           onSelectionChange={() => setPinnedBuilding(null)}
         >
           <Tabs.ListContainer>
-            <Tabs.List aria-label="選擇校區">
+            <Tabs.List aria-label={t("選擇校區", "Campus")}>
               {CAMPUSES.map((campus) => (
                 <Tabs.Tab key={campus.key} id={campus.key}>
-                  {campus.name}
+                  {campusName(campus.name, t)}
                   <Tabs.Indicator />
                 </Tabs.Tab>
               ))}
@@ -175,14 +189,17 @@ export const MapPage = () => {
                   buildings={[...campus.buildings]}
                   className="col-span-1"
                   layout={campus.layout}
-                  title={campus.name}
+                  title={campusName(campus.name, t)}
                   onBuildingChange={setHoveredBuilding}
                 />
                 <CampusFloorPlan
                   aspect={campus.aspect}
                   // 手機上地圖排在清單前面：清單有九項，地圖排後面要捲三個螢幕才看得到。
                   className="order-first col-span-2 md:order-none"
-                  title={`${campus.name}平面圖`}
+                  title={t(
+                    `${campus.name}平面圖`,
+                    `${campusName(campus.name, t)} plan`,
+                  )}
                 >
                   <CampusMap
                     activeBuilding={activeBuilding}

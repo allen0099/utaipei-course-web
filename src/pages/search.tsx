@@ -48,6 +48,7 @@ import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { useCourseAddGate } from "@/hooks/useCourseAddGate.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { DataFreshness } from "@/components/data-freshness.tsx";
+import { useT } from "@/i18n/language.tsx";
 
 // 一次畫多少列。原本是「最多 200 筆、超過的看不到」：音樂學系 (320) 與進修推廣處
 // (274) 光是自己的課就超過上限，學生永遠瀏覽不完自己的系。現在改成分批往下載，
@@ -89,22 +90,35 @@ const SLOT_PATTERN = /^[0-6]-([1-9]|1[0-4])$/;
 const parseSlots = (value: string | null): Set<string> =>
   new Set((value ?? "").split(".").filter((key) => SLOT_PATTERN.test(key)));
 
+// 值維持中文：它們是拿去跟課程資料（course.required / course.campus）比對的，
+// 也會寫進網址。只有畫面上的字才翻。
 const REQUIRED_OPTIONS = ["必修", "選修"];
 const CAMPUS_OPTIONS = ["博愛", "天母"];
+const OPTION_LABELS_EN: Record<string, string> = {
+  必修: "Required",
+  選修: "Elective",
+  博愛: "Bo'ai Campus",
+  天母: "Tianmu Campus",
+};
 
 type SortKey = "" | "time" | "credits" | "name";
 
-const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: "", label: "預設順序" },
-  { key: "time", label: "上課時間" },
-  { key: "credits", label: "學分（多到少）" },
-  { key: "name", label: "課程名稱" },
+const SORT_OPTIONS: { key: SortKey; label: string; labelEn: string }[] = [
+  { key: "", label: "預設順序", labelEn: "Default order" },
+  { key: "time", label: "上課時間", labelEn: "Class time" },
+  { key: "credits", label: "學分（多到少）", labelEn: "Credits (high to low)" },
+  { key: "name", label: "課程名稱", labelEn: "Course name" },
 ];
 
 // 通識與體育不掛在任何系所底下，只能靠開課班級名稱找到，而那正是新生最常找
 // 的兩類課。做成按鈕直接填關鍵字，而不是另一種隱形的篩選狀態 —— 使用者看得到
 // 它做了什麼，也能自己改。
-const QUICK_KEYWORDS = ["通識課程", "體育課程"];
+//
+// 填進去的關鍵字一定是中文 —— 那才對得上資料裡的班級名稱；只有按鈕上的字翻譯。
+const QUICK_KEYWORDS = [
+  { keyword: "通識課程", label: "通識", labelEn: "General Education" },
+  { keyword: "體育課程", label: "體育", labelEn: "PE" },
+];
 
 const NO_SLOTS = new Set<string>();
 const noop = () => {};
@@ -113,6 +127,7 @@ const noop = () => {};
 const SIDE_BY_SIDE_QUERY = "(min-width: 1280px)";
 
 export const SearchPage = () => {
+  const t = useT();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Read the initial filter values once from the URL; subsequent user
@@ -181,8 +196,8 @@ export const SearchPage = () => {
 
   // 教學綱要連結要帶學年期，所以欄位定義得跟著 yms 走。
   const columns = useMemo(
-    () => buildCourseColumns<PartialCourse>(COLUMN_KEYS, { yms }),
-    [yms],
+    () => buildCourseColumns<PartialCourse>(COLUMN_KEYS, { yms, t }),
+    [yms, t],
   );
 
   const onYmsChange = (id: Key | null) => {
@@ -535,22 +550,37 @@ export const SearchPage = () => {
 
   const renderResults = () => {
     if (!yms) {
-      return <EmptyState title="請先選擇學年期" />;
+      return (
+        <EmptyState title={t("請先選擇學年期", "Pick a semester first")} />
+      );
     }
 
     if (error) {
-      return <FetchError message="課程資料載入失敗。" onRetry={refetch} />;
+      return (
+        <FetchError
+          message={t("課程資料載入失敗。", "Failed to load course data.")}
+          onRetry={refetch}
+        />
+      );
     }
 
     if (loading) {
-      return <ListSkeleton className="mt-4" label="課程資料" />;
+      return (
+        <ListSkeleton className="mt-4" label={t("課程資料", "course data")} />
+      );
     }
 
     if (!hasFilter) {
       return (
         <EmptyState
-          description="也可以只輸入教師姓名、教室或課程代碼，或在課表上點選想找課的時段。"
-          title="請輸入關鍵字或選擇系所以開始查詢課程"
+          description={t(
+            "也可以只輸入教師姓名、教室或課程代碼，或在課表上點選想找課的時段。",
+            "An instructor, a room or a course code works too — or click a time slot on the schedule.",
+          )}
+          title={t(
+            "請輸入關鍵字或選擇系所以開始查詢課程",
+            "Type a keyword or pick a department to start",
+          )}
         />
       );
     }
@@ -566,12 +596,15 @@ export const SearchPage = () => {
                 variant="secondary"
                 onPress={clearFilters}
               >
-                清除篩選條件
+                {t("清除篩選條件", "Clear filters")}
               </Button>
             ) : undefined
           }
-          description="試試放寬系所或時段條件，或改用更短的關鍵字。"
-          title="查無符合的課程"
+          description={t(
+            "試試放寬系所或時段條件，或改用更短的關鍵字。",
+            "Try loosening the department or time filters, or a shorter keyword.",
+          )}
+          title={t("查無符合的課程", "No matching courses")}
         />
       );
     }
@@ -606,7 +639,9 @@ export const SearchPage = () => {
                     setExpandedCode(isExpanded ? null : course.code)
                   }
                 >
-                  {isExpanded ? "收起時段" : "在課表上看時段"}
+                  {isExpanded
+                    ? t("收起時段", "Hide time slots")
+                    : t("在課表上看時段", "Show on my schedule")}
                 </Button>
                 {isExpanded && (
                   <SchedulePreview
@@ -638,10 +673,16 @@ export const SearchPage = () => {
                 setPaging({ key: filterKey, count: visibleCount + PAGE_SIZE })
               }
             >
-              再顯示 {Math.min(PAGE_SIZE, remaining)} 筆
+              {t(
+                `再顯示 ${Math.min(PAGE_SIZE, remaining)} 筆`,
+                `Show ${Math.min(PAGE_SIZE, remaining)} more`,
+              )}
             </Button>
             <span aria-live="polite" className="text-xs text-muted">
-              已顯示 {displayedCourses.length}／{filteredCourses.length} 筆
+              {t(
+                `已顯示 ${displayedCourses.length}／${filteredCourses.length} 筆`,
+                `Showing ${displayedCourses.length} of ${filteredCourses.length}`,
+              )}
             </span>
           </div>
         )}
@@ -654,8 +695,11 @@ export const SearchPage = () => {
       <PageSection align="stretch">
         <PageHeader
           className="mb-6"
-          description="依學年度、系所或關鍵字查詢開課資料。"
-          title="課程查詢"
+          description={t(
+            "依學年度、系所或關鍵字查詢開課資料。",
+            "Look up course offerings by semester, department or keyword.",
+          )}
+          title={t("課程查詢", "Course Search")}
         />
         {/* 篩選條件與標題、分隔線、結果共用同一個量測寬度並靠左，整頁才有
             一條連續的左緣。篩選列本身是靠左排列而不是置中：頁面其餘內容
@@ -671,8 +715,8 @@ export const SearchPage = () => {
               <ItemSelector
                 className={FILTER_FIELD_CLASS}
                 items={colleges}
-                label="選擇學院"
-                placeholder="不限學院"
+                label={t("選擇學院", "College")}
+                placeholder={t("不限學院", "Any college")}
                 selectedKey={collegeCode || null}
                 onChange={onCollegeChange}
               />
@@ -680,9 +724,11 @@ export const SearchPage = () => {
             <ItemSelector
               className={FILTER_FIELD_CLASS}
               items={departmentItems}
-              label="選擇系所"
+              label={t("選擇系所", "Department")}
               placeholder={
-                useCascade && !collegeCode ? "請先選擇學院" : "不限系所"
+                useCascade && !collegeCode
+                  ? t("請先選擇學院", "Pick a college first")
+                  : t("不限系所", "Any department")
               }
               selectedKey={departmentCode || null}
               onChange={onDepartmentChange}
@@ -691,28 +737,37 @@ export const SearchPage = () => {
           <SearchField className="w-full" value={keyword} onChange={setKeyword}>
             <SearchField.Group>
               <SearchField.SearchIcon />
-              <SearchField.Input placeholder="輸入課程名稱、代碼、教師或教室搜尋" />
+              <SearchField.Input
+                placeholder={t(
+                  "輸入課程名稱、代碼、教師或教室搜尋",
+                  "Course name, code, instructor or room",
+                )}
+              />
               <SearchField.ClearButton />
             </SearchField.Group>
           </SearchField>
 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-muted">快速查詢</span>
+              <span className="text-muted">
+                {t("快速查詢", "Quick search")}
+              </span>
               {QUICK_KEYWORDS.map((quick) => (
                 <Button
-                  key={quick}
+                  key={quick.keyword}
                   size="sm"
                   variant="secondary"
-                  onPress={() => setKeyword(quick)}
+                  onPress={() => setKeyword(quick.keyword)}
                 >
-                  {quick.replace("課程", "")}
+                  {t(quick.label, quick.labelEn)}
                 </Button>
               ))}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-muted">必選修</span>
+              <span className="text-muted">
+                {t("必選修", "Required / elective")}
+              </span>
               {REQUIRED_OPTIONS.map((option) => (
                 <ToggleButton
                   key={option}
@@ -720,7 +775,7 @@ export const SearchPage = () => {
                   size="sm"
                   onChange={(selected) => setRequired(selected ? option : "")}
                 >
-                  {option}
+                  {t(option, OPTION_LABELS_EN[option] ?? option)}
                   {hasFilter && (
                     <span className="text-xs opacity-70 tabular-nums">
                       {facetCounts.required[option]}
@@ -731,7 +786,7 @@ export const SearchPage = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-muted">校區</span>
+              <span className="text-muted">{t("校區", "Campus")}</span>
               {CAMPUS_OPTIONS.map((option) => (
                 <ToggleButton
                   key={option}
@@ -739,7 +794,7 @@ export const SearchPage = () => {
                   size="sm"
                   onChange={(selected) => setCampus(selected ? option : "")}
                 >
-                  {option}
+                  {t(option, OPTION_LABELS_EN[option] ?? option)}
                   {hasFilter && (
                     <span className="text-xs opacity-70 tabular-nums">
                       {facetCounts.campus[option]}
@@ -758,7 +813,7 @@ export const SearchPage = () => {
                 size="sm"
                 onChange={setFreeOnly}
               >
-                只顯示不衝堂
+                {t("只顯示不衝堂", "No time conflicts only")}
               </ToggleButton>
               {slots.size > 0 && (
                 <ToggleButton
@@ -766,13 +821,16 @@ export const SearchPage = () => {
                   size="sm"
                   onChange={setStrictTime}
                 >
-                  每一節都在所選時段內
+                  {t(
+                    "每一節都在所選時段內",
+                    "Every period within the selected slots",
+                  )}
                 </ToggleButton>
               )}
             </div>
 
             <label className="flex items-center gap-2">
-              <span className="text-muted">排序</span>
+              <span className="text-muted">{t("排序", "Sort by")}</span>
               <select
                 className="rounded-lg border border-border bg-surface px-2 py-1 text-sm"
                 value={sortKey}
@@ -780,7 +838,7 @@ export const SearchPage = () => {
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.key} value={option.key}>
-                    {option.label}
+                    {t(option.label, option.labelEn)}
                   </option>
                 ))}
               </select>
@@ -788,7 +846,7 @@ export const SearchPage = () => {
 
             {activeFilterCount > 0 && (
               <Button size="sm" variant="ghost" onPress={clearFilters}>
-                清除全部條件
+                {t("清除全部條件", "Clear all filters")}
               </Button>
             )}
           </div>
@@ -806,10 +864,13 @@ export const SearchPage = () => {
                 open={slots.size > 0}
               >
                 <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium">
-                  我的課表與時段篩選
+                  {t("我的課表與時段篩選", "My schedule & time filter")}
                   {slots.size > 0 && (
                     <span className="ml-2 text-xs text-muted">
-                      已選 {slots.size} 個時段
+                      {t(
+                        `已選 ${slots.size} 個時段`,
+                        `${slots.size} slots picked`,
+                      )}
                     </span>
                   )}
                 </summary>
@@ -820,7 +881,10 @@ export const SearchPage = () => {
               <div className="flex w-full flex-wrap items-baseline justify-between gap-x-4 text-sm">
                 <DataFreshness className="text-xs text-muted" yms={yms} />
                 <span aria-live="polite" className="ml-auto">
-                  共計：{filteredCourses.length} 筆資料
+                  {t(
+                    `共計：${filteredCourses.length} 筆資料`,
+                    `${filteredCourses.length} results`,
+                  )}
                 </span>
               </div>
             )}
@@ -830,10 +894,13 @@ export const SearchPage = () => {
             // top-20：避開 sticky 的 navbar。
             <aside className="sticky top-20 rounded-lg border border-border p-4">
               <h2 className="mb-3 text-sm font-semibold">
-                我的課表
+                {t("我的課表", "My Schedule")}
                 {scheduleApplies && (
                   <span className="ml-2 font-normal text-muted">
-                    已選 {selectedCourses.length} 門
+                    {t(
+                      `已選 ${selectedCourses.length} 門`,
+                      `${selectedCourses.length} courses`,
+                    )}
                   </span>
                 )}
               </h2>

@@ -19,6 +19,8 @@ import { downloadICS } from "@/utils/ics-generator.ts";
 import { LoadingState } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import CopyButton from "@/components/copy-button.tsx";
+import { useT } from "@/i18n/language.tsx";
+import { semesterName } from "@/i18n/terms.ts";
 
 const PDFDocument = lazy(() => import("@/components/pdf.tsx"));
 
@@ -30,6 +32,7 @@ const TAB_CLASS =
 const ymsCodeOf = (item: CalendarItem) => `${item.year}#${item.semester}`;
 
 export const CalendarPage = () => {
+  const t = useT();
   const {
     data: rawCalendarList,
     error,
@@ -76,8 +79,11 @@ export const CalendarPage = () => {
     const name = displayNameOf(code);
 
     return name === code
-      ? `${item.year} 學年度${item.semester === 1 ? "上" : "下"}學期`
-      : name;
+      ? t(
+          `${item.year} 學年度${item.semester === 1 ? "上" : "下"}學期`,
+          `AY ${item.year}, Semester ${item.semester}`,
+        )
+      : semesterName(name, t);
   };
 
   const currentCalendar = useMemo(() => {
@@ -151,7 +157,10 @@ export const CalendarPage = () => {
                 {/* Button is the RAC menu trigger directly; wrapping it in
                     Dropdown.Trigger would nest a <button> inside a <button>. */}
                 <Button
-                  aria-label={`切換學年度，目前為 ${semesterLabel(selectedCalendar)}`}
+                  aria-label={t(
+                    `切換學年度，目前為 ${semesterLabel(selectedCalendar)}`,
+                    `Change semester, currently ${semesterLabel(selectedCalendar)}`,
+                  )}
                   className="max-sm:w-full max-sm:justify-between"
                   variant="outline"
                 >
@@ -160,7 +169,7 @@ export const CalendarPage = () => {
                 </Button>
                 <Dropdown.Popover>
                   <Dropdown.Menu
-                    aria-label="選擇學年度"
+                    aria-label={t("選擇學年度", "Select semester")}
                     className="max-h-60 overflow-y-auto"
                     onAction={handleYearChange}
                   >
@@ -178,13 +187,19 @@ export const CalendarPage = () => {
               </Dropdown>
             )
           }
-          description="學校公告的學期重要日程，可下載或訂閱到個人日曆。"
-          title="校園行事曆"
+          description={t(
+            "學校公告的學期重要日程，可下載或訂閱到個人日曆。",
+            "Key dates published by the university. Download them or subscribe from your own calendar app.",
+          )}
+          title={t("校園行事曆", "Academic Calendar")}
         />
 
         {error ? (
           <FetchError
-            message="行事曆載入失敗，請稍後再試。"
+            message={t(
+              "行事曆載入失敗，請稍後再試。",
+              "Failed to load the calendar. Please try again later.",
+            )}
             onRetry={refetch}
           />
         ) : !selectedCalendar ? (
@@ -203,14 +218,14 @@ export const CalendarPage = () => {
                   HeroUI 的 Tabs.Indicator 需要 SharedElementTransition 祖先才能運作，
                   這裡沒有，所以改用 data-selected 自行畫出選取中的底色。 */}
               <Tabs.ListContainer className="w-fit">
-                <Tabs.List aria-label="行事曆檢視方式">
+                <Tabs.List aria-label={t("行事曆檢視方式", "Calendar view")}>
                   {hasStructuredData && (
                     <Tabs.Tab className={TAB_CLASS} id="events">
-                      行事曆
+                      {t("行事曆", "Calendar")}
                     </Tabs.Tab>
                   )}
                   <Tabs.Tab className={TAB_CLASS} id="pdf">
-                    PDF 原件
+                    {t("PDF 原件", "Original PDF")}
                   </Tabs.Tab>
                 </Tabs.List>
               </Tabs.ListContainer>
@@ -226,12 +241,15 @@ export const CalendarPage = () => {
                       onPress={handleDownload}
                     >
                       <ArrowDownTrayIcon className="size-4" />
-                      下載 .ics
+                      {t("下載 .ics", "Download .ics")}
                     </Button>
                     <CopyButton
-                      copiedText={"已複製訂閱網址"}
+                      copiedText={t(
+                        "已複製訂閱網址",
+                        "Subscription URL copied",
+                      )}
                       idleIcon={<ClipboardDocumentIcon className="size-4" />}
-                      idleText={"複製訂閱網址"}
+                      idleText={t("複製訂閱網址", "Copy subscription URL")}
                       size="sm"
                       variant="ghost"
                       writeText={subscribeUrl}
@@ -239,12 +257,15 @@ export const CalendarPage = () => {
                     />
                   </div>
                   <p className="text-xs text-muted sm:text-right">
-                    下載可一次匯入日曆；訂閱網址則會隨學校更新自動同步。
+                    {t(
+                      "下載可一次匯入日曆；訂閱網址則會隨學校更新自動同步。",
+                      "Downloading imports the events once; the subscription URL keeps syncing as the university updates them.",
+                    )}
                   </p>
                   {showSubscribeUrl && subscribeUrl && (
                     <input
                       readOnly
-                      aria-label="訂閱網址"
+                      aria-label={t("訂閱網址", "Subscription URL")}
                       className="w-full rounded-md border border-border bg-background-secondary px-3 py-1.5 text-xs sm:max-w-sm"
                       value={subscribeUrl}
                       onFocus={(e) => e.currentTarget.select()}
@@ -258,7 +279,10 @@ export const CalendarPage = () => {
               <Tabs.Panel className="flex flex-col gap-4" id="events">
                 {eventsError ? (
                   <FetchError
-                    message="行事曆內容載入失敗，可改看 PDF 原件。"
+                    message={t(
+                      "行事曆內容載入失敗，可改看 PDF 原件。",
+                      "Failed to load the calendar events. You can view the original PDF instead.",
+                    )}
                     onRetry={refetchEvents}
                   />
                 ) : !events ? (
@@ -272,10 +296,18 @@ export const CalendarPage = () => {
             <Tabs.Panel className="flex flex-col items-center gap-4" id="pdf">
               {isUnparsable && (
                 <p className="text-center text-sm text-muted">
-                  這份行事曆的 PDF 無法擷取文字，僅提供原件檢視。
+                  {t(
+                    "這份行事曆的 PDF 無法擷取文字，僅提供原件檢視。",
+                    "Text cannot be extracted from this calendar's PDF, so only the original is available.",
+                  )}
                 </p>
               )}
-              <p className="text-muted">點擊下方任一頁即可放大檢視</p>
+              <p className="text-muted">
+                {t(
+                  "點擊下方任一頁即可放大檢視",
+                  "Click any page below to enlarge it",
+                )}
+              </p>
               <Suspense fallback={<LoadingState />}>
                 <PDFDocument link={selectedCalendar.link} />
               </Suspense>

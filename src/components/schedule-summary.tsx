@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 
 import { PartialCourse, WeeklyScheduleCourse } from "@/interfaces/globals.ts";
+import { useT } from "@/i18n/language.tsx";
+import { dayName } from "@/i18n/terms.ts";
 
 const DAY_LABELS = ["一", "二", "三", "四", "五", "六", "日"];
 
@@ -34,6 +36,7 @@ const Stat = ({
  * 對學分上下限的。
  */
 export const ScheduleSummary = ({ courses, slots }: ScheduleSummaryProps) => {
+  const t = useT();
   const { credits, hours, missingCredits } = useMemo(() => {
     let credits = 0;
     let hours = 0;
@@ -80,19 +83,27 @@ export const ScheduleSummary = ({ courses, slots }: ScheduleSummaryProps) => {
   return (
     <div className="flex flex-col gap-3">
       <dl className="grid grid-cols-3 gap-3">
-        <Stat label="課程" value={String(courses.length)} />
+        <Stat label={t("課程", "Courses")} value={String(courses.length)} />
         <Stat
           hint={
-            missingCredits > 0 ? `${missingCredits} 門無學分資料` : undefined
+            missingCredits > 0
+              ? t(
+                  `${missingCredits} 門無學分資料`,
+                  `${missingCredits} without credit data`,
+                )
+              : undefined
           }
-          label="總學分"
+          label={t("總學分", "Total credits")}
           value={formatNumber(credits)}
         />
-        <Stat label="每週時數" value={formatNumber(hours)} />
+        <Stat
+          label={t("每週時數", "Hours per week")}
+          value={formatNumber(hours)}
+        />
       </dl>
 
       <div
-        aria-label="每日節數"
+        aria-label={t("每日節數", "Periods per day")}
         className="grid grid-cols-7 gap-1 rounded-lg border border-border px-4 py-3"
         role="group"
       >
@@ -110,9 +121,12 @@ export const ScheduleSummary = ({ courses, slots }: ScheduleSummaryProps) => {
                 }}
               />
             </div>
-            <span className="text-xs text-muted">{DAY_LABELS[day]}</span>
+            <span className="text-xs text-muted">
+              {t(DAY_LABELS[day], dayName(day, t))}
+            </span>
             <span className="text-xs font-medium tabular-nums">
-              {count > 0 ? `${count} 節` : "—"}
+              {/* 七欄很窄，英文只放數字；單位由這一組的 aria-label 交代。 */}
+              {count > 0 ? t(`${count} 節`, String(count)) : "—"}
             </span>
           </div>
         ))}
@@ -120,7 +134,12 @@ export const ScheduleSummary = ({ courses, slots }: ScheduleSummaryProps) => {
 
       {unscheduled > 0 && (
         <p className="text-xs text-muted">
-          另有 {unscheduled} 門課沒有排定上課時間，不會出現在課表上。
+          {t(
+            `另有 ${unscheduled} 門課沒有排定上課時間，不會出現在課表上。`,
+            unscheduled === 1
+              ? "1 more course has no scheduled time and won't appear on the timetable."
+              : `${unscheduled} more courses have no scheduled time and won't appear on the timetable.`,
+          )}
         </p>
       )}
     </div>

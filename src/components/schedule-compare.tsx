@@ -2,8 +2,10 @@ import { useMemo } from "react";
 import clsx from "clsx";
 
 import { WeeklyScheduleCourse } from "@/interfaces/globals.ts";
+import { useT } from "@/i18n/language.tsx";
 
 const DAY_LABELS = ["一", "二", "三", "四", "五", "六", "日"];
+const DAY_LABELS_EN = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const PERIODS = Array.from({ length: 14 }, (_, index) => index + 1);
 // 「共同空堂」只算白天的平日：晚上十點兩個人都沒課不是什麼有用的資訊。
 const DAYTIME_LAST_PERIOD = 10;
@@ -27,12 +29,24 @@ const CELL_MARK: Record<CellState, string> = {
   together: "同",
 };
 
-const LEGEND: { state: CellState; label: string }[] = [
-  { state: "free", label: "都沒課" },
-  { state: "mine", label: "只有我有課" },
-  { state: "theirs", label: "只有對方有課" },
-  { state: "both", label: "都有課（不同課）" },
-  { state: "together", label: "同一門課" },
+const CELL_MARK_EN: Record<CellState, string> = {
+  free: "",
+  mine: "Me",
+  theirs: "Th",
+  both: "×",
+  together: "=",
+};
+
+const LEGEND: { state: CellState; label: string; labelEn: string }[] = [
+  { state: "free", label: "都沒課", labelEn: "Both free" },
+  { state: "mine", label: "只有我有課", labelEn: "Only I have class" },
+  { state: "theirs", label: "只有對方有課", labelEn: "Only they have class" },
+  {
+    state: "both",
+    label: "都有課（不同課）",
+    labelEn: "Both busy (different courses)",
+  },
+  { state: "together", label: "同一門課", labelEn: "Same course" },
 ];
 
 const occupancy = (slots: WeeklyScheduleCourse[]) => {
@@ -64,6 +78,7 @@ export interface ScheduleCompareProps {
  * 後端。
  */
 export const ScheduleCompare = ({ mine, theirs }: ScheduleCompareProps) => {
+  const t = useT();
   const { cells, days, sharedFree, together } = useMemo(() => {
     const mineMap = occupancy(mine);
     const theirsMap = occupancy(theirs);
@@ -110,15 +125,18 @@ export const ScheduleCompare = ({ mine, theirs }: ScheduleCompareProps) => {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm">
-        平日白天（第 1–{DAYTIME_LAST_PERIOD} 節）有{" "}
-        <span className="font-semibold">{sharedFree}</span> 節兩個人都沒課
-        {together.length > 0 ? (
-          <>
-            ，一起上的課有 {together.length} 門：{together.join("、")}。
-          </>
-        ) : (
-          "，沒有一起上的課。"
+        {t(
+          `平日白天（第 1–${DAYTIME_LAST_PERIOD} 節）有 `,
+          `On weekdays (periods 1–${DAYTIME_LAST_PERIOD}) you are both free for `,
         )}
+        <span className="font-semibold">{sharedFree}</span>
+        {t(" 節兩個人都沒課", " period(s)")}
+        {together.length > 0
+          ? t(
+              `，一起上的課有 ${together.length} 門：${together.join("、")}。`,
+              `, and you share ${together.length} course(s): ${together.join(", ")}.`,
+            )
+          : t("，沒有一起上的課。", ", with no courses in common.")}
       </p>
 
       <div
@@ -134,7 +152,7 @@ export const ScheduleCompare = ({ mine, theirs }: ScheduleCompareProps) => {
             key={day}
             className="bg-surface-secondary py-1 text-center font-medium"
           >
-            {DAY_LABELS[day]}
+            {t(DAY_LABELS[day], DAY_LABELS_EN[day])}
           </div>
         ))}
         {PERIODS.map((period) => (
@@ -153,7 +171,7 @@ export const ScheduleCompare = ({ mine, theirs }: ScheduleCompareProps) => {
                     CELL_CLASS[state],
                   )}
                 >
-                  {CELL_MARK[state]}
+                  {t(CELL_MARK[state], CELL_MARK_EN[state])}
                 </div>
               );
             })}
@@ -162,7 +180,7 @@ export const ScheduleCompare = ({ mine, theirs }: ScheduleCompareProps) => {
       </div>
 
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-        {LEGEND.map(({ state, label }) => (
+        {LEGEND.map(({ state, label, labelEn }) => (
           <li key={state} className="flex items-center gap-1.5">
             <span
               className={clsx(
@@ -170,9 +188,9 @@ export const ScheduleCompare = ({ mine, theirs }: ScheduleCompareProps) => {
                 CELL_CLASS[state],
               )}
             >
-              {CELL_MARK[state]}
+              {t(CELL_MARK[state], CELL_MARK_EN[state])}
             </span>
-            {label}
+            {t(label, labelEn)}
           </li>
         ))}
       </ul>

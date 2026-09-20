@@ -9,24 +9,28 @@ import { CampusLayout } from "@/components/floorplans/layout.ts";
  */
 export const BOAI_LAYOUT: CampusLayout = {
   label: "博愛校區平面圖",
+  labelEn: "Bo'ai Campus map",
   viewBox: { width: 1276, height: 1049 },
   ground:
     "M154 12 h972 a16 16 0 0 1 16 16 v878 a16 16 0 0 1 -16 16 h-972 a16 16 0 0 1 -16 -16 v-878 a16 16 0 0 1 16 -16 Z",
   roads: [
     {
       name: "重慶南路一段",
+      nameEn: "Chongqing S. Rd. Sec. 1",
       path: "M72 20 V1030",
       width: 108,
       label: { x: 72, y: 467, rotate: -90 },
     },
     {
       name: "公園路",
+      nameEn: "Gongyuan Rd.",
       path: "M1204 20 V1030",
       width: 108,
       label: { x: 1204, y: 467, rotate: -90 },
     },
     {
       name: "愛國西路",
+      nameEn: "Aiguo W. Rd.",
       path: "M20 982 H1256",
       width: 100,
       label: { x: 638, y: 982 },
@@ -35,6 +39,7 @@ export const BOAI_LAYOUT: CampusLayout = {
   features: [
     {
       label: "操場",
+      labelEn: "Track",
       tone: "track",
       inset: 34,
       shape: { type: "ellipse", cx: 626, cy: 378, rx: 242, ry: 141 },

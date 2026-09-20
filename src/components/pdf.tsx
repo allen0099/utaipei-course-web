@@ -7,6 +7,7 @@ import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 import { FetchError } from "@/components/fetch-error.tsx";
 import { LoadingState } from "@/components/states.tsx";
+import { useT } from "@/i18n/language.tsx";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -49,6 +50,7 @@ export const PDFDocument = ({ link }: { link: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [retryToken, setRetryToken] = useState(0);
   const pdfCache = useRef<{ [key: string]: string }>({});
+  const t = useT();
 
   // Effect for cleaning up the entire cache on unmount
   useEffect(() => {
@@ -120,7 +122,10 @@ export const PDFDocument = ({ link }: { link: string }) => {
   if (error) {
     return (
       <FetchError
-        message="PDF 載入失敗，請稍後再試。"
+        message={t(
+          "PDF 載入失敗，請稍後再試。",
+          "Failed to load the PDF. Please try again later.",
+        )}
         onRetry={() => setRetryToken((prev) => prev + 1)}
       />
     );
@@ -151,7 +156,10 @@ export const PDFDocument = ({ link }: { link: string }) => {
               {/* The canvas click was the only way to zoom; a real button
                   wrapper gives keyboard users the same affordance. */}
               <button
-                aria-label={`放大檢視第 ${index + 1} 頁`}
+                aria-label={t(
+                  `放大檢視第 ${index + 1} 頁`,
+                  `Enlarge page ${index + 1}`,
+                )}
                 // The PDF keeps its own (light) colours instead of the previous
                 // `dark:invert dark:hue-rotate-180`, which shifted every colour
                 // in the document. A white sheet with a border reads as a
@@ -178,7 +186,9 @@ export const PDFDocument = ({ link }: { link: string }) => {
             <Modal.Dialog>
               <Modal.CloseTrigger />
               <Modal.Header>
-                <Modal.Heading>頁面 {activePage}</Modal.Heading>
+                <Modal.Heading>
+                  {t(`頁面 ${activePage}`, `Page ${activePage}`)}
+                </Modal.Heading>
               </Modal.Header>
               <Modal.Body className="p-2 flex flex-col items-center overflow-auto">
                 <div
@@ -202,6 +212,7 @@ export const PDFDocument = ({ link }: { link: string }) => {
               <Modal.Footer>
                 <ButtonGroup size="sm" variant="ghost">
                   <Button
+                    aria-label={t("縮小", "Zoom out")}
                     className={clsx({
                       "cursor-not-allowed": zoom <= 1.0,
                     })}
@@ -214,6 +225,7 @@ export const PDFDocument = ({ link }: { link: string }) => {
                     {Math.round(zoom * 100)}%
                   </Button>
                   <Button
+                    aria-label={t("放大", "Zoom in")}
                     className={clsx({
                       "cursor-not-allowed": zoom >= 2.0,
                     })}

@@ -30,6 +30,7 @@ import { sectionTitle } from "@/components/primitives.ts";
 import { EmptyState, LoadingState, Notice } from "@/components/states.tsx";
 import { PageSection } from "@/components/panel.tsx";
 import { useSelectionParams } from "@/hooks/useSelectionParams.ts";
+import { useT } from "@/i18n/language.tsx";
 
 const PARAM_KEYS = ["unit", "teacher"] as const;
 
@@ -48,6 +49,7 @@ const COLUMN_KEYS: CourseColumnKey[] = [
 ];
 
 export const TeacherSchedulePage = () => {
+  const t = useT();
   // Each selector feeds the next, so changing one clears everything
   // downstream; useSelectionParams does that and mirrors it all to the URL.
   const { yms, initialYms, values, onYmsChange, select } =
@@ -99,12 +101,15 @@ export const TeacherSchedulePage = () => {
   const { canAdd, blockedReason } = useCourseAddGate(yms);
 
   const columns = useMemo(
-    () => buildCourseColumns<PartialCourse>(COLUMN_KEYS, { yms }),
-    [yms],
+    () => buildCourseColumns<PartialCourse>(COLUMN_KEYS, { yms, t }),
+    [yms, t],
   );
 
   const scheduleTitle = teacher
-    ? `${year} 學年 (${semester}) ${teacher.name} 教師的課表`
+    ? t(
+        `${year} 學年 (${semester}) ${teacher.name} 教師的課表`,
+        `AY ${year} S${semester} – ${teacher.name}`,
+      )
     : "";
 
   return (
@@ -112,8 +117,11 @@ export const TeacherSchedulePage = () => {
       <PageSection>
         <PageHeader
           className="mb-6 max-w-5xl"
-          description="查詢個別教師在該學期的授課課表。"
-          title="教師課表"
+          description={t(
+            "查詢個別教師在該學期的授課課表。",
+            "See what an instructor teaches in a given semester.",
+          )}
+          title={t("教師課表", "Teacher Schedules")}
         />
         {/* 與標題、分隔線、課表共用同一個量測寬度並靠左，整頁才有一條連續左緣；
             選擇器平分該寬度，右側才不會空出一整條。 */}
@@ -127,24 +135,27 @@ export const TeacherSchedulePage = () => {
             <ItemSelector
               className={FILTER_FIELD_CLASS}
               items={units}
-              label="請選擇系級"
+              label={t("請選擇系級", "Department")}
               selectedKey={unitCode || null}
               onChange={(id) => select("unit", id)}
             />
             <ItemSelector
               className={FILTER_FIELD_CLASS}
               items={teachers}
-              label="請選擇教師"
+              label={t("請選擇教師", "Instructor")}
               selectedKey={teacherCode || null}
               onChange={(id) => select("teacher", id)}
             />
           </div>
           {(indexLoading || (!!teacherCode && coursesLoading)) && (
-            <LoadingState label="課程資料" />
+            <LoadingState label={t("課程資料", "course data")} />
           )}
           {(indexError || (!!teacherCode && coursesError)) && (
             <FetchError
-              message="這個學年期尚未收錄教師課表，請改選其他學年期。"
+              message={t(
+                "這個學年期尚未收錄教師課表，請改選其他學年期。",
+                "Teacher schedules are not available for this semester yet. Try another one.",
+              )}
               onRetry={() => {
                 refetchIndex();
                 refetchCourses();
@@ -157,8 +168,14 @@ export const TeacherSchedulePage = () => {
           {teacher ? (
             teacherCourses.length === 0 ? (
               <EmptyState
-                description="該教師在此學年期沒有開課紀錄，可以換一個學年期再試。"
-                title={`${teacher.name} 教師查無課程`}
+                description={t(
+                  "該教師在此學年期沒有開課紀錄，可以換一個學年期再試。",
+                  "No courses on record for this instructor in this semester. Try another one.",
+                )}
+                title={t(
+                  `${teacher.name} 教師查無課程`,
+                  `No courses found for ${teacher.name}`,
+                )}
               />
             ) : (
               <>
@@ -169,7 +186,10 @@ export const TeacherSchedulePage = () => {
                     這不是錯誤，但少掉的課要講出來，不能靜默不顯示。 */}
                 {missing > 0 && (
                   <Notice className="mt-4">
-                    有 {missing} 筆課程的資料尚未更新，暫時無法顯示。
+                    {t(
+                      `有 ${missing} 筆課程的資料尚未更新，暫時無法顯示。`,
+                      `${missing} course(s) have no data yet and cannot be shown for now.`,
+                    )}
                   </Notice>
                 )}
                 <BulkAddCourses
@@ -195,8 +215,14 @@ export const TeacherSchedulePage = () => {
             )
           ) : (
             <EmptyState
-              description="依序選擇學年期、系級與教師，就會顯示該教師整學期的課表。"
-              title="請選擇系級與教師以查看課程"
+              description={t(
+                "依序選擇學年期、系級與教師，就會顯示該教師整學期的課表。",
+                "Pick a semester, a department and an instructor to see their full timetable.",
+              )}
+              title={t(
+                "請選擇系級與教師以查看課程",
+                "Pick a department and an instructor",
+              )}
             />
           )}
         </div>

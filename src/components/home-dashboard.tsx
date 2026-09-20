@@ -8,8 +8,9 @@ import { useYms } from "@/hooks/useYms.ts";
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 import { convertCourses } from "@/utils/convert-course.ts";
 import { resolveTermRange } from "@/utils/ics-generator.ts";
+import { useT } from "@/i18n/language.tsx";
+import { dayName, semesterName } from "@/i18n/terms.ts";
 
-const DAY_NAMES = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"];
 const UPCOMING_LIMIT = 4;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -64,6 +65,7 @@ export const HomeDashboard = () => {
   const { defaultCode, displayNameOf } = useYms();
   const { selectedCourses, scheduleYms } = useSelectedCourses();
   const [year, semester] = (defaultCode ?? "").split("#");
+  const t = useT();
 
   const { data: calendars } = useFetchJson<CalendarItem[]>(
     `${siteConfig.links.github.api}/calendar.json`,
@@ -107,7 +109,15 @@ export const HomeDashboard = () => {
         (term.start.getTime() - today.getTime()) / MS_PER_DAY,
       );
 
-      return { headline: `距開學 ${days} 天`, detail: "" };
+      return {
+        headline: t(
+          `距開學 ${days} 天`,
+          days === 1
+            ? "1 day until term starts"
+            : `${days} days until term starts`,
+        ),
+        detail: "",
+      };
     }
 
     if (today > term.end) return null;
@@ -122,10 +132,12 @@ export const HomeDashboard = () => {
       1;
 
     return {
-      headline: `第 ${week} 週`,
-      detail: term.holidays.has(toDateKey(today)) ? "今天放假" : "",
+      headline: t(`第 ${week} 週`, `Week ${week}`),
+      detail: term.holidays.has(toDateKey(today))
+        ? t("今天放假", "Holiday today")
+        : "",
     };
-  }, [events, today]);
+  }, [events, today, t]);
 
   const upcoming = useMemo(() => {
     const todayKey = toDateKey(today);
@@ -152,10 +164,10 @@ export const HomeDashboard = () => {
   return (
     <div className="grid w-full max-w-4xl gap-3 md:grid-cols-3">
       <DashboardCard
-        action={{ label: "行事曆", href: "/calendar" }}
-        title="本學期"
+        action={{ label: t("行事曆", "Calendar"), href: "/calendar" }}
+        title={t("本學期", "This semester")}
       >
-        <p className="text-sm">{displayNameOf(defaultCode)}</p>
+        <p className="text-sm">{semesterName(displayNameOf(defaultCode), t)}</p>
         {termStatus && (
           <p className="text-2xl font-semibold">
             {termStatus.headline}
@@ -169,18 +181,23 @@ export const HomeDashboard = () => {
       </DashboardCard>
 
       <DashboardCard
-        action={{ label: "我的課表", href: "/my-schedule" }}
-        title={`今天的課（${DAY_NAMES[todayIndex]}）`}
+        action={{ label: t("我的課表", "My Schedule"), href: "/my-schedule" }}
+        title={t(
+          `今天的課（${dayName(todayIndex, t)}）`,
+          `Today's classes (${dayName(todayIndex, t)})`,
+        )}
       >
         {!scheduleIsCurrent ? (
           <p className="text-sm text-muted">
-            還沒有本學期的課表。
+            {t("還沒有本學期的課表。", "No schedule for this semester yet. ")}
             <Link className="text-sm" href="/search">
-              去查課程
+              {t("去查課程", "Search courses")}
             </Link>
           </p>
         ) : todayCourses.length === 0 ? (
-          <p className="text-sm text-muted">今天沒有課。</p>
+          <p className="text-sm text-muted">
+            {t("今天沒有課。", "No classes today.")}
+          </p>
         ) : (
           <ul className="flex flex-col gap-1.5 text-sm">
             {todayCourses.map((slot) => {
@@ -190,8 +207,8 @@ export const HomeDashboard = () => {
                 <li key={slot.id} className="flex gap-2">
                   <span className="shrink-0 text-muted tabular-nums">
                     {end > slot.period
-                      ? `${slot.period}–${end} 節`
-                      : `${slot.period} 節`}
+                      ? t(`${slot.period}–${end} 節`, `P${slot.period}–${end}`)
+                      : t(`${slot.period} 節`, `P${slot.period}`)}
                   </span>
                   <span className="min-w-0">
                     <span className="font-medium">{slot.name}</span>
@@ -210,8 +227,8 @@ export const HomeDashboard = () => {
 
       {upcoming.length > 0 && (
         <DashboardCard
-          action={{ label: "全部", href: "/calendar" }}
-          title="接下來"
+          action={{ label: t("全部", "All"), href: "/calendar" }}
+          title={t("接下來", "Coming up")}
         >
           <ul className="flex flex-col gap-1.5 text-sm">
             {upcoming.map((event, index) => (

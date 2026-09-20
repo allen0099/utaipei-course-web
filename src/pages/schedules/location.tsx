@@ -30,6 +30,7 @@ import {
 } from "@/hooks/useCourseCatalog.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
+import { useT } from "@/i18n/language.tsx";
 
 const COLUMN_KEYS: CourseColumnKey[] = [
   "code",
@@ -47,6 +48,7 @@ const COLUMN_KEYS: CourseColumnKey[] = [
 const PARAM_KEYS = ["location"] as const;
 
 export const LocationSearchPage = () => {
+  const t = useT();
   const { yms, initialYms, values, onYmsChange, select } =
     useSelectionParams(PARAM_KEYS);
   const { location } = values;
@@ -81,11 +83,14 @@ export const LocationSearchPage = () => {
   );
 
   const columns = useMemo(
-    () => buildCourseColumns<PartialCourse>(COLUMN_KEYS, { yms }),
-    [yms],
+    () => buildCourseColumns<PartialCourse>(COLUMN_KEYS, { yms, t }),
+    [yms, t],
   );
 
-  const scheduleTitle = `${year} 學年 (${semester}) ${selectedLocation?.name || ""} 的課表`;
+  const scheduleTitle = t(
+    `${year} 學年 (${semester}) ${selectedLocation?.name || ""} 的課表`,
+    `AY ${year} S${semester} – ${selectedLocation?.name || ""}`,
+  );
 
   const { canAdd, blockedReason } = useCourseAddGate(yms);
 
@@ -94,8 +99,11 @@ export const LocationSearchPage = () => {
       <PageSection>
         <PageHeader
           className="mb-6 max-w-5xl"
-          description="查詢某間教室或場地在該學期的使用課表。"
-          title="地點課表"
+          description={t(
+            "查詢某間教室或場地在該學期的使用課表。",
+            "See when a room or venue is in use during a semester.",
+          )}
+          title={t("地點課表", "Room Schedules")}
         />
         {/* 與標題、分隔線、內容共用同一個量測寬度並靠左；選擇器平分該寬度，
             右側才不會空出一整條。 */}
@@ -108,18 +116,21 @@ export const LocationSearchPage = () => {
           <ItemSelector
             className={FILTER_FIELD_CLASS}
             items={locations}
-            label="選擇地點"
+            label={t("選擇地點", "Location")}
             selectedKey={location || null}
             onChange={(id) => select("location", id)}
           />
         </div>
         {(indexLoading || (!!location && coursesLoading)) && (
-          <LoadingState className="mt-4" label="課程資料" />
+          <LoadingState className="mt-4" label={t("課程資料", "course data")} />
         )}
         {(indexError || (!!location && coursesError)) && (
           <FetchError
             className="mt-4"
-            message="這個學年期尚未收錄地點課表，請改選其他學年期。"
+            message={t(
+              "這個學年期尚未收錄地點課表，請改選其他學年期。",
+              "Room schedules are not available for this semester yet. Try another one.",
+            )}
             onRetry={() => {
               refetchIndex();
               refetchCourses();
@@ -131,8 +142,11 @@ export const LocationSearchPage = () => {
           {selectedLocation ? (
             locationCourses.length === 0 ? (
               <EmptyState
-                description="這個地點在本學期沒有排課紀錄。"
-                title="查無課程"
+                description={t(
+                  "這個地點在本學期沒有排課紀錄。",
+                  "Nothing is scheduled at this location this semester.",
+                )}
+                title={t("查無課程", "No courses found")}
               />
             ) : (
               <>
@@ -144,7 +158,10 @@ export const LocationSearchPage = () => {
                     這不是錯誤，但少掉的課要講出來，不能靜默不顯示。 */}
                 {missing > 0 && (
                   <Notice className="mt-4">
-                    有 {missing} 筆課程的資料尚未更新，暫時無法顯示。
+                    {t(
+                      `有 ${missing} 筆課程的資料尚未更新，暫時無法顯示。`,
+                      `${missing} course(s) have no data yet and cannot be shown for now.`,
+                    )}
                   </Notice>
                 )}
                 {/* 這一頁原本是唯讀的，教師與班級課表卻都能勾選 —— 在這裡看到
@@ -172,8 +189,11 @@ export const LocationSearchPage = () => {
             )
           ) : (
             <EmptyState
-              description="選擇學年期與地點後，會顯示該教室或場地整學期的使用課表。"
-              title="尚未選擇地點"
+              description={t(
+                "選擇學年期與地點後，會顯示該教室或場地整學期的使用課表。",
+                "Pick a semester and a location to see how it is used.",
+              )}
+              title={t("尚未選擇地點", "No location selected")}
             />
           )}
         </div>

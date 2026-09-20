@@ -12,6 +12,7 @@ import { useWishGate, useWishlist } from "@/contexts/wishlist-context.tsx";
 import { PartialCourse } from "@/interfaces/globals.ts";
 import { convertCourses } from "@/utils/convert-course.ts";
 import { findConflictsAgainstSchedule } from "@/utils/schedule-conflict.ts";
+import { useT } from "@/i18n/language.tsx";
 
 export interface SelectableCourseTableProps {
   courses: PartialCourse[];
@@ -45,6 +46,10 @@ export const SelectableCourseTable = ({
   const { isSelected, toggleCourse, selectedCourses } = useSelectedCourses();
   const { isWished, toggleWish, removeWish } = useWishlist();
   const canWish = useWishGate(yms);
+  const t = useT();
+  // 英文介面優先用英文課名（與 course-columns 的科目欄一致）。
+  const nameOf = (item: PartialCourse) =>
+    t(item.name, item.nameEn || item.name);
 
   // 衝堂 used to surface only on 我的課表, i.e. after the user had left this
   // page -- so picking courses meant committing first and finding out later.
@@ -63,7 +68,10 @@ export const SelectableCourseTable = ({
 
     if (!names || names.size === 0) return null;
 
-    const label = `與 ${Array.from(names).join("、")} 衝堂`;
+    const label = t(
+      `與 ${Array.from(names).join("、")} 衝堂`,
+      `Conflicts with ${Array.from(names).join(", ")}`,
+    );
 
     return (
       <Tooltip>
@@ -87,17 +95,20 @@ export const SelectableCourseTable = ({
     <DataTable
       cardFooter={cardFooter}
       cardSubtitle={(item) => item.code}
-      cardTitle={(item) => item.name}
+      cardTitle={nameOf}
       className={className}
       columns={columns}
       leading={{
-        label: "加入",
+        label: t("加入", "Add"),
         // 勾選框 + 星號 + 衝堂圖示，預設的 w-14 放不下。
         width: "w-24",
         render: (item) => (
           <div className="flex items-center gap-1">
             <Checkbox
-              aria-label={`將 ${item.name} (${item.class}) 加入我的課表`}
+              aria-label={t(
+                `將 ${item.name} (${item.class}) 加入我的課表`,
+                `Add ${nameOf(item)} (${item.class}) to My Schedule`,
+              )}
               // The column stays rendered (just disabled) when the 學年期 can't
               // be added to, so switching semesters doesn't reflow the table.
               isDisabled={!canAdd && !isSelected(item)}
@@ -119,7 +130,9 @@ export const SelectableCourseTable = ({
             {/* 已經在課表裡的課不需要收藏；位置留著，整欄才不會左右跳。 */}
             <button
               aria-label={
-                isWished(item) ? `取消收藏 ${item.name}` : `收藏 ${item.name}`
+                isWished(item)
+                  ? t(`取消收藏 ${item.name}`, `Unsave ${nameOf(item)}`)
+                  : t(`收藏 ${item.name}`, `Save ${nameOf(item)}`)
               }
               aria-pressed={isWished(item)}
               className={

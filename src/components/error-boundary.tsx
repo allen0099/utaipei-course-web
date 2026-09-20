@@ -38,12 +38,21 @@ export class ErrorBoundary extends Component<
     if (this.state.hasError) {
       return (
         <div className="relative flex flex-col h-screen items-center justify-center gap-4 px-6 text-center">
+          {/* class component 用不了 useT，而且出錯的可能正是 LanguageProvider
+              本身，所以兩種語言並排而不是去接 context。 */}
           <h1 className={title()}>發生錯誤</h1>
+          <p className={title({ size: "sm" })} lang="en">
+            Something went wrong
+          </p>
           <p className={subtitle()}>
             很抱歉，頁面發生非預期的錯誤，請嘗試重新整理頁面。
+            <br />
+            <span lang="en">
+              Sorry, the page hit an unexpected error. Please try reloading.
+            </span>
           </p>
           <Button variant="primary" onPress={this.handleReload}>
-            重新整理
+            重新整理 / Reload
           </Button>
         </div>
       );

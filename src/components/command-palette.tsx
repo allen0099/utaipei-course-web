@@ -8,6 +8,7 @@ import { siteConfig } from "@/config/site.ts";
 import { LocationEntry, TeacherUnit } from "@/interfaces/globals.ts";
 import { useCourseCatalog, useCourseIndex } from "@/hooks/useCourseCatalog.ts";
 import { useYms } from "@/hooks/useYms.ts";
+import { useLanguage } from "@/i18n/language.tsx";
 
 /** Navbar 的搜尋按鈕用這個事件打開面板；兩者不在同一棵子樹裡。 */
 export const OPEN_PALETTE_EVENT = "utc:open-palette";
@@ -18,6 +19,8 @@ interface PaletteItem {
   id: string;
   group: string;
   label: string;
+  /** 另一種語言的標籤：頁面兩種語言都搜得到，不管介面現在是哪一種。 */
+  altLabel?: string;
   hint?: string;
   href: string;
 }
@@ -36,6 +39,7 @@ interface PaletteItem {
 export const CommandPalette = () => {
   const navigate = useNavigate();
   const { defaultCode } = useYms();
+  const { language, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   // 打開過一次就留著：關掉再開不必重新等資料。
   const [hasOpened, setHasOpened] = useState(false);
@@ -79,11 +83,12 @@ export const CommandPalette = () => {
     () =>
       siteConfig.navMenuItems.map((item) => ({
         id: `page-${item.href}`,
-        group: "頁面",
-        label: item.label,
+        group: t("頁面", "Pages"),
+        label: t(item.label, item.labelEn),
+        altLabel: t(item.labelEn, item.label),
         href: item.href,
       })),
-    [],
+    [t],
   );
 
   // 同一位老師會掛在好幾個系級底下；面板上只要出現一次，連到第一個就好。
@@ -97,7 +102,7 @@ export const CommandPalette = () => {
         seen.add(teacher.code);
         items.push({
           id: `teacher-${teacher.code}`,
-          group: "教師",
+          group: t("教師", "Instructors"),
           label: teacher.name,
           hint: unit.name,
           href: `/schedules/teacher?${new URLSearchParams({
@@ -110,20 +115,20 @@ export const CommandPalette = () => {
     });
 
     return items;
-  }, [teacherIndex, yms]);
+  }, [teacherIndex, yms, t]);
 
   const locations = useMemo<PaletteItem[]>(
     () =>
       (locationIndex?.entries ?? []).map((location) => ({
         id: `location-${location.code}`,
-        group: "地點",
+        group: t("地點", "Locations"),
         label: location.name,
         href: `/schedules/location?${new URLSearchParams({
           yms,
           location: location.code,
         }).toString()}`,
       })),
-    [locationIndex, yms],
+    [locationIndex, yms, t],
   );
 
   const results = useMemo(() => {
@@ -133,7 +138,11 @@ export const CommandPalette = () => {
 
     const match = (items: PaletteItem[]) =>
       items
-        .filter((item) => item.label.toLowerCase().includes(keyword))
+        .filter(
+          (item) =>
+            item.label.toLowerCase().includes(keyword) ||
+            item.altLabel?.toLowerCase().includes(keyword),
+        )
         .slice(0, PER_GROUP_LIMIT);
 
     const matchedCourses = (courses ?? [])
@@ -146,8 +155,9 @@ export const CommandPalette = () => {
       .slice(0, PER_GROUP_LIMIT)
       .map<PaletteItem>((course) => ({
         id: `course-${course.code}`,
-        group: "課程",
-        label: course.name,
+        group: t("課程", "Courses"),
+        // 課程名稱是資料；學校有給英文名時英文介面優先用它。
+        label: (language === "en" && course.nameEn) || course.name,
         hint: [course.code, course.teacher, course.class]
           .filter(Boolean)
           .join(" · "),
@@ -162,12 +172,15 @@ export const CommandPalette = () => {
       // 永遠留一條退路：上面每組只列前幾筆，完整結果在課程查詢。
       {
         id: "search-all",
-        group: "課程",
-        label: `在課程查詢搜尋「${query.trim()}」`,
+        group: t("課程", "Courses"),
+        label: t(
+          `在課程查詢搜尋「${query.trim()}」`,
+          `Search for "${query.trim()}" in Course Search`,
+        ),
         href: `/search?${new URLSearchParams({ q: query.trim() }).toString()}`,
       },
     ];
-  }, [query, pages, teachers, locations, courses, yms]);
+  }, [query, pages, teachers, locations, courses, yms, language, t]);
 
   const close = () => {
     setIsOpen(false);
@@ -206,7 +219,10 @@ export const CommandPalette = () => {
         onOpenChange={(open) => (open ? setIsOpen(true) : close())}
       >
         <Modal.Container className="max-w-xl" placement="top">
-          <Modal.Dialog aria-label="全站搜尋" className="p-0">
+          <Modal.Dialog
+            aria-label={t("全站搜尋", "Search the site")}
+            className="p-0"
+          >
             <div className="flex items-center gap-2 border-b border-border px-4">
               <MagnifyingGlassIcon className="size-5 shrink-0 text-muted" />
               <input
@@ -215,9 +231,15 @@ export const CommandPalette = () => {
                 aria-activedescendant={activeId}
                 aria-controls="command-palette-results"
                 aria-expanded="true"
-                aria-label="搜尋頁面、教師、地點或課程"
+                aria-label={t(
+                  "搜尋頁面、教師、地點或課程",
+                  "Search pages, instructors, locations or courses",
+                )}
                 className="h-12 w-full bg-transparent text-base outline-none placeholder:text-muted"
-                placeholder="搜尋頁面、教師、地點或課程…"
+                placeholder={t(
+                  "搜尋頁面、教師、地點或課程…",
+                  "Search pages, instructors, locations or courses…",
+                )}
                 role="combobox"
                 value={query}
                 onChange={(event) => {
@@ -272,7 +294,7 @@ export const CommandPalette = () => {
 
             {query.trim() && coursesLoading && (
               <p className="border-t border-border px-4 py-2 text-xs text-muted">
-                載入課程資料中⋯
+                {t("載入課程資料中⋯", "Loading course data…")}
               </p>
             )}
           </Modal.Dialog>

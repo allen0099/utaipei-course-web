@@ -3,8 +3,17 @@ import type { ReactNode } from "react";
 import { Spinner } from "@heroui/react";
 import clsx from "clsx";
 
+import { Translate, useT } from "@/i18n/language.tsx";
+
+/** `label` 由呼叫端翻好再傳進來（t("課程資料", "course data")）。 */
+const loadingText = (label: string | undefined, t: Translate) =>
+  label ? t(`載入${label}中⋯`, `Loading ${label}…`) : t("載入中⋯", "Loading…");
+
 export interface LoadingStateProps {
-  /** What is being loaded, e.g. "課程資料". Rendered as「載入{label}中⋯」. */
+  /**
+   * What is being loaded, already translated by the caller, e.g.
+   * t("課程資料", "course data"). Rendered as「載入{label}中⋯」/ "Loading {label}…".
+   */
   label?: string;
   className?: string;
 }
@@ -14,15 +23,19 @@ export interface LoadingStateProps {
  * hand-copied in ten places with a different wording and wrapper margin each
  * time.
  */
-export const LoadingState = ({ label, className }: LoadingStateProps) => (
-  <div
-    aria-live="polite"
-    className={clsx("flex items-center justify-center gap-2", className)}
-  >
-    <Spinner />
-    <span className="text-muted">{label ? `載入${label}中⋯` : "載入中⋯"}</span>
-  </div>
-);
+export const LoadingState = ({ label, className }: LoadingStateProps) => {
+  const t = useT();
+
+  return (
+    <div
+      aria-live="polite"
+      className={clsx("flex items-center justify-center gap-2", className)}
+    >
+      <Spinner />
+      <span className="text-muted">{loadingText(label, t)}</span>
+    </div>
+  );
+};
 
 export interface ListSkeletonProps {
   /** Announced to screen readers, e.g. "課程資料". */
@@ -44,31 +57,35 @@ export const ListSkeleton = ({
   label,
   rows = 6,
   className,
-}: ListSkeletonProps) => (
-  <div
-    aria-live="polite"
-    className={clsx(
-      "overflow-hidden rounded-lg border border-border",
-      className,
-    )}
-    role="status"
-  >
-    <span className="sr-only">{label ? `載入${label}中⋯` : "載入中⋯"}</span>
-    <div className="h-10 bg-background-secondary" />
-    {Array.from({ length: rows }, (_, index) => (
-      <div
-        key={index}
-        className="flex items-center gap-4 border-t border-border/60 px-3 py-4"
-      >
-        <div className="size-4 shrink-0 rounded bg-surface-secondary motion-safe:animate-pulse" />
-        <div className="h-3 w-12 shrink-0 rounded bg-surface-secondary motion-safe:animate-pulse" />
-        <div className="h-3 flex-1 rounded bg-surface-secondary motion-safe:animate-pulse" />
-        <div className="hidden h-3 w-24 rounded bg-surface-secondary motion-safe:animate-pulse sm:block" />
-        <div className="hidden h-3 w-16 rounded bg-surface-secondary motion-safe:animate-pulse md:block" />
-      </div>
-    ))}
-  </div>
-);
+}: ListSkeletonProps) => {
+  const t = useT();
+
+  return (
+    <div
+      aria-live="polite"
+      className={clsx(
+        "overflow-hidden rounded-lg border border-border",
+        className,
+      )}
+      role="status"
+    >
+      <span className="sr-only">{loadingText(label, t)}</span>
+      <div className="h-10 bg-background-secondary" />
+      {Array.from({ length: rows }, (_, index) => (
+        <div
+          key={index}
+          className="flex items-center gap-4 border-t border-border/60 px-3 py-4"
+        >
+          <div className="size-4 shrink-0 rounded bg-surface-secondary motion-safe:animate-pulse" />
+          <div className="h-3 w-12 shrink-0 rounded bg-surface-secondary motion-safe:animate-pulse" />
+          <div className="h-3 flex-1 rounded bg-surface-secondary motion-safe:animate-pulse" />
+          <div className="hidden h-3 w-24 rounded bg-surface-secondary motion-safe:animate-pulse sm:block" />
+          <div className="hidden h-3 w-16 rounded bg-surface-secondary motion-safe:animate-pulse md:block" />
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export interface NoticeProps {
   /**

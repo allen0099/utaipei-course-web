@@ -42,6 +42,15 @@ export interface CourseColumnOptions {
   t?: Translate;
 }
 
+/** 學校資料裡的固定詞彙 → 英文。值本身維持中文（篩選與比對都靠它）。 */
+const DATA_TERMS_EN: Record<string, string> = {
+  必修: "Required",
+  選修: "Elective",
+  不限: "Any",
+  學期: "Semester",
+  學年: "Year",
+};
+
 /** 缺值一律顯示「—」，不要用空字串假裝這門課沒有這個屬性。 */
 const orDash = (value: string | undefined) => value || "—";
 
@@ -120,86 +129,104 @@ export const buildCourseColumns = <T extends PartialCourse>(
   options: CourseColumnOptions = {},
 ): DataTableColumn<T>[] => {
   const { conflictNamesByCourseCode, viewingClassCode, yms } = options;
+  const t: Translate = options.t ?? ((zh) => zh);
+  // 英文介面以英文課名為主、中文為輔；沒有 nameEn 的課就只有中文。
+  const isEnglish = t("zh", "en") === "en";
+  // 來自資料的固定詞彙；表上沒有的值原樣顯示。
+  const term = (value: string) => t(value, DATA_TERMS_EN[value] ?? value);
 
   const all: Record<CourseColumnKey, DataTableColumn<T>> = {
     code: {
       key: "code",
-      label: "選課代碼",
-      headerLabel: "代碼",
+      label: t("選課代碼", "Course code"),
+      headerLabel: t("代碼", "Code"),
       width: "w-[7%]",
       cellClassName: "tabular-nums text-muted",
       hideOnCard: true,
     },
     name: {
       key: "name",
-      label: "科目",
+      label: t("科目", "Course"),
       width: "w-[19%]",
       cellClassName: "font-medium text-foreground",
       // 手機卡片改用 cardTitle 呈現，見各頁的 DataTable 設定。
       hideOnCard: true,
-      render: (course) => (
-        <span className="flex flex-col gap-0.5">
-          <span className="inline-flex flex-wrap items-center gap-1.5">
-            {course.name}
-            {isOtherClassCourse(course, viewingClassCode) && (
-              <>
-                <Tooltip delay={0}>
-                  <Tooltip.Trigger>
-                    <Chip size="sm" variant="soft">
-                      他班開課
-                    </Chip>
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>
-                    <p>該課程非本系所課程，僅在資料中列出，通常為共用課程</p>
-                  </Tooltip.Content>
-                </Tooltip>
-              </>
+      render: (course) => {
+        const englishFirst = isEnglish && !!course.nameEn;
+        const secondaryName = englishFirst ? course.name : course.nameEn;
+
+        return (
+          <span className="flex flex-col gap-0.5">
+            <span className="inline-flex flex-wrap items-center gap-1.5">
+              {englishFirst ? course.nameEn : course.name}
+              {isOtherClassCourse(course, viewingClassCode) && (
+                <>
+                  <Tooltip delay={0}>
+                    <Tooltip.Trigger>
+                      <Chip size="sm" variant="soft">
+                        {t("他班開課", "Other class")}
+                      </Chip>
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>
+                      <p>
+                        {t(
+                          "該課程非本系所課程，僅在資料中列出，通常為共用課程",
+                          "Offered by another department and only listed here — usually a shared course",
+                        )}
+                      </p>
+                    </Tooltip.Content>
+                  </Tooltip>
+                </>
+              )}
+            </span>
+            {secondaryName && (
+              <span className="text-xs font-normal text-muted">
+                {secondaryName}
+              </span>
+            )}
+            {course.note && (
+              <span className="text-xs font-normal text-warning">
+                {course.note}
+              </span>
+            )}
+            {/* 擋修條件。放在這裡而不是自成一欄，是因為只有少數課有 —— 一整欄會
+                大半都是「—」；學校自己也是把這顆按鈕放在備註欄。 */}
+            {course.hasRestriction && yms && (
+              <ExternalLink
+                className="text-xs font-normal text-danger hover:underline"
+                href={restrictionUrl(yms, course.code)}
+              >
+                {t("有擋修條件", "Has prerequisites")}
+              </ExternalLink>
             )}
           </span>
-          {course.nameEn && (
-            <span className="text-xs font-normal text-muted">
-              {course.nameEn}
-            </span>
-          )}
-          {course.note && (
-            <span className="text-xs font-normal text-warning">
-              {course.note}
-            </span>
-          )}
-          {/* 擋修條件。放在這裡而不是自成一欄，是因為只有少數課有 —— 一整欄會
-              大半都是「—」；學校自己也是把這顆按鈕放在備註欄。 */}
-          {course.hasRestriction && yms && (
-            <ExternalLink
-              className="text-xs font-normal text-danger hover:underline"
-              href={restrictionUrl(yms, course.code)}
-            >
-              有擋修條件
-            </ExternalLink>
-          )}
-        </span>
-      ),
+        );
+      },
     },
     class: {
       key: "class",
-      label: "班級名稱",
-      headerLabel: "班級",
+      label: t("班級名稱", "Class name"),
+      headerLabel: t("班級", "Class"),
       width: "w-[10%]",
       render: (course) =>
         course.mixedClass
-          ? `${orDash(course.class)}（合 ${course.mixedClass}）`
+          ? t(
+              `${orDash(course.class)}（合 ${course.mixedClass}）`,
+              `${orDash(course.class)} (with ${course.mixedClass})`,
+            )
           : orDash(course.class),
     },
     group: {
       key: "group",
-      label: "分組",
+      label: t("分組", "Group"),
       width: "w-[6%]",
       cellClassName: "tabular-nums",
       render: (course) => orDash(course.group),
     },
     credits: {
       key: "credits",
-      label: "學分／時數",
-      headerLabel: "學分/時數",
+      label: t("學分／時數", "Credits / hours"),
+      headerLabel: t("學分/時數", "Credits/hrs"),
       width: "w-[9%]",
       isEmpty: (course) => !course.credits && !course.hours,
       cellClassName: "tabular-nums",
@@ -218,7 +245,8 @@ export const buildCourseColumns = <T extends PartialCourse>(
     },
     required: {
       key: "required",
-      label: "必選修",
+      label: t("必選修", "Required / elective"),
+      headerLabel: t("必選修", "Type"),
       width: "w-[8%]",
       // 必修用警示色：這是「不選不行」的資訊，選修則不需要搶注意力。
       // 開課別絕大多數是「學期」，只在「學年」等其他值時才標，否則每列都換行。
@@ -236,22 +264,27 @@ export const buildCourseColumns = <T extends PartialCourse>(
               course.required.includes("必") ? "font-medium text-danger" : ""
             }
           >
-            {course.required}
-            {extra && <span className="text-muted">・{extra}</span>}
+            {term(course.required)}
+            {extra && (
+              <span className="text-muted">
+                {t("・", " · ")}
+                {term(extra)}
+              </span>
+            )}
           </span>
         );
       },
     },
     category: {
       key: "category",
-      label: "領域類",
+      label: t("領域類", "Category"),
       width: "w-[10%]",
       render: (course) => orDash(course.category),
     },
     genderLimit: {
       key: "genderLimit",
-      label: "限制性別",
-      headerLabel: "性別",
+      label: t("限制性別", "Gender limit"),
+      headerLabel: t("性別", "Gender"),
       width: "w-[6%]",
       // 絕大多數是「不限」，所以「不限」壓成低對比、有限制的才標色 —— 掃過表格
       // 時真正需要注意的那幾列才會跳出來。
@@ -259,21 +292,23 @@ export const buildCourseColumns = <T extends PartialCourse>(
         if (!course.genderLimit) return "—";
 
         return course.genderLimit === "不限" ? (
-          <span className="text-muted">不限</span>
+          <span className="text-muted">{term("不限")}</span>
         ) : (
-          <span className="font-medium text-warning">{course.genderLimit}</span>
+          <span className="font-medium text-warning">
+            {term(course.genderLimit)}
+          </span>
         );
       },
     },
     teacher: {
       key: "teacher",
-      label: "教師",
+      label: t("教師", "Instructor"),
       width: "w-[9%]",
       render: (course) => mutedIfUndecided(course.teacher),
     },
     time: {
       key: "time",
-      label: "時間",
+      label: t("時間", "Time"),
       width: "w-[9%]",
       cellClassName: "tabular-nums",
       render: (course) => mutedIfUndecided(course.time),
@@ -281,7 +316,7 @@ export const buildCourseColumns = <T extends PartialCourse>(
     classroom: {
       // 教室已含校區前綴（「博愛 G313」），所以不另開校區欄。
       key: "classroom",
-      label: "教室",
+      label: t("教室", "Room"),
       width: "w-[11%]",
       render: (course) => {
         const href = mapLinkForClassroom(course.classroom);
@@ -290,7 +325,10 @@ export const buildCourseColumns = <T extends PartialCourse>(
         return href ? (
           <RouterLink
             className="underline decoration-dotted underline-offset-2 hover:text-accent"
-            title="在校園地圖上標示這棟樓"
+            title={t(
+              "在校園地圖上標示這棟樓",
+              "Show this building on the Campus Map",
+            )}
             to={href}
           >
             {course.classroom}
@@ -302,8 +340,8 @@ export const buildCourseColumns = <T extends PartialCourse>(
     },
     capacity: {
       key: "capacity",
-      label: "人數上限",
-      headerLabel: "上限",
+      label: t("人數上限", "Capacity"),
+      headerLabel: t("上限", "Cap."),
       width: "w-[5%]",
       isEmpty: (course) => !course.capacity?.max,
       cellClassName: "tabular-nums",
@@ -311,8 +349,8 @@ export const buildCourseColumns = <T extends PartialCourse>(
     },
     syllabus: {
       key: "syllabus",
-      label: "教學綱要",
-      headerLabel: "綱要",
+      label: t("教學綱要", "Syllabus"),
+      headerLabel: t("綱要", "Syllabus"),
       width: "w-[6%]",
       isEmpty: (course) => !yms || !course.syllabusKey,
       render: (course) => {
@@ -320,14 +358,14 @@ export const buildCourseColumns = <T extends PartialCourse>(
 
         return (
           <ExternalLink href={syllabusUrl(yms, course.syllabusKey)}>
-            綱要
+            {t("綱要", "Syllabus")}
           </ExternalLink>
         );
       },
     },
     conflict: {
       key: "conflict",
-      label: "衝堂提示",
+      label: t("衝堂提示", "Time conflicts"),
       width: "w-[16%]",
       render: (course) => {
         const names = conflictNamesByCourseCode?.get(course.code);
@@ -336,8 +374,11 @@ export const buildCourseColumns = <T extends PartialCourse>(
 
         return (
           <span className="inline-flex items-start gap-1 text-danger">
-            <ExclamationTriangleIcon className="mt-0.5 shrink-0" width={16} />與{" "}
-            {Array.from(names).join("、")} 衝堂
+            <ExclamationTriangleIcon className="mt-0.5 shrink-0" width={16} />
+            {t(
+              `與 ${Array.from(names).join("、")} 衝堂`,
+              `Conflicts with ${Array.from(names).join(", ")}`,
+            )}
           </span>
         );
       },

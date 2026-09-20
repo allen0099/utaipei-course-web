@@ -33,10 +33,12 @@ import { isOtherClassCourse } from "@/utils/course-class.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { PageHeader } from "@/components/page-header.tsx";
 import { useSelectionParams } from "@/hooks/useSelectionParams.ts";
+import { useT } from "@/i18n/language.tsx";
 
 const PARAM_KEYS = ["college", "dept", "class"] as const;
 
 export const ClassSearchPage = () => {
+  const t = useT();
   // Each selector feeds the next, so changing one has to clear everything
   // downstream — otherwise a stale 系所 or 班級 stays selected and the page
   // shows the previous class's timetable. useSelectionParams does that and
@@ -142,13 +144,16 @@ export const ClassSearchPage = () => {
           "capacity",
           "syllabus",
         ],
-        { viewingClassCode: classCode, yms },
+        { viewingClassCode: classCode, yms, t },
       ),
-    [classCode, yms],
+    [classCode, yms, t],
   );
 
   const scheduleTitle = selectedClass
-    ? `${year} 學年 (${semester}) ${selectedClass.name} 的課表`
+    ? t(
+        `${year} 學年 (${semester}) ${selectedClass.name} 的課表`,
+        `AY ${year} S${semester} – ${selectedClass.name}`,
+      )
     : "";
 
   // Gated on a selection: courses.json is fetched as soon as a 學年期 is picked,
@@ -163,8 +168,11 @@ export const ClassSearchPage = () => {
       <PageSection>
         <PageHeader
           className="mb-6 max-w-5xl"
-          description="依學年期、學院、系所選擇班級，查看該班整學期的排課清單與週課表。"
-          title="班級課表"
+          description={t(
+            "依學年期、學院、系所選擇班級，查看該班整學期的排課清單與週課表。",
+            "Pick a class by semester, college and department to see its course list and weekly timetable.",
+          )}
+          title={t("班級課表", "Class Schedules")}
         />
         {/* 四個選擇器一列會太擠，改為兩欄網格；與標題、分隔線共用同一量測寬度。 */}
         <div className="grid w-full max-w-5xl grid-cols-1 gap-4 md:grid-cols-2">
@@ -176,44 +184,55 @@ export const ClassSearchPage = () => {
           <ItemSelector
             className={FILTER_FIELD_CLASS}
             items={colleges}
-            label="請選擇學院"
+            label={t("請選擇學院", "College")}
             selectedKey={collegeCode || null}
             onChange={(id) => select("college", id)}
           />
           <ItemSelector
             className={FILTER_FIELD_CLASS}
             items={departments}
-            label="請選擇系所"
+            label={t("請選擇系所", "Department")}
             selectedKey={departmentCode || null}
             onChange={(id) => select("dept", id)}
           />
           <ItemSelector
             className={FILTER_FIELD_CLASS}
             items={classes}
-            label="請選擇班級"
+            label={t("請選擇班級", "Class")}
             selectedKey={classCode || null}
             onChange={(id) => select("class", id)}
           />
         </div>
-        {indexLoading && <LoadingState className="mt-4" label="班級資料" />}
+        {indexLoading && (
+          <LoadingState className="mt-4" label={t("班級資料", "class list")} />
+        )}
         {indexError && (
           <FetchError
             className="mt-4"
             // 舊學年期是逐次回填的，尚未輪到的學年期沒有 classes.json，
             // 這跟「載入失敗」是兩回事，訊息要講清楚。
-            message="這個學年期尚未收錄班級課表，請改選其他學年期。"
+            message={t(
+              "這個學年期尚未收錄班級課表，請改選其他學年期。",
+              "Class schedules are not available for this semester yet. Try another one.",
+            )}
             onRetry={refetchIndex}
           />
         )}
         <Separator className="my-6 max-w-5xl w-full" />
         <div className="w-full max-w-5xl">
-          {loading && <LoadingState label="班級課表" />}
+          {loading && <LoadingState label={t("班級課表", "Class Schedules")} />}
           {failed && (
             <FetchError
               message={
                 isLegacySchedule
-                  ? "這個學年期的班級課表尚未更新為新格式，請改選其他學年期。"
-                  : "班級課表載入失敗。"
+                  ? t(
+                      "這個學年期的班級課表尚未更新為新格式，請改選其他學年期。",
+                      "Class schedules for this semester have not been converted to the current format yet. Try another one.",
+                    )
+                  : t(
+                      "班級課表載入失敗。",
+                      "Failed to load the class schedule.",
+                    )
               }
               onRetry={() => {
                 refetchSchedule();
@@ -224,8 +243,14 @@ export const ClassSearchPage = () => {
           {!loading && !failed && schedule ? (
             classCourses.length === 0 ? (
               <EmptyState
-                description="該班級在此學年期沒有排課紀錄，可以換一個學年期再試。"
-                title={`${schedule.name} 查無課程`}
+                description={t(
+                  "該班級在此學年期沒有排課紀錄，可以換一個學年期再試。",
+                  "No courses on record for this class in this semester. Try another one.",
+                )}
+                title={t(
+                  `${schedule.name} 查無課程`,
+                  `No courses found for ${schedule.name}`,
+                )}
               />
             ) : (
               <>
@@ -237,7 +262,10 @@ export const ClassSearchPage = () => {
                     這不是錯誤，但少掉的課要講出來，不能靜默不顯示。 */}
                 {missing > 0 && (
                   <Notice className="mt-4">
-                    有 {missing} 筆課程的資料尚未更新，暫時無法顯示。
+                    {t(
+                      `有 ${missing} 筆課程的資料尚未更新，暫時無法顯示。`,
+                      `${missing} course(s) have no data yet and cannot be shown for now.`,
+                    )}
                   </Notice>
                 )}
                 <BulkAddCourses
@@ -248,7 +276,10 @@ export const ClassSearchPage = () => {
                   courses={classCourses}
                   excludedNote={
                     otherClassCount > 0
-                      ? `已排除 ${otherClassCount} 門他班開課的課程（多為共用課程，不一定是本班要修的）；需要的話可在下方個別勾選加入。`
+                      ? t(
+                          `已排除 ${otherClassCount} 門他班開課的課程（多為共用課程，不一定是本班要修的）；需要的話可在下方個別勾選加入。`,
+                          `${otherClassCount} course(s) offered by another class were left out (mostly shared courses this class may not need). Tick them below if you want them.`,
+                        )
                       : undefined
                   }
                   yms={yms}
@@ -271,8 +302,11 @@ export const ClassSearchPage = () => {
             !loading &&
             !failed && (
               <EmptyState
-                description="依序選擇學年期、學院、系所與班級，就會顯示該班整學期的課表。"
-                title="尚未選擇班級"
+                description={t(
+                  "依序選擇學年期、學院、系所與班級，就會顯示該班整學期的課表。",
+                  "Pick a semester, college, department and class to see its full timetable.",
+                )}
+                title={t("尚未選擇班級", "No class selected")}
               />
             )
           )}

@@ -9,6 +9,7 @@ import {
   saveThemePreference,
   ThemePreference,
 } from "@/utils/theme.ts";
+import { useT } from "@/i18n/language.tsx";
 
 export interface ThemeSwitchProps {
   className?: string;
@@ -26,6 +27,12 @@ const LABEL: Record<ThemePreference, string> = {
   dark: "深色模式",
 };
 
+const LABEL_EN: Record<ThemePreference, string> = {
+  system: "System",
+  light: "Light",
+  dark: "Dark",
+};
+
 /**
  * 三態切換：跟隨系統 → 淺色 → 深色。
  *
@@ -35,6 +42,7 @@ const LABEL: Record<ThemePreference, string> = {
 export const ThemeSwitch: FC<ThemeSwitchProps> = ({ className }) => {
   const [preference, setPreference] =
     useState<ThemePreference>(readThemePreference);
+  const t = useT();
 
   // 跟隨系統時，系統一變就重新套用。index.html 的開機腳本只管第一次繪製。
   useEffect(() => {
@@ -53,9 +61,12 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({ className }) => {
 
   return (
     <button
-      aria-label={`主題：${LABEL[preference]}，按一下切換為${LABEL[NEXT[preference]]}`}
+      aria-label={t(
+        `主題：${LABEL[preference]}，按一下切換為${LABEL[NEXT[preference]]}`,
+        `Theme: ${LABEL_EN[preference]}. Click to switch to ${LABEL_EN[NEXT[preference]]}`,
+      )}
       className={`grid size-11 place-items-center transition-opacity hover:opacity-80 cursor-pointer text-muted ${className ?? ""}`}
-      title={`主題：${LABEL[preference]}`}
+      title={t(`主題：${LABEL[preference]}`, `Theme: ${LABEL_EN[preference]}`)}
       type="button"
       onClick={cycle}
     >

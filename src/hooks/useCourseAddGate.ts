@@ -1,10 +1,12 @@
 import { useSelectedCourses } from "@/contexts/selected-courses-context.tsx";
 import { useYms } from "@/hooks/useYms.ts";
+import { useT } from "@/i18n/language.tsx";
+import { semesterName } from "@/i18n/terms.ts";
 
 export interface CourseAddGate {
   /** 現在能不能把這個學年期的課寫進我的課表。 */
   canAdd: boolean;
-  /** 不能的原因（給使用者看的中文）；可以加入或還在載入時為 null。 */
+  /** 不能的原因（給使用者看的、已依介面語言翻好）；可以加入或還在載入時為 null。 */
   blockedReason: string | null;
 }
 
@@ -16,6 +18,7 @@ export interface CourseAddGate {
  * 「哪個學期都行」，這種 fail-closed 只能有一份，複製到各頁遲早會漏掉一處。
  */
 export const useCourseAddGate = (yms: string): CourseAddGate => {
+  const t = useT();
   const { scheduleYms } = useSelectedCourses();
   const { defaultCode, displayNameOf, loading } = useYms();
 
@@ -35,14 +38,27 @@ export const useCourseAddGate = (yms: string): CourseAddGate => {
     if (canAdd || loading) return null;
 
     if (defaultCode === null) {
-      return "目前無法確認學校的當前學期，暫時不能將課程加入我的課表。";
+      return t(
+        "目前無法確認學校的當前學期，暫時不能將課程加入我的課表。",
+        "The school's current semester can't be confirmed right now, so courses can't be added to My Schedule for the moment.",
+      );
     }
+
+    const current = semesterName(displayNameOf(defaultCode), t);
 
     if (!isCurrentYms) {
-      return `僅能將目前學期（${displayNameOf(defaultCode)}）的課程加入我的課表；其他學年期為歷史／未來資料，僅供查詢。`;
+      return t(
+        `僅能將目前學期（${current}）的課程加入我的課表；其他學年期為歷史／未來資料，僅供查詢。`,
+        `Only courses from the current semester (${current}) can be added to My Schedule; other semesters are past or future data and are view-only.`,
+      );
     }
 
-    return `你的課表屬於 ${displayNameOf(scheduleYms)}，目前學期已是 ${displayNameOf(defaultCode)}。請先到「我的課表」清空後再重新選課。`;
+    const saved = semesterName(displayNameOf(scheduleYms), t);
+
+    return t(
+      `你的課表屬於 ${saved}，目前學期已是 ${current}。請先到「我的課表」清空後再重新選課。`,
+      `Your schedule is for ${saved}, but the current semester is now ${current}. Clear it in My Schedule before picking courses again.`,
+    );
   })();
 
   return { canAdd, blockedReason };

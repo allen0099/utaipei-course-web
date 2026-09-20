@@ -9,6 +9,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { AnimatePresence, motion } from "motion/react";
 
+import { useT } from "@/i18n/language.tsx";
+
 export interface CopyButtonProps extends ButtonProps {
   writeText?: string | null;
   idleIcon?: React.ReactNode;
@@ -36,6 +38,7 @@ export const CopyButton = ({
   className,
   ...props
 }: CopyButtonProps) => {
+  const t = useT();
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
     "idle",
   );
@@ -95,21 +98,21 @@ export const CopyButton = ({
           {copyState === "copied" && (
             <>
               {copiedIcon ?? <CheckIcon className="size-4" />}
-              {copiedText ?? "已複製"}
+              {copiedText ?? t("已複製", "Copied")}
             </>
           )}
 
           {copyState === "failed" && (
             <>
               {failedIcon ?? <ExclamationCircleIcon className="size-4" />}
-              {failedText ?? "複製失敗"}
+              {failedText ?? t("複製失敗", "Copy failed")}
             </>
           )}
 
           {copyState === "idle" && (
             <>
               {idleIcon ?? <ClipboardDocumentIcon className="size-4" />}
-              {idleText ?? "複製"}
+              {idleText ?? t("複製", "Copy")}
             </>
           )}
         </motion.div>

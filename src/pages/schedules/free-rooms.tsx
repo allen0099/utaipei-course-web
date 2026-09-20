@@ -19,6 +19,8 @@ import {
   useCourseIndex,
 } from "@/hooks/useCourseCatalog.ts";
 import { convertCourses } from "@/utils/convert-course.ts";
+import { useT } from "@/i18n/language.tsx";
+import { campusName, dayName } from "@/i18n/terms.ts";
 
 const PARAM_YMS = "yms";
 const PARAM_CAMPUS = "campus";
@@ -26,7 +28,6 @@ const PARAM_TIME = "time";
 
 const SLOT_PATTERN = /^[0-6]-([1-9]|1[0-4])$/;
 const CAMPUS_OPTIONS = ["博愛", "天母"];
-const DAY_LABELS = ["一", "二", "三", "四", "五", "六", "日"];
 
 // 「教室未定」「校外場地」「各場地」不是一個可以走進去的地方，列成空教室只會
 // 誤導人。
@@ -54,6 +55,7 @@ const currentSlot = (campus: string): string | null => {
  * 時段哪些教室沒課」。資料就是 locations.json + courses.json，沒有多抓任何東西。
  */
 export const FreeRoomsPage = () => {
+  const t = useT();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [initialYms] = useState(() => searchParams.get(PARAM_YMS) ?? "");
@@ -149,13 +151,13 @@ export const FreeRoomsPage = () => {
           ...room,
           freeUntil:
             next > 14
-              ? "當天之後都沒課"
+              ? t("當天之後都沒課", "Free for the rest of the day")
               : next === singleDay.lastPeriod + 1
-                ? `第 ${next} 節有課`
-                : `空到第 ${next - 1} 節`,
+                ? t(`第 ${next} 節有課`, `In use from period ${next}`)
+                : t(`空到第 ${next - 1} 節`, `Free through period ${next - 1}`),
         };
       });
-  }, [rooms, slots, campus, singleDay]);
+  }, [rooms, slots, campus, singleDay, t]);
 
   // 時段與校區跟學年期無關，換學年期不必清。
   const onYmsChange = (id: Key | null) => {
@@ -186,7 +188,7 @@ export const FreeRoomsPage = () => {
     .map((key) => {
       const [day, period] = key.split("-").map(Number);
 
-      return `週${DAY_LABELS[day]} ${period}`;
+      return `${dayName(day, t)} ${period}`;
     })
     .join("、");
 
@@ -195,8 +197,11 @@ export const FreeRoomsPage = () => {
       <PageSection>
         <PageHeader
           className="mb-6 max-w-5xl"
-          description="選一個時段，列出該時段沒有排課的教室與場地。"
-          title="尋找空教室"
+          description={t(
+            "選一個時段，列出該時段沒有排課的教室與場地。",
+            "Pick a time slot to list the rooms and venues with nothing scheduled.",
+          )}
+          title={t("尋找空教室", "Find Free Rooms")}
         />
         <div className="grid w-full max-w-5xl gap-6 md:grid-cols-[20rem_minmax(0,1fr)] md:items-start">
           <div className="flex flex-col gap-4">
@@ -206,7 +211,7 @@ export const FreeRoomsPage = () => {
               onChange={onYmsChange}
             />
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-muted">校區</span>
+              <span className="text-muted">{t("校區", "Campus")}</span>
               {CAMPUS_OPTIONS.map((option) => (
                 <ToggleButton
                   key={option}
@@ -214,15 +219,18 @@ export const FreeRoomsPage = () => {
                   size="sm"
                   onChange={(selected) => setCampus(selected ? option : "")}
                 >
-                  {option}
+                  {campusName(option, t)}
                 </ToggleButton>
               ))}
               <Button size="sm" variant="secondary" onPress={pickNow}>
-                現在
+                {t("現在", "Now")}
               </Button>
             </div>
             <SchedulePreview
-              idleHint="點格子選時段，可以一次選好幾節。"
+              idleHint={t(
+                "點格子選時段，可以一次選好幾節。",
+                "Click cells to pick time slots; several at once is fine.",
+              )}
               scheduled={[]}
               selectedSlots={slots}
               onClearSlots={() => setSlots(new Set())}
@@ -233,34 +241,52 @@ export const FreeRoomsPage = () => {
           <div className="min-w-0">
             {error ? (
               <FetchError
-                message="這個學年期尚未收錄地點課表，請改選其他學年期。"
+                message={t(
+                  "這個學年期尚未收錄地點課表，請改選其他學年期。",
+                  "Room schedules are not available for this semester yet. Try another one.",
+                )}
                 onRetry={() => {
                   refetchIndex();
                   refetchCourses();
                 }}
               />
             ) : loading ? (
-              <LoadingState label="教室資料" />
+              <LoadingState label={t("教室資料", "room data")} />
             ) : slots.size === 0 ? (
               <EmptyState
-                description="在左邊的格子點選想找的時段，或按「現在」直接看這一節。"
-                title="請先選擇時段"
+                description={t(
+                  "在左邊的格子點選想找的時段，或按「現在」直接看這一節。",
+                  "Pick the slots you want on the grid, or press Now for the current period.",
+                )}
+                title={t("請先選擇時段", "Pick a time slot first")}
               />
             ) : (
               <>
                 <h2 aria-live="polite" className="text-sm font-medium">
-                  {slotSummary} 節：{freeRooms.length} 個地點沒有排課
+                  {t(
+                    `${slotSummary} 節：${freeRooms.length} 個地點沒有排課`,
+                    `${slotSummary}: ${freeRooms.length} location(s) with nothing scheduled`,
+                  )}
                 </h2>
                 {/* 「沒排課」不等於「門開著」，這一點得講在結果上面而不是藏在
                     頁尾 —— 使用者是拿這份清單直接走過去的。 */}
                 <Notice className="mt-3">
-                  這裡只知道課表上沒有排課，不代表教室有開放，也看不到社團或臨時借用。
+                  {t(
+                    "這裡只知道課表上沒有排課，不代表教室有開放，也看不到社團或臨時借用。",
+                    "This only knows that no course is scheduled. It does not mean the room is open, and club or ad-hoc bookings are not visible.",
+                  )}
                 </Notice>
                 <Separator className="my-4" />
                 {freeRooms.length === 0 ? (
                   <EmptyState
-                    description="試試少選幾節，或取消校區條件。"
-                    title="這個時段沒有空的地點"
+                    description={t(
+                      "試試少選幾節，或取消校區條件。",
+                      "Try fewer periods, or clear the campus filter.",
+                    )}
+                    title={t(
+                      "這個時段沒有空的地點",
+                      "No free locations in this slot",
+                    )}
                   />
                 ) : (
                   <ul className="grid gap-2 sm:grid-cols-2">

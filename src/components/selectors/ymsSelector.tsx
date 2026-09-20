@@ -7,6 +7,8 @@ import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { ItemSelector } from "@/components/selectors/itemSelector.tsx";
 import { LoadingState } from "@/components/states.tsx";
+import { useT } from "@/i18n/language.tsx";
+import { semesterName } from "@/i18n/terms.ts";
 
 export const YmsSelector = ({
   initialKey,
@@ -18,6 +20,7 @@ export const YmsSelector = ({
   /** Width override, so a filter row can make all its selectors share it. */
   className?: string;
 }) => {
+  const t = useT();
   const {
     data: cache,
     loading,
@@ -42,8 +45,12 @@ export const YmsSelector = ({
 
   // ItemSelector renders `name`; yms.json calls the same field `displayName`.
   const items = useMemo(
-    () => data.map((yms) => ({ code: yms.code, name: yms.displayName })),
-    [data],
+    () =>
+      data.map((yms) => ({
+        code: yms.code,
+        name: semesterName(yms.displayName, t),
+      })),
+    [data, t],
   );
 
   // Prefer restoring a caller-provided key (e.g. from the URL) when it
@@ -97,11 +104,16 @@ export const YmsSelector = ({
   };
 
   if (error) {
-    return <FetchError message="學年度資料載入失敗。" onRetry={refetch} />;
+    return (
+      <FetchError
+        message={t("學年度資料載入失敗。", "Failed to load the semester list.")}
+        onRetry={refetch}
+      />
+    );
   }
 
   if (loading) {
-    return <LoadingState label="學年度" />;
+    return <LoadingState label={t("學年度", "semesters")} />;
   }
 
   // YmsSelector is ItemSelector plus a fetch — the ComboBox tree lives in one
@@ -110,7 +122,7 @@ export const YmsSelector = ({
     <ItemSelector
       className={className}
       items={items}
-      label="選擇學年度"
+      label={t("選擇學年度", "Semester")}
       selectedKey={selectedKey}
       onChange={handleSelectionChange}
     />
