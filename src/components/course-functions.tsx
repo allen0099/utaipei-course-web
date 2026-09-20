@@ -80,7 +80,8 @@ export const CourseFunctions = () => {
       <h2 className={sectionTitle({ align: "center", class: "mb-6" })}>
         課程功能
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* 8 張卡：3 欄會剩下孤零零的兩張，2／4 欄才排得滿。 */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {functions.map((func) => (
           <Link key={func.title} className="w-full" href={func.href}>
             <Card className="h-full w-full border border-transparent hover:border-accent transition-colors duration-200">

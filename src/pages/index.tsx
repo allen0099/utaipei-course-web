@@ -1,8 +1,9 @@
 import type { JSX } from "react";
 
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
+import clsx from "clsx";
 import { useNavigate } from "react-router";
-import { Card, Link, SearchField } from "@heroui/react";
+import { Button, Link, SearchField } from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default";
 import { AnnounceHrefItem, AnnouncementItem } from "@/interfaces/globals.ts";
@@ -14,6 +15,8 @@ import { sectionTitle, title } from "@/components/primitives.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { ExternalLinkIcon } from "@/components/icons.tsx";
 import { EmptyState, LoadingState } from "@/components/states.tsx";
+
+const COLLAPSE_AFTER = 8;
 
 const reDate = /((?:\d{3}\s年)?\s\d{1,2}\s[/\-月]\s\d{1,2}\s日?)(?!\d)/g;
 
@@ -121,6 +124,7 @@ const highlightDate = (text: string) => {
 
 export default function IndexPage() {
   const navigate = useNavigate();
+  const [isExpanded, setIsExpanded] = useState(false);
   const {
     data: announcements = [],
     loading,
@@ -129,6 +133,9 @@ export default function IndexPage() {
   } = useFetchJson<AnnouncementItem[]>(
     `${siteConfig.links.github.api}/announcement.json`,
   );
+
+  // 幾行以內直接全部顯示，沒有必要多一顆按鈕。
+  const isLong = announcements.length > COLLAPSE_AFTER;
 
   return (
     <DefaultLayout>
@@ -182,33 +189,49 @@ export default function IndexPage() {
           </div>
         </section>
         <HomeDashboard />
-        <CourseFunctions />
-        {loading ? (
-          <LoadingState className="mt-8" label="校園公告" />
-        ) : error ? (
-          <FetchError
-            className="mt-8"
-            message="校園公告載入失敗，請稍後再試。"
-            onRetry={refetch}
-          />
-        ) : (
-          <Card className="border border-warning/30 border-l-4 border-l-warning w-full max-w-2xl bg-surface">
-            <Card.Header className="flex justify-center text-center w-full">
-              <h2
-                className={sectionTitle({ align: "center", class: "w-full" })}
+
+        {/* 公告排在功能入口之前：它是這一頁唯一會變的內容（選課時程、截止日），
+            而功能入口導覽列上本來就有。寬度與表面樣式跟上面的儀表板卡片一致 ——
+            原本是一張置中、比其他區塊窄一截、左邊一條黃色粗線的卡片，夾在兩個
+            滿版區塊之間，看起來像是從別的頁面貼過來的。 */}
+        <section className="w-full max-w-4xl rounded-xl border border-border bg-surface p-5">
+          <div className="mb-3 flex items-baseline justify-between gap-3">
+            <h2 className={sectionTitle({ size: "md" })}>校園公告</h2>
+            <a
+              className="inline-flex shrink-0 items-center gap-1 text-sm text-accent hover:text-accent-hover"
+              href={siteConfig.links.utaipei.sky}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              校務資訊系統
+              <ExternalLinkIcon />
+            </a>
+          </div>
+          {loading ? (
+            <LoadingState className="py-6" label="校園公告" />
+          ) : error ? (
+            <FetchError
+              message="校園公告載入失敗，請稍後再試。"
+              onRetry={refetch}
+            />
+          ) : announcements.length === 0 ? (
+            <EmptyState
+              className="py-4"
+              description="校務資訊系統目前沒有張貼中的公告。"
+              title="目前沒有校園公告"
+            />
+          ) : (
+            <>
+              {/* 公告動輒二三十行。全部攤開會把功能入口推到兩個螢幕之外，所以先
+                  收在固定高度裡，底部淡出暗示下面還有。 */}
+              <div
+                className={clsx(
+                  "relative overflow-hidden",
+                  !isExpanded && isLong && "max-h-56",
+                )}
+                id="home-announcements"
               >
-                校園公告
-              </h2>
-            </Card.Header>
-            <Card.Content>
-              {announcements.length === 0 ? (
-                <EmptyState
-                  className="py-4"
-                  description="校務資訊系統目前沒有張貼中的公告。"
-                  title="目前沒有校園公告"
-                />
-              ) : (
-                <ul className="space-y-2">
+                <ul className="space-y-2 text-sm leading-relaxed">
                   {announcements.map((item, idx) => (
                     <li key={idx} className={getIndentClass(item.level)}>
                       <span className="text-foreground whitespace-pre-line">
@@ -217,21 +240,27 @@ export default function IndexPage() {
                     </li>
                   ))}
                 </ul>
+                {!isExpanded && isLong && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-surface to-transparent" />
+                )}
+              </div>
+              {isLong && (
+                <Button
+                  aria-controls="home-announcements"
+                  aria-expanded={isExpanded}
+                  className="mt-3"
+                  size="sm"
+                  variant="tertiary"
+                  onPress={() => setIsExpanded((value) => !value)}
+                >
+                  {isExpanded ? "收合公告" : "展開全部公告"}
+                </Button>
               )}
-            </Card.Content>
-            <Card.Footer>
-              <a
-                className="inline-flex items-center gap-1 text-accent hover:text-accent-hover"
-                href={siteConfig.links.utaipei.sky}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                詳細公告請見校務資訊系統
-                <ExternalLinkIcon />
-              </a>
-            </Card.Footer>
-          </Card>
-        )}
+            </>
+          )}
+        </section>
+
+        <CourseFunctions />
       </section>
     </DefaultLayout>
   );
