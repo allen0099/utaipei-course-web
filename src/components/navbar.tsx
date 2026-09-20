@@ -9,7 +9,6 @@ import clsx from "clsx";
 
 import { NavItem, siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import { WipBadge } from "@/components/wip-badge.tsx";
 import { OPEN_PALETTE_EVENT } from "@/components/command-palette.tsx";
 
 const SearchButton = ({ showShortcut }: { showShortcut?: boolean }) => (
@@ -54,7 +53,6 @@ const NavItemLink = ({
     onClick={onNavigate}
   >
     {item.label}
-    {item.wip && <WipBadge />}
   </NavLink>
 );
 
@@ -134,7 +132,6 @@ export const Navbar = () => {
                             textValue={item.label}
                           >
                             <Label>{item.label}</Label>
-                            {item.wip && <WipBadge />}
                           </Dropdown.Item>
                         ))}
                       </Dropdown.Menu>

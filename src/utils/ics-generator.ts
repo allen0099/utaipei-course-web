@@ -17,19 +17,46 @@ const formatICSUtc = (date: Date): string =>
     .replace(/[-:]/g, "")
     .replace(/\.\d{3}/, "");
 
-// Helper to wrap long lines as per ICS specification
+const utf8 = new TextEncoder();
+
+/**
+ * Fold a content line per RFC 5545 §3.1: no line longer than 75 **octets**,
+ * continuation lines start with one space (which counts toward their 75).
+ *
+ * This used to count UTF-16 code units. A CJK character is one unit but three
+ * octets, so a "75 character" line of Chinese was really 225 octets — three
+ * times the limit, which stricter parsers reject or truncate. Course names and
+ * calendar event titles are almost entirely CJK, so nearly every long line was
+ * affected. Splitting walks whole code points, never inside a multi-byte
+ * sequence or a surrogate pair. The crawler's calendarIcs.ts already folds this
+ * way; the two now agree.
+ */
 export const wrapICSLine = (line: string): string => {
-  if (line.length <= 75) return line;
+  if (utf8.encode(line).length <= 75) return line;
 
-  let result = line.slice(0, 75);
-  let remaining = line.slice(75);
+  const segments: string[] = [];
+  let current = "";
+  let currentOctets = 0;
+  // 第一行 75，之後每行開頭的空白佔掉 1，所以內容只剩 74。
+  let limit = 75;
 
-  while (remaining.length > 0) {
-    result += "\r\n " + remaining.slice(0, 74);
-    remaining = remaining.slice(74);
+  for (const char of line) {
+    const size = utf8.encode(char).length;
+
+    if (currentOctets + size > limit) {
+      segments.push(current);
+      current = "";
+      currentOctets = 0;
+      limit = 74;
+    }
+
+    current += char;
+    currentOctets += size;
   }
 
-  return result;
+  segments.push(current);
+
+  return segments.join("\r\n ");
 };
 
 /** Trigger a browser download for generated iCalendar text. */

@@ -1,7 +1,6 @@
 import { Card, Link } from "@heroui/react";
 import { ReactNode } from "react";
 
-import { WipBadge } from "@/components/wip-badge.tsx";
 import {
   CalendarIcon,
   ClassroomIcon,
@@ -18,7 +17,6 @@ interface Functions {
   href: string;
   icon: ReactNode;
   description: string;
-  wip?: boolean;
 }
 
 // title 用各頁的正式名稱（與 config/site.ts 的導覽標籤、頁面 h1 一致）；
@@ -88,7 +86,6 @@ export const CourseFunctions = () => {
               <Card.Header className="flex items-center gap-4">
                 {func.icon}
                 <h3 className={cardTitle()}>{func.title}</h3>
-                {func.wip && <WipBadge />}
               </Card.Header>
               <Card.Content>
                 <p className="text-muted text-center">{func.description}</p>

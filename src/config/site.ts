@@ -5,8 +5,6 @@ export type SiteConfig = typeof siteConfig;
 export interface NavItem {
   label: string;
   href: string;
-  /** 尚未實作，導覽上標示「開發中」，避免使用者以為功能壞掉。 */
-  wip?: boolean;
 }
 
 export interface NavGroup {

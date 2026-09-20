@@ -1,5 +1,3 @@
-import { downloadBlob } from "@/utils/download.ts";
-
 const WARM_BACKGROUND_COLOR = "#fef7ed"; // Warm orange-50 background
 const DARK_BACKGROUND_COLOR = "#1c1917"; // stone-900, matches the dark UI
 const PADDING = 40; // 40px padding on all sides
@@ -8,9 +6,6 @@ const PADDING = 40; // 40px padding on all sides
 // classes are active. Picking the background from the same signal keeps the
 // export from pairing dark cells with a cream page (and vice versa).
 const isDarkMode = () => document.documentElement.classList.contains("dark");
-
-const backgroundColor = () =>
-  isDarkMode() ? DARK_BACKGROUND_COLOR : WARM_BACKGROUND_COLOR;
 
 // Wait for the browser to complete a full layout/paint cycle before measuring.
 // A single rAF can still fire before layout has settled, so we wait for two.
@@ -21,137 +16,43 @@ const waitForLayout = (): Promise<void> =>
     });
   });
 
-const htmlToCanvas = async (element: HTMLElement): Promise<Blob | null> => {
+/**
+ * Render a schedule grid to a PNG blob.
+ *
+ * Takes the element itself. It used to look the grid up by a hard-coded id and,
+ * failing that, fall through three increasingly vague selectors ending in "any
+ * element whose class contains `grid`" — so a page with two schedules exported
+ * whichever came first, and a markup change would have silently exported some
+ * unrelated part of the page. The caller owns a ref to the exact node.
+ *
+ * Throws on failure. The previous fallback downloaded a PNG that only said
+ * "please take a screenshot instead" and, if even that failed, called
+ * `alert()`; the component now reports the failure inline instead.
+ */
+export const generateScheduleImageBlob = async (
+  element: HTMLElement,
+): Promise<Blob> => {
   // Lazily load html-to-image so it's only pulled into a chunk when a
   // schedule image is actually requested, not bundled into the main chunk.
   const { toBlob } = await import("html-to-image");
 
-  // Wait for any pending layout changes
   await waitForLayout();
 
-  return toBlob(element, {
-    backgroundColor: backgroundColor(),
-    height: element.scrollHeight + PADDING * 2, // Add padding to height
-    width: element.scrollWidth + PADDING * 2, // Add padding to width
+  const blob = await toBlob(element, {
+    backgroundColor: isDarkMode()
+      ? DARK_BACKGROUND_COLOR
+      : WARM_BACKGROUND_COLOR,
+    height: element.scrollHeight + PADDING * 2,
+    width: element.scrollWidth + PADDING * 2,
     style: {
-      // Add padding to the element
       padding: `${PADDING}px`,
       margin: "0",
     },
   });
-};
-
-// Generate schedule image blob for preview or download
-export const generateScheduleImageBlob = async (
-  _scheduleTitle: string = "課程表",
-): Promise<Blob> => {
-  // Try multiple selectors to find the schedule grid
-  let scheduleGrid = document.getElementById(
-    "weekly-schedule-grid",
-  ) as HTMLElement;
-
-  if (!scheduleGrid) {
-    // Fallback: look for the grid container
-    scheduleGrid = document.querySelector(
-      '[style*="grid-template-columns"]',
-    ) as HTMLElement;
-  }
-
-  if (!scheduleGrid) {
-    // Another fallback: look for the schedule container within CardBody
-    const cardBody = document.querySelector('[data-component="CardBody"]');
-
-    if (cardBody) {
-      scheduleGrid = cardBody.querySelector(
-        'div[style*="grid-template-columns"]',
-      ) as HTMLElement;
-    }
-  }
-
-  if (!scheduleGrid) {
-    // Final fallback: look for any grid container
-    scheduleGrid = document.querySelector(
-      '.grid, [class*="grid"]',
-    ) as HTMLElement;
-  }
-
-  if (!scheduleGrid) {
-    throw new Error("Schedule grid not found");
-  }
-
-  // Convert to canvas
-  const blob = await htmlToCanvas(scheduleGrid);
 
   if (!blob) {
     throw new Error("Failed to generate image blob");
   }
 
   return blob;
-};
-
-// Download schedule as image (existing function, now uses generateScheduleImageBlob)
-export const downloadScheduleImage = async (
-  scheduleTitle: string = "課程表",
-): Promise<void> => {
-  try {
-    const blob = await generateScheduleImageBlob(scheduleTitle);
-
-    downloadBlob(blob, `${scheduleTitle}.png`);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Failed to generate schedule image:", error);
-
-    // Fallback: Create a simple table representation
-    try {
-      await createFallbackImage(scheduleTitle);
-    } catch (fallbackError) {
-      // eslint-disable-next-line no-console
-      console.error("Fallback image generation also failed:", fallbackError);
-      alert("生成課表圖片失敗，請稍後再試。建議截圖保存課表。");
-    }
-  }
-};
-
-// Fallback method using canvas API
-const createFallbackImage = async (scheduleTitle: string): Promise<void> => {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  if (!ctx) {
-    throw new Error("Canvas context not available");
-  }
-
-  // Set canvas size with padding
-  canvas.width = 800 + PADDING * 2;
-  canvas.height = 600 + PADDING * 2;
-
-  // Fill background with the theme-matching color
-  ctx.fillStyle = backgroundColor();
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Add title with padding offset
-  ctx.fillStyle = isDarkMode() ? "#f5f5f4" : "#000000";
-  ctx.font = "bold 24px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(scheduleTitle, canvas.width / 2, 40 + PADDING);
-
-  // Add note with padding offset
-  ctx.font = "16px sans-serif";
-  ctx.fillText(
-    "請使用瀏覽器截圖功能保存完整課表",
-    canvas.width / 2,
-    80 + PADDING,
-  );
-  ctx.fillText("或直接截圖此頁面內容", canvas.width / 2, 110 + PADDING);
-
-  // Convert to blob and download
-  const blob = await new Promise<Blob | null>((resolve) => {
-    canvas.toBlob(resolve, "image/png", 0.9);
-  });
-
-  if (!blob) {
-    throw new Error("Failed to generate fallback image blob");
-  }
-
-  downloadBlob(blob, `${scheduleTitle}-notice.png`);
 };

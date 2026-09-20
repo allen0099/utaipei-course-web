@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { FC, useMemo, useRef, useState } from "react";
 import {
   Card,
   Switch,
@@ -28,10 +28,8 @@ import {
 import { siteConfig } from "@/config/site.ts";
 import { useIsMobileViewport } from "@/hooks/useIsMobileViewport.ts";
 import { downloadICSFile, resolveTermRange } from "@/utils/ics-generator";
-import {
-  downloadScheduleImage,
-  generateScheduleImageBlob,
-} from "@/utils/image-generator";
+import { generateScheduleImageBlob } from "@/utils/image-generator";
+import { Notice } from "@/components/states.tsx";
 import ImagePreviewModal from "@/components/image-preview-modal";
 import { sectionTitle } from "@/components/primitives.ts";
 import { downloadBlob } from "@/utils/download.ts";
@@ -310,7 +308,7 @@ export const COURSE_COLORS = [
   "bg-violet-200 border-violet-600 text-violet-950 dark:bg-violet-700/40 dark:border-violet-300 dark:text-violet-50",
 ];
 
-export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
+export const WeeklySchedule: FC<WeeklyScheduleProps> = ({
   scheduleTitle = "週課表",
   courses = [],
   campusTimeMappings = DEFAULT_CAMPUS_MAPPINGS,
@@ -413,18 +411,26 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
     downloadICSFile(courses, currentMapping, scheduleTitle, term);
   };
 
+  // 匯出圖片要畫的就是這個節點。用 ref 而不是全域 id：一頁出現兩張課表時
+  // （例如分享頁之後若要並排），id 查找只會抓到第一張。
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [imageError, setImageError] = useState(false);
+
   // Handle image download with preview
   const handleImageDownload = async () => {
-    try {
-      const blob = await generateScheduleImageBlob(scheduleTitle);
+    setImageError(false);
 
-      setPreviewImageBlob(blob);
+    try {
+      if (!gridRef.current) throw new Error("Schedule grid is not mounted");
+
+      setPreviewImageBlob(await generateScheduleImageBlob(gridRef.current));
       setIsPreviewModalOpen(true);
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("Failed to generate preview image:", error);
-      // Fallback to direct download if preview fails
-      await downloadScheduleImage(scheduleTitle);
+      console.error("Failed to generate schedule image:", error);
+      // 失敗就在原地講清楚。以前是下載一張只寫著「請自行截圖」的 PNG，連那個
+      // 也失敗才跳原生 alert()。
+      setImageError(true);
     }
   };
 
@@ -641,9 +647,9 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
 
     return (
       <div
+        ref={gridRef}
         aria-label={scheduleTitle}
         className={`grid gap-0 border border-border rounded-lg overflow-hidden`}
-        id="weekly-schedule-grid"
         // table，不是 grid：ARIA 的 grid 承諾方向鍵在格子間移動，這裡沒有那種
         // 操作（課程是一般的按鈕，用 Tab 走），宣告成 grid 只會讓螢幕閱讀器
         // 切進一個按了沒反應的模式。列用 display:contents 的容器包起來，版面
@@ -1105,6 +1111,11 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
       </Card.Header>
 
       <Card.Content>
+        {imageError && (
+          <Notice className="mb-4" tone="danger">
+            課表圖片產生失敗。可以再試一次，或改用瀏覽器的截圖功能。
+          </Notice>
+        )}
         {courses.length === 0 ? (
           <div className="text-center py-8 text-muted">
             <p>沒有課程資料</p>
@@ -1115,7 +1126,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
             {/* Desktop table. Also the source for the "另存圖片" export, so it
                 must stay in the DOM at full size on every screen. On mobile we
                 clip it with h-0/overflow-hidden (NOT display:none) — html-to-image
-                renders #weekly-schedule-grid as a standalone node, so parent
+                renders the grid (gridRef) as a standalone node, so parent
                 clipping doesn't shrink its scrollWidth/scrollHeight and the
                 export keeps working. */}
             {/* aria-hidden + inert: h-0/overflow-hidden keeps the node
