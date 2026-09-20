@@ -25,8 +25,13 @@ export const LoadingState = ({ label, className }: LoadingStateProps) => (
 );
 
 export interface NoticeProps {
-  /** danger for "something is wrong now", warning for "heads up". */
-  tone?: "warning" | "danger";
+  /**
+   * danger for "something is wrong now", warning for "heads up", info for
+   * plain explanations (why a control is disabled, that a list is truncated).
+   * Those used to borrow the warning yellow, which made routine messages read
+   * as if something had gone wrong.
+   */
+  tone?: "info" | "warning" | "danger";
   icon?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -45,9 +50,11 @@ export const Notice = ({
   <div
     className={clsx(
       "flex items-start gap-2 rounded-lg border p-3 text-sm",
-      tone === "danger"
-        ? "border-danger/40 bg-danger/10 text-danger"
-        : "border-warning/40 bg-warning/10 text-warning",
+      tone === "danger" && "border-danger/40 bg-danger/10 text-danger",
+      tone === "warning" && "border-warning/40 bg-warning/10 text-warning",
+      // 標準 Tailwind 色票：HeroUI v3 沒有可用的 info／數字色階 class。
+      tone === "info" &&
+        "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200",
       className,
     )}
   >

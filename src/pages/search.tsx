@@ -46,6 +46,7 @@ import {
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { useCourseAddGate } from "@/hooks/useCourseAddGate.ts";
 import { FetchError } from "@/components/fetch-error.tsx";
+import { DataFreshness } from "@/components/data-freshness.tsx";
 
 const MAX_DISPLAYED_COURSES = 200;
 
@@ -556,12 +557,16 @@ export const SearchPage = () => {
     return (
       <>
         {addBlockedReason && (
-          <Notice icon={<InformationCircleIcon width={18} />}>
+          <Notice icon={<InformationCircleIcon width={18} />} tone="info">
             {addBlockedReason}
           </Notice>
         )}
         {isTruncated && (
-          <Notice className="mt-4" icon={<InformationCircleIcon width={18} />}>
+          <Notice
+            className="mt-4"
+            icon={<InformationCircleIcon width={18} />}
+            tone="info"
+          >
             共 {filteredCourses.length} 筆符合，先顯示前 {MAX_DISPLAYED_COURSES}{" "}
             筆。輸入關鍵字可以縮小範圍，找到其餘{" "}
             {filteredCourses.length - MAX_DISPLAYED_COURSES} 筆課程。
@@ -747,8 +752,11 @@ export const SearchPage = () => {
               </details>
             )}
             {filteredCourses.length > 0 && (
-              <div aria-live="polite" className="w-full text-right text-sm">
-                共計：{filteredCourses.length} 筆資料
+              <div className="flex w-full flex-wrap items-baseline justify-between gap-x-4 text-sm">
+                <DataFreshness className="text-xs text-muted" yms={yms} />
+                <span aria-live="polite" className="ml-auto">
+                  共計：{filteredCourses.length} 筆資料
+                </span>
               </div>
             )}
             {renderResults()}

@@ -252,7 +252,10 @@ export const SharedSchedulePage = () => {
             {importedCount === null ? (
               <>
                 {importBlockedReason && (
-                  <Notice icon={<InformationCircleIcon width={18} />}>
+                  <Notice
+                    icon={<InformationCircleIcon width={18} />}
+                    tone="info"
+                  >
                     {importBlockedReason}
                   </Notice>
                 )}

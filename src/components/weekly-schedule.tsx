@@ -37,7 +37,7 @@ import { sectionTitle } from "@/components/primitives.ts";
 import { downloadBlob } from "@/utils/download.ts";
 
 // Default campus time mappings
-const DEFAULT_CAMPUS_MAPPINGS: CampusTimeMapping[] = [
+export const DEFAULT_CAMPUS_MAPPINGS: CampusTimeMapping[] = [
   {
     campus: "main",
     name: "博愛校區",
@@ -541,6 +541,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
             "ring-2 ring-blue-400 dark:ring-blue-500": hasHoveredCourse,
           },
         )}
+        role="cell"
       >
         {isEmpty && onEmptySlotPress && (
           <button
@@ -617,31 +618,41 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
         aria-label={scheduleTitle}
         className={`grid gap-0 border border-border rounded-lg overflow-hidden`}
         id="weekly-schedule-grid"
-        role="grid"
+        // table，不是 grid：ARIA 的 grid 承諾方向鍵在格子間移動，這裡沒有那種
+        // 操作（課程是一般的按鈕，用 Tab 走），宣告成 grid 只會讓螢幕閱讀器
+        // 切進一個按了沒反應的模式。列用 display:contents 的容器包起來，版面
+        // 仍然是同一張 CSS grid。
+        role="table"
         style={{
           gridTemplateColumns: `auto repeat(${visibleDays.length}, 1fr)`,
         }}
       >
         {/* Headers */}
-        <div
-          className="bg-surface-secondary p-2 border-r border-border"
-          role="columnheader"
-        >
-          <div className="text-xs font-semibold text-center">時間</div>
-        </div>
-        {visibleDays.map((dayName, visibleIndex) => (
+        <div className="contents" role="row">
           <div
-            key={visibleIndex}
-            className="bg-surface-secondary p-2 border-r border-border last:border-r-0"
+            className="bg-surface-secondary p-2 border-r border-border"
             role="columnheader"
           >
-            <div className="text-xs font-semibold text-center">{dayName}</div>
+            <div className="text-xs font-semibold text-center">時間</div>
           </div>
-        ))}
+          {visibleDays.map((dayName, visibleIndex) => (
+            <div
+              key={visibleIndex}
+              className="bg-surface-secondary p-2 border-r border-border last:border-r-0"
+              role="columnheader"
+            >
+              <div className="text-xs font-semibold text-center">{dayName}</div>
+            </div>
+          ))}
+        </div>
 
         {/* Time slots for visible periods */}
         {visiblePeriods.map((timeInfo) => (
-          <React.Fragment key={`period-${timeInfo.period}`}>
+          <div
+            key={`period-${timeInfo.period}`}
+            className="contents"
+            role="row"
+          >
             <div
               className="bg-background-secondary p-2 border-r border-border border-t"
               role="rowheader"
@@ -661,7 +672,7 @@ export const WeeklySchedule: React.FC<WeeklyScheduleProps> = ({
             {visibleDayIndices.map((dayIndex) => {
               return renderTimeSlot(dayIndex, timeInfo.period);
             })}
-          </React.Fragment>
+          </div>
         ))}
       </div>
     );
