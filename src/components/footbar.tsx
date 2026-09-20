@@ -4,6 +4,7 @@ import React from "react";
 import { GithubIcon, HeartFilledIcon } from "@/components/icons.tsx";
 import { siteConfig } from "@/config/site.ts";
 import { cardTitle } from "@/components/primitives.ts";
+import { OPEN_DISCLAIMER_EVENT } from "@/components/disclaimer.tsx";
 
 const FooterLink = ({
   link,
@@ -68,6 +69,16 @@ export const Footbar = () => {
               發電
               <br />
             </p>
+            {/* 按過「我已了解」之後橫幅就不再出現，這裡是重讀全文的唯一入口。 */}
+            <button
+              className="mt-2 text-sm text-muted underline underline-offset-2 hover:text-accent"
+              type="button"
+              onClick={() =>
+                window.dispatchEvent(new Event(OPEN_DISCLAIMER_EVENT))
+              }
+            >
+              免責聲明
+            </button>
             <div className="w-full flex items-center justify-center py-3">
               <a
                 className="flex items-center gap-1 text-muted"
