@@ -11,6 +11,7 @@ import { CourseFunctions } from "@/components/course-functions.tsx";
 import { HomeDashboard } from "@/components/home-dashboard.tsx";
 import { FetchError } from "@/components/fetch-error.tsx";
 import { siteConfig } from "@/config/site.ts";
+import { HOME_FAQ } from "@/config/home-faq.js";
 import { sectionTitle, title } from "@/components/primitives.ts";
 import { useFetchJson } from "@/hooks/useFetchJson.ts";
 import { ExternalLinkIcon } from "@/components/icons.tsx";
@@ -138,6 +139,13 @@ export default function IndexPage() {
 
   // 幾行以內直接全部顯示，沒有必要多一顆按鈕。
   const isLong = announcements.length > COLLAPSE_AFTER;
+  // 收合時只渲染前幾則，不是整份都放進 DOM 再用 max-h 藏起來：公告是從學校
+  // 原封不動抓來的，全部攤在渲染後的 DOM 裡，搜尋引擎會把首頁看成學校網站的
+  // 複本。視覺上沒差——收合時本來就只看得到這幾則。
+  const visibleAnnouncements =
+    isExpanded || !isLong
+      ? announcements
+      : announcements.slice(0, COLLAPSE_AFTER);
 
   return (
     <DefaultLayout>
@@ -206,7 +214,11 @@ export default function IndexPage() {
             而功能入口導覽列上本來就有。寬度與表面樣式跟上面的儀表板卡片一致 ——
             原本是一張置中、比其他區塊窄一截、左邊一條黃色粗線的卡片，夾在兩個
             滿版區塊之間，看起來像是從別的頁面貼過來的。 */}
-        <section className="w-full max-w-4xl rounded-xl border border-border bg-surface p-5">
+        {/* data-nosnippet：搜尋結果的摘要不該是學校的繳費公告，而是本站自己的說明。 */}
+        <section
+          data-nosnippet
+          className="w-full max-w-4xl rounded-xl border border-border bg-surface p-5"
+        >
           <div className="mb-3 flex items-baseline justify-between gap-3">
             <h2 className={sectionTitle({ size: "md" })}>
               {t("校園公告", "Announcements")}
@@ -261,7 +273,7 @@ export default function IndexPage() {
                 id="home-announcements"
               >
                 <ul className="space-y-2 text-sm leading-relaxed">
-                  {announcements.map((item, idx) => (
+                  {visibleAnnouncements.map((item, idx) => (
                     <li key={idx} className={getIndentClass(item.level)}>
                       <span className="text-foreground whitespace-pre-line">
                         {renderTextWithLinks(item.text, item.href)}
@@ -292,6 +304,27 @@ export default function IndexPage() {
         </section>
 
         <CourseFunctions />
+
+        {/* 同一份問答也被 scripts/generate-static-pages.js 寫進靜態 HTML，改這裡
+            的結構時兩邊都要看。用 <details>：收合的內容仍在 DOM 裡、照樣會被
+            索引，首頁也不會因此多拉長一大段。 */}
+        <section className="w-full max-w-4xl">
+          <h2 className={clsx(sectionTitle({ size: "md" }), "mb-3")}>
+            {t("常見問題", "FAQ")}
+          </h2>
+          <div className="divide-y divide-border rounded-xl border border-border bg-surface">
+            {HOME_FAQ.map((item) => (
+              <details key={item.q} className="px-5 py-3">
+                <summary className="cursor-pointer font-medium text-foreground">
+                  {t(item.q, item.qEn)}
+                </summary>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {t(item.a, item.aEn)}
+                </p>
+              </details>
+            ))}
+          </div>
+        </section>
       </section>
     </DefaultLayout>
   );

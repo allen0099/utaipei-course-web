@@ -19,6 +19,7 @@ import {
   canonicalUrl,
   pageMeta,
 } from '../src/config/page-meta.js';
+import { HOME_FAQ } from '../src/config/home-faq.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -78,6 +79,43 @@ function generateMetaTags(route, routeMeta) {
 
     <!-- Canonical URL -->
     <link rel="canonical" href="${escapeAttr(fullUrl)}" />${jsonLdTag}`;
+}
+
+/**
+ * 寫進 <div id="root"> 的靜態內容：站名、全站導覽、該頁的 <h1> 與說明，首頁再加
+ * 上常見問題。
+ *
+ * 以前 #root 是空的，沒執行 JS 的爬蟲在每一頁只讀得到 GTM 的 noscript，Search
+ * Console 也一直停在「已檢索 - 目前未建立索引」。這裡放的只是 React 渲染後本來
+ * 就會出現的文字的子集（同樣的 h1、同一句 description、同一份 HOME_FAQ），不是
+ * 另一套只給爬蟲看的內容。createRoot().render() 第一次渲染時會清空 #root，所以
+ * 使用者只會在 JS 載入前短暫看到它。
+ *
+ * 樣式寫在這段 HTML 自己的 <style> 裡：Tailwind 不保證掃得到 scripts/，而這段
+ * <style> 會跟著 #root 的內容一起被 React 換掉，不會漏到 app 裡。
+ */
+function generateRootContent(route, routeMeta) {
+  const isHome = route === '/';
+  const heading = isHome ? SITE.shortName : routeMeta.name;
+
+  const navLinks = Object.entries(pageMeta)
+    .filter(([, meta]) => !meta.noIndex)
+    .map(([path, meta]) => {
+      const href = path === '/' ? '/' : `${path}/`;
+      const current = path === route ? ' aria-current="page"' : '';
+
+      return `<li><a href="${escapeAttr(href)}"${current}>${escapeAttr(meta.name)}</a></li>`;
+    })
+    .join('');
+
+  const faq = isHome
+    ? `<section><h2>常見問題</h2>${HOME_FAQ.map(
+        (item) =>
+          `<details><summary>${escapeAttr(item.q)}</summary><p>${escapeAttr(item.a)}</p></details>`,
+      ).join('')}</section>`
+    : '';
+
+  return `<div class="prerender"><style>.prerender{max-width:56rem;margin:0 auto;padding:1.5rem 1rem;font-family:system-ui,sans-serif;line-height:1.7}.prerender nav ul{display:flex;flex-wrap:wrap;gap:.25rem 1rem;list-style:none;padding:0;margin:.5rem 0 1.5rem}.prerender a{color:inherit}.prerender h1{font-size:1.75rem;margin:0 0 .5rem}.prerender h2{font-size:1.25rem;margin:2rem 0 .5rem}.prerender summary{cursor:pointer;font-weight:600;margin-top:.75rem}</style><header><a href="/">${escapeAttr(SITE.name)}</a></header><nav aria-label="網站導覽"><ul>${navLinks}</ul></nav><main><h1>${escapeAttr(heading)}</h1><p>${escapeAttr(routeMeta.description)}</p>${faq}</main><noscript><p>本站需要啟用 JavaScript 才能使用完整功能。</p></noscript></div>`;
 }
 
 function generateSitemap() {
@@ -160,6 +198,20 @@ function generateStaticPages() {
       `<!-- Route-specific meta tags -->${metaTags}
 
     <!-- Apply saved theme`
+    );
+
+    // Same fail-loud rule as the meta block: if the mount point stops matching,
+    // every route silently goes back to shipping an empty body.
+    const rootMount = '<div id="root"></div>';
+
+    if (!html.includes(rootMount)) {
+      console.error('❌ Could not find <div id="root"></div> in dist/index.html.');
+      process.exit(1);
+    }
+
+    html = html.replace(
+      rootMount,
+      `<div id="root">${generateRootContent(route, routeMeta)}</div>`,
     );
 
     // Determine the file path based on route
