@@ -27,7 +27,7 @@
     "clsx": "2.1.1",
     "html-to-image": "^1.11.13",
     "motion": "^13.2.0",
-    "pdfjs-dist": "6.3.289",
+    "pdfjs-dist": "6.4.299",
     "react": "19.3.0",
     "react-aria-components": "^1.21.1",
     "react-dom": "19.3.0",
