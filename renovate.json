@@ -50,6 +50,11 @@
     {
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
+    },
+    {
+      "description": "pdfjs-dist must stay on exactly the version react-pdf resolves: the bundled worker and react-pdf's API copy speak a version-locked protocol, and a mismatch leaves the /calendar PDF tab stuck loading. Bump it by hand together with react-pdf.",
+      "matchPackageNames": ["pdfjs-dist"],
+      "enabled": false
     }
   ]
 }
