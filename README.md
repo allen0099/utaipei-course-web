@@ -2,6 +2,8 @@
 
 臺北市立大學選課輔助工具，提供課程查詢、我的課表、教師／班級／地點課表、校園行事曆與校園地圖等功能，讓選課更便利。
 
+**網站：<https://utc.allen0099.tw/>**
+
 本專案為前端網站，**本身沒有後端**：所有課程資料在執行時直接讀取由 [utaipei-course-crawler](https://github.com/allen0099/utaipei-course-crawler) 爬取並發布到 GitHub Pages 的 JSON（`https://allen0099.github.io/utaipei-course-crawler`）。
 
 ## 功能
