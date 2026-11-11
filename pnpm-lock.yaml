@@ -231,8 +231,8 @@ importers:
         specifier: 8.5.1
         version: 8.5.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       tailwind-variants:
-        specifier: 3.3.1
-        version: 3.3.1(tailwindcss@4.3.5)
+        specifier: 4.0.1
+        version: 4.0.1
       tailwindcss:
         specifier: 4.3.5
         version: 4.3.5
@@ -3572,6 +3572,10 @@ packages:
         optional: true
       tailwindcss:
         optional: true
+
+  tailwind-variants@4.0.1:
+    resolution: {integrity: sha512-VumzgPklIwpneDWtskGuhEqPlfZZ2DeN1nIb2um9DRhk9XBX580s4N84A533j+oHN+dLz274HkKvSjr+64fggA==}
+    engines: {node: '>=16.9.x', pnpm: '>=7.x'}
 
   tailwindcss@4.3.5:
     resolution: {integrity: sha512-FcQk9BuffmEHJP2G0XmB2SplU1aLTI7j07Kunk+U74Ny+XiWOtzXz9aujFZ/avntw1e2cOv/3PkgzflQ7gX2vQ==}
@@ -7264,6 +7268,8 @@ snapshots:
   tailwind-variants@3.3.1(tailwindcss@4.3.5):
     optionalDependencies:
       tailwindcss: 4.3.5
+
+  tailwind-variants@4.0.1: {}
 
   tailwindcss@4.3.5: {}
 
